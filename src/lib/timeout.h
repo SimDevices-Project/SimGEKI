@@ -1,0 +1,12 @@
+#ifndef __TIMEOUT_H_
+#define __TIMEOUT_H_
+
+#include "bsp.h"
+
+void Timeout_Init();
+uint8_t setInterval(void (*callback)(void), uint16_t period);
+void clearInterval(uint8_t id);
+
+void Timer_Process();
+
+#endif // __TIMEOUT_H_

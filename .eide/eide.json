@@ -32,7 +32,7 @@
       "uploader": "Custom",
       "uploadConfig": {
         "bin": "${ExecutableName}.bin",
-        "commandLine": "download.cmd ${programFile}",
+        "commandLine": "bash ./tools/program_flash.sh \"${programFile}\"",
         "eraseChipCommand": ""
       },
       "uploadConfigMap": {
@@ -64,7 +64,11 @@
           "sdk/Peripheral/inc",
           "src",
           "sdk/Core",
-          "sdk/Debug"
+          "sdk/Debug",
+          "src/lib",
+          "src/usblib/config",
+          "src/usblib/usb_driver/inc",
+          "src/usblib/usb_driver/src"
         ],
         "libList": [],
         "sourceDirList": [],

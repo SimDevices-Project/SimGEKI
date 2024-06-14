@@ -1,0 +1,22 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "cwd": "${workspaceRoot}",
+            "executable": "./build/Debug/SimGEKI.elf",
+            "name": "Debug with OpenOCD",
+            "request": "launch",
+            "type": "cortex-debug",
+            "servertype": "openocd",
+            "searchDir": [],
+            "runToEntryPoint": "main",
+            "showDevDebugOutput": "raw",
+            "device": "CH32V203",
+            "svdFile": "D:/MounRiver/MounRiver_Studio/template/wizard/WCH/RISC-V/CH32V203/NoneOS/CH32V203xx.svd",
+            "toolchainPrefix": "D:/MounRiver/MounRiver_Studio/toolchain/RISC-V Embedded GCC/bin/riscv-none-embed",
+            "configFiles": [
+                "D:/MounRiver/MounRiver_Studio/toolchain/OpenOCD/bin/wch-riscv.cfg"
+            ]
+        }
+    ]
+}

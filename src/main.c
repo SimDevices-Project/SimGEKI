@@ -1,25 +1,67 @@
 /*
- * ch32v203 eide demo
- * version: v1.0
- * Copyright (c) 2022 Taoyukai
- * SPDX-License-Identifier: Apache-2.0
+ * SimGEKI
+ * Copyright (c) 2024 SimDevices, Handle
  */
+
+#include "bsp.h"
+#include "timeout.h"
+
+#include "led.h"
+#include "ch422.h"
+#include "hidio.h"
+
+#include "uart.h"
+#include "usb_lib.h"
 
 #include "debug.h"
 
-/**
- * @brief 
- * 
- * @return int 
- */
 int main(void)
 {
-    Delay_Init();
-    USART_Printf_Init(115200);
-    printf("ch32v203 hello world\r\n");
+  SystemInit();
+  SystemCoreClockUpdate();
 
-    while(1)
-    {
-        ;
-    }
+  NVIC_PriorityGroupConfig(NVIC_PriorityGroup_1);
+  Delay_Init();
+  Timeout_Init();
+
+  // USART_Printf_Init(115200);
+
+  // RCC_Configuration();
+  // TIM2_Init();
+  // UART2_Init(1, DEF_UARTx_BAUDRATE, DEF_UARTx_STOPBIT, DEF_UARTx_PARITY);
+
+  Set_USBConfig();
+  USB_Init();
+  USB_Interrupts_Config();
+
+  Delay_Ms(50);
+
+  initRgbColor();
+  CH422_Init();
+  HIDIO_Init();
+
+  CH422_Set(~0x0001B6DB);
+
+  // setRgbColor(0, 0, 0xFF, 0x00, 0x00);
+  setRgbColorPort(1, 0xff, 0, 0);
+  // showRgbColor();
+
+  // setRgbColor(2, 0, 0x00, 0x00, 0xFF);
+
+  setInterval(CH422_Refresh, 25);
+  setInterval(showRgbColor, 25);
+  setInterval(HIDIO_Check, 1);
+
+  setInterval(HIDIO_Upload, 1500);
+  while (1) {
+    Timer_Process();
+
+    // Delay_Us(100); // Do Something
+
+    // showRgbColor();
+    // CH422_Check();
+
+    // UART2_DataRx_Deal();
+    // UART2_DataTx_Deal();
+  }
 }
