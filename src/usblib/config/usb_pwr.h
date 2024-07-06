@@ -16,6 +16,9 @@
  extern "C" {
 #endif
 	 
+#include "usb_core.h"
+#include "usb_type.h"
+
 #include "ch32v20x.h"
 typedef enum _RESUME_STATE
 {

@@ -3,9 +3,11 @@
 /* Global define */
 
 // Actully 5 bytes, extra 1 byte for data safety
-#define DataLen 6
+#define DATA_LEN 6
+#define VALUE_OFFSET_MASK 0xFFFF
+#define VALUE_OFFSET 0xA000
 
-const uint8_t TxData[DataLen] = {0x05, 0x00};
+const uint8_t TxData[DATA_LEN] = {0x05, 0x00};
 struct rxdata_t {
   uint8_t zero;
   uint8_t angle_h;
@@ -13,7 +15,7 @@ struct rxdata_t {
   uint8_t status;
   uint8_t crc;
   uint8_t dummy;
-} EncoderData;
+} __packed EncoderData;
 
 volatile uint16_t EncoderValue = 0;
 
@@ -182,11 +184,11 @@ void DMA_Rx_Init(DMA_Channel_TypeDef *DMA_CHx, u32 ppadr, u32 memadr, u16 bufsiz
   DMA_Init(DMA_CHx, &DMA_InitStructure);
 }
 
-void Roller_Init()
+xdata void Roller_Init()
 {
   SPI_FullDuplex_Init();
-  DMA_Tx_Init(DMA1_Channel5, (u32) & (SPI2->DATAR), (u32)TxData, DataLen);
-  DMA_Rx_Init(DMA1_Channel4, (u32) & (SPI2->DATAR), (u32)&EncoderData, DataLen);
+  DMA_Tx_Init(DMA1_Channel5, (u32) & (SPI2->DATAR), (u32)TxData, DATA_LEN);
+  DMA_Rx_Init(DMA1_Channel4, (u32) & (SPI2->DATAR), (u32)&EncoderData, DATA_LEN);
 
   GPIO_SetBits(GPIOB, GPIO_Pin_12);
 
@@ -211,17 +213,26 @@ void Roller_Update()
   }
 
   DMA_Cmd(DMA1_Channel5, DISABLE);
-  DMA_SetCurrDataCounter(DMA1_Channel5, DataLen);
+  DMA_SetCurrDataCounter(DMA1_Channel5, DATA_LEN);
   DMA_Cmd(DMA1_Channel5, ENABLE);
 
   DMA_Cmd(DMA1_Channel4, DISABLE);
-  DMA_SetCurrDataCounter(DMA1_Channel4, DataLen);
+  DMA_SetCurrDataCounter(DMA1_Channel4, DATA_LEN);
   DMA_Cmd(DMA1_Channel4, ENABLE);
 
   SPI_Cmd(SPI2, ENABLE);
 }
 
+
+uint16_t Roller_GetRawValue(){
+  return EncoderValue;
+}
+
 uint16_t Roller_GetValue()
 {
-  return EncoderValue;
+  if(EncoderValue <= VALUE_OFFSET_MASK - VALUE_OFFSET){
+    return EncoderValue + VALUE_OFFSET;
+  } else {
+    return ((VALUE_OFFSET + EncoderValue) & VALUE_OFFSET_MASK) + 1;
+  }
 }

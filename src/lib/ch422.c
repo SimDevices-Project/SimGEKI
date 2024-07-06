@@ -37,7 +37,7 @@ volatile uint8_t data_index = 0;
  *
  * @return  none
  */
-void IIC_Init(uint32_t bound, uint16_t address)
+xdata void IIC_Init(uint32_t bound, uint16_t address)
 {
   GPIO_InitTypeDef GPIO_InitStructure = {0};
   I2C_InitTypeDef I2C_InitTSturcture  = {0};
@@ -71,7 +71,7 @@ void IIC_Init(uint32_t bound, uint16_t address)
 #endif
 }
 
-void CH422_Init()
+xdata void CH422_Init()
 {
   IIC_Init(400000, IIC_OWN_ADDRESS);
 }

@@ -11,7 +11,7 @@ typedef enum {
   JAM        = 0x01,
   DISCONNECT = 0x02,
   BUSY       = 0x03,
-} CoinCondition;
+} __packed CoinCondition;
 
 typedef enum {
   SET_COMM_TIMEOUT   = 0x01,
@@ -20,12 +20,12 @@ typedef enum {
   SET_GENERAL_OUTPUT = 0x04,
   SET_PWM_OUTPUT     = 0x05,
   // UPDATE_FIRMWARE    = 0x85,
-} HidioCommand;
+} __packed HidioCommand;
 
 typedef struct {
   CoinCondition condition;
   uint8_t count;
-} CoinData;
+} __packed CoinData;
 
 typedef struct {
   uint8_t reportID;
@@ -36,13 +36,13 @@ typedef struct {
   uint8_t systemStatus;
   uint8_t usbStatus;
   uint8_t _unused[29];
-} __attribute__((packed)) DataUpload;
+} __packed DataUpload;
 
 typedef struct {
   uint8_t reportID;
   HidioCommand command;
   uint8_t payload[62];
-} __attribute__((packed)) DataReceive;
+} __packed DataReceive;
 
 const static uint8_t hid_key_map[KEY_COUNT][2] = {
     // COL1
@@ -51,7 +51,7 @@ const static uint8_t hid_key_map[KEY_COUNT][2] = {
     {0x00, 0x20}, // LB
     {0x00, 0x10}, // LC
 
-    {0x03, 0x80}, // LSide
+    {0x01, 0x40}, // RSide
 
     // COL2
     {0},
@@ -59,7 +59,7 @@ const static uint8_t hid_key_map[KEY_COUNT][2] = {
     {0x02, 0x01}, // RB
     {0x01, 0x80}, // RC
 
-    {0x01, 0x40}, // RSide
+    {0x03, 0x80}, // LSide
 
     // COL3
     {0x03, 0x40}, // LMenu
@@ -75,7 +75,7 @@ const static uint8_t hid_key_map[KEY_COUNT][2] = {
 void HIDIO_Init();
 void HIDIO_Receive_Handler();
 void HIDIO_Upload();
-void HIDIO_Check();
+void HIDIO_Update();
 
 extern uint8_t HID_Buffer_OUT[64];
 extern uint8_t HID_Buffer_IN[64];

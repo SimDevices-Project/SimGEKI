@@ -67,10 +67,10 @@ const uint8_t USBD_ConfigDescriptor[USBD_SIZE_CONFIG_DESC] = {
     /* Interrupt upload endpoint descriptor */
     0x07,       // bLength
     0x05,       // bDescriptorType (Endpoint)
-    0x81,       // bEndpointAddress (IN/D2H)
+    0x87,       // bEndpointAddress (IN/D2H)
     0x03,       // bmAttributes (Interrupt)
     0x40, 0x00, // wMaxPacketSize 64
-    0x01,       // bInterval 1 (unit depends on device speed)
+    0x05,       // bInterval 5 (unit depends on device speed)
 
     /* Interface 1 (data interface) descriptor */
     0x09, // bLength
@@ -94,7 +94,7 @@ const uint8_t USBD_ConfigDescriptor[USBD_SIZE_CONFIG_DESC] = {
     /* Endpoint descriptor */
     0x07,       // bLength
     0x05,       // bDescriptorType (Endpoint)
-    0x83,       // bEndpointAddress (IN/D2H)
+    0x82,       // bEndpointAddress (IN/D2H)
     0x02,       // bmAttributes (Bulk)
     0x40, 0x00, // wMaxPacketSize 64
     0x00,       // bInterval 0 (unit depends on device speed)
@@ -122,7 +122,7 @@ const uint8_t USBD_ConfigDescriptor[USBD_SIZE_CONFIG_DESC] = {
     /* interface 2 endpoint descriptor*/
     0x07,       // bLength
     0x05,       // bDescriptorType (Endpoint)
-    0x84,       // bEndpointAddress (IN/D2H)
+    0x81,       // bEndpointAddress (IN/D2H)
     0x03,       // bmAttributes (Interrupt)
     0x40, 0x00, // wMaxPacketSize 64
     0x01,       // bInterval 1 (unit depends on device speed)
@@ -130,7 +130,7 @@ const uint8_t USBD_ConfigDescriptor[USBD_SIZE_CONFIG_DESC] = {
     /* interface 2 endpoint descriptor */
     0x07,       // bLength
     0x05,       // bDescriptorType (Endpoint)
-    0x04,       // bEndpointAddress (OUT/H2D)
+    0x01,       // bEndpointAddress (OUT/H2D)
     0x03,       // bmAttributes (Interrupt)
     0x40, 0x00, // wMaxPacketSize 64
     0x05,       // bInterval 5 (unit depends on device speed)

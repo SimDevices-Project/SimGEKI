@@ -15,11 +15,11 @@
 #include "usb_desc.h"
 #include "usb_pwr.h"
 #include "hw_config.h"
-#include "uart.h"
+
+#include "cdc.h"
 
 uint8_t Request = 0;
 
-extern uint8_t USBD_Endp3_Busy;
 volatile uint8_t HID_Idle_Value[2] = {0};
 volatile uint8_t HID_Protocol_Value[2] = {0};
 
@@ -163,7 +163,7 @@ void USBD_Status_In(void)
     {
         if (Request_No == CDC_SET_LINE_CODING)
         {
-            UART2_USB_Init();
+            // UART2_USB_Init();
         }
     }
 }
@@ -231,38 +231,38 @@ void USBD_Reset(void)
   SetEPType(ENDP1, EP_INTERRUPT);
   SetEPTxStatus(ENDP1, EP_TX_NAK);
   SetEPTxAddr(ENDP1, ENDP1_TXADDR);
-  SetEPRxStatus(ENDP1, EP_RX_DIS);
+  SetEPRxAddr(ENDP1, ENDP1_RXADDR);
+  SetEPRxCount(ENDP1, DEF_USBD_MAX_PACK_SIZE);
+  SetEPRxStatus(ENDP1, EP_RX_VALID);
   _ClearDTOG_TX(ENDP1);
   _ClearDTOG_RX(ENDP1);
 
   SetEPType(ENDP2, EP_BULK);
-  SetEPTxStatus(ENDP2, EP_TX_DIS);
+  SetEPTxStatus(ENDP2, EP_TX_NAK);
+  SetEPTxAddr(ENDP2, ENDP2_TXADDR);
   SetEPRxAddr(ENDP2, ENDP2_RXADDR);
   SetEPRxCount(ENDP2, DEF_USBD_MAX_PACK_SIZE);
   SetEPRxStatus(ENDP2,EP_RX_VALID);
   _ClearDTOG_RX(ENDP2);
   _ClearDTOG_TX(ENDP2);
 
-  SetEPType(ENDP3, EP_BULK);
-  SetEPTxStatus(ENDP3, EP_TX_NAK);
-  SetEPTxAddr(ENDP3, ENDP3_TXADDR);
-  SetEPRxStatus(ENDP3, EP_RX_DIS);
-  _ClearDTOG_TX(ENDP3);
-  _ClearDTOG_RX(ENDP3);
-  USBD_Endp3_Busy = 0;
+  // SetEPType(ENDP3, EP_BULK);
+  // SetEPTxStatus(ENDP3, EP_TX_NAK);
+  // SetEPTxAddr(ENDP3, ENDP3_TXADDR);
+  // SetEPRxStatus(ENDP3, EP_RX_DIS);
+  // _ClearDTOG_TX(ENDP3);
+  // _ClearDTOG_RX(ENDP3);
 
-  SetEPType(ENDP4, EP_INTERRUPT);
-  SetEPTxStatus(ENDP4, EP_TX_NAK);
-  SetEPTxAddr(ENDP4, ENDP4_TXADDR);
-  SetEPRxAddr(ENDP4, ENDP4_RXADDR);
-  SetEPRxCount(ENDP4, DEF_USBD_MAX_PACK_SIZE);
-  SetEPRxStatus(ENDP4, EP_RX_VALID );
-  _ClearDTOG_TX(ENDP4);
-  _ClearDTOG_RX(ENDP4);
+  // SetEPType(ENDP4, EP_INTERRUPT);
+  // SetEPTxStatus(ENDP4, EP_TX_NAK);
+  // SetEPTxAddr(ENDP4, ENDP4_TXADDR);
+  // SetEPRxAddr(ENDP4, ENDP4_RXADDR);
+  // SetEPRxCount(ENDP4, DEF_USBD_MAX_PACK_SIZE);
+  // SetEPRxStatus(ENDP4, EP_RX_VALID );
+  // _ClearDTOG_TX(ENDP4);
+  // _ClearDTOG_RX(ENDP4);
 
   SetDeviceAddress(0);
-
-  USBD_Endp3_Busy = 0;
 
   bDeviceState = ATTACHED;
 }
@@ -387,7 +387,7 @@ uint8_t *USB_CDC_GetLineCoding( uint16_t Length )
         pInformation->Ctrl_Info.Usb_wLength = 7;
         return( NULL );
     }
-    return (uint8_t *)&Uart.Com_Cfg[ 0 ];
+    return (uint8_t *)&LineCoding[0];
 }
 
 /*********************************************************************
@@ -406,7 +406,7 @@ uint8_t *USB_CDC_SetLineCoding( uint16_t Length )
         pInformation->Ctrl_Info.Usb_wLength = 7;
         return( NULL );
     }
-    return(uint8_t *)&Uart.Com_Cfg[ 0 ];
+    return(uint8_t *)&LineCoding[0];
 }
 
 

@@ -17,12 +17,9 @@
 #include "usb_pwr.h"
 #include "usb_prop.h"
 
+#include "cdc.h"
+
 #include "hidio.h"
-#include "UART.h"
-
-uint8_t USBD_Endp3_Busy;
-
-uint16_t USB_Rx_Cnt = 0;
 
 /*********************************************************************
  * @fn      EP1_IN_Callback
@@ -36,6 +33,21 @@ void EP1_IN_Callback(void)
 }
 
 /*********************************************************************
+ * @fn      EP1_OUT_Callback
+ *
+ * @brief  Endpoint 1 OUT.
+ *
+ * @return  none
+ */
+void EP1_OUT_Callback(void)
+{
+  if (USB_SIL_Read(EP1_OUT, HID_Buffer_OUT) == 64) {
+    HIDIO_Receive_Handler();
+  }
+  SetEPRxValid(ENDP1);
+}
+
+/*********************************************************************
  * @fn      EP2_OUT_Callback
  *
  * @brief  Endpoint 2 OUT.
@@ -44,61 +56,28 @@ void EP1_IN_Callback(void)
  */
 void EP2_OUT_Callback(void)
 {
-  uint32_t len;
-  len = GetEPRxCount(EP2_OUT & 0x7F);
-  PMAToUserBufferCopy(&UART2_Tx_Buf[(Uart.Tx_LoadNum * DEF_USB_FS_PACK_LEN)], GetEPRxAddr(EP2_OUT & 0x7F), len);
-  Uart.Tx_PackLen[Uart.Tx_LoadNum] = len;
-  Uart.Tx_LoadNum++;
-  if (Uart.Tx_LoadNum >= DEF_UARTx_TX_BUF_NUM_MAX) {
-    Uart.Tx_LoadNum = 0x00;
-  }
-  Uart.Tx_RemainNum++;
+  cdc_led_io.Rx_Pending = USB_SIL_Read(EP2_OUT, cdc_led_io.Rx_PendingBuf);
+  cdc_led_io.Rx_CurPos  = 0;
+  // SetEPRxStatus(CDC_LED_IO_EP, EP_RX_NAK);
+  SetEPRxValid(CDC_LED_IO_EP);
+}
 
-  if (Uart.Tx_RemainNum >= (DEF_UARTx_TX_BUF_NUM_MAX - 2)) {
-    Uart.USB_Down_StopFlag = 0x01;
+/*********************************************************************
+ * @fn      EP2_IN_Callback
+ *
+ * @brief  Endpoint 2 IN.
+ *
+ * @return  none
+ */
+void EP2_IN_Callback(void)
+{
+  if(cdc_led_io.Tx_Full){
+    USB_SIL_Write(0x80 | CDC_LED_IO_EP, 0, 0);
+    cdc_led_io.Tx_Full = 0;
   } else {
-    SetEPRxValid(ENDP2);
+    SetEPTxStatus(CDC_LED_IO_EP, EP_TX_NAK);
+    cdc_led_io.Tx_Busy = 0;
   }
-}
-
-/*********************************************************************
- * @fn      EP3_IN_Callback
- *
- * @brief  Endpoint 3 IN.
- *
- * @return  none
- */
-void EP3_IN_Callback(void)
-{
-  USBD_Endp3_Busy     = 0;
-  Uart.USB_Up_IngFlag = 0x00;
-}
-
-/*********************************************************************
- * @fn      EP4_IN_Callback
- *
- * @brief  Endpoint 4 IN.
- *
- * @return  none
- */
-void EP4_IN_Callback(void)
-{
-}
-
-/*********************************************************************
- * @fn      EP4_OUT_Callback
- *
- * @brief  Endpoint 4 OUT.
- *
- * @return  none
- */
-void EP4_OUT_Callback(void)
-{
-  USB_Rx_Cnt = USB_SIL_Read(EP4_OUT, HID_Buffer_OUT);
-  if (USB_Rx_Cnt == 64) {
-    HIDIO_Receive_Handler();
-  }
-  SetEPRxValid(ENDP4);
 }
 
 /*********************************************************************
@@ -115,21 +94,20 @@ void EP4_OUT_Callback(void)
 uint8_t USBD_ENDPx_DataUp(uint8_t endp, uint8_t *pbuf, uint16_t len)
 {
   switch (endp) {
-    case ENDP3: {
-      if (USBD_Endp3_Busy) {
+    case ENDP1: {
+      if (GetEPTxStatus(ENDP1) == EP_TX_VALID) {
         return USB_ERROR;
       }
-      USB_SIL_Write(EP3_IN, pbuf, len);
-      USBD_Endp3_Busy = 1;
-      SetEPTxStatus(ENDP3, EP_TX_VALID);
+      USB_SIL_Write(EP1_IN, pbuf, len);
+      SetEPTxStatus(ENDP1, EP_TX_VALID);
       break;
     }
-    case ENDP4: {
-      if (GetEPTxStatus(ENDP4) == EP_TX_VALID) {
+    case ENDP2: {
+      if (GetEPTxStatus(ENDP2) == EP_TX_VALID) {
         return USB_ERROR;
       }
-      USB_SIL_Write(EP4_IN, pbuf, len);
-      SetEPTxStatus(ENDP4, EP_TX_VALID);
+      USB_SIL_Write(EP2_IN, pbuf, len);
+      SetEPTxStatus(ENDP2, EP_TX_VALID);
       break;
     }
     default:

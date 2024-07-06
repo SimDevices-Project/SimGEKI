@@ -1,21 +1,23 @@
 #include "led.h"
+#include "timeout.h"
 
 #define RGB_PORT_COUNT      3
 #define RGB_COUNT_PER_PORT  1
 
-#define WS2812_TIME_0BIT    50
+#define WS2812_TIME_0BIT    45
 #define WS2812_TIME_1BIT    115
 
 #define WS2812_FREQ         800000
 #define TIMER_CLOCK_FREQ    144000000
 
 #define BUFF_FRONT_OFFSET   1
+#define BUFF_END_OFFSET     80
 
-#define TIMER_PER_BUFF_SIZE (RGB_COUNT_PER_PORT * 24 + 1 + BUFF_FRONT_OFFSET)
+#define TIMER_PER_BUFF_SIZE (BUFF_FRONT_OFFSET + RGB_COUNT_PER_PORT * 24 + BUFF_END_OFFSET)
 #define TIMER_PERIOD        ((TIMER_CLOCK_FREQ / WS2812_FREQ) - 1)
 
-uint32_t colorList[RGB_PORT_COUNT][RGB_COUNT_PER_PORT]; // GRB format
-uint8_t colorPWM[RGB_PORT_COUNT][TIMER_PER_BUFF_SIZE];  // GRB format in 24 bits
+uint32_t colorList[RGB_PORT_COUNT][RGB_COUNT_PER_PORT] = {0}; // GRB format
+uint8_t colorPWM[RGB_PORT_COUNT][TIMER_PER_BUFF_SIZE]  = {0}; // GRB format in 24 bits
 
 void setRgbColor32(uint8_t port, uint8_t index, uint32_t color)
 {
@@ -54,13 +56,20 @@ void Timer3_Config(void)
   // 使能外部时钟
   RCC_APB1PeriphClockCmd(RCC_APB1Periph_TIM3, ENABLE);
   RCC_APB2PeriphClockCmd(RCC_APB2Periph_GPIOB, ENABLE);
+  RCC_APB2PeriphClockCmd(RCC_APB2Periph_GPIOA, ENABLE);
   RCC_AHBPeriphClockCmd(RCC_AHBPeriph_DMA1, ENABLE);
 
-  // 引脚配置
+  // 引脚配置 RGB1 RGB2
   GPIO_InitStructure.GPIO_Pin   = GPIO_Pin_1 | GPIO_Pin_0;
   GPIO_InitStructure.GPIO_Mode  = GPIO_Mode_AF_PP;
   GPIO_InitStructure.GPIO_Speed = GPIO_Speed_10MHz;
   GPIO_Init(GPIOB, &GPIO_InitStructure);
+
+  // 引脚配置 RGB EX
+  GPIO_InitStructure.GPIO_Pin   = GPIO_Pin_6;
+  GPIO_InitStructure.GPIO_Mode  = GPIO_Mode_AF_PP;
+  GPIO_InitStructure.GPIO_Speed = GPIO_Speed_10MHz;
+  GPIO_Init(GPIOA, &GPIO_InitStructure);
 
   // 时钟源配置
   TIM_InternalClockConfig(TIM3); // 内部时钟模式
@@ -78,15 +87,23 @@ void Timer3_Config(void)
   TIM_OC3PolarityConfig(TIM3, TIM_OCPolarity_High); // 设置输出极性
   TIM_OC3PreloadConfig(TIM3, TIM_OCPreload_Enable); // 必须要手动使能CCR寄存器的影子寄存器（类似缓冲器）的功能（默认不使能）
 
+  TIM_OC1PolarityConfig(TIM3, TIM_OCPolarity_High); // 设置输出极性
+  TIM_OC1PreloadConfig(TIM3, TIM_OCPreload_Enable); // 必须要手动使能CCR寄存器的影子寄存器（类似缓冲器）的功能（默认不使能）
+
   // // RGB 0, PB1 Channel4
-  TIM_SetCompare4(TIM3, 0);                            // 设置比较值
+  TIM_SetCompare4(TIM3, 0);                             // 设置比较值
   TIM_SelectOCxM(TIM3, TIM_Channel_4, TIM_OCMode_PWM1); // 设置输出通道模式
   TIM_CCxCmd(TIM3, TIM_Channel_4, TIM_CCx_Enable);      // 使能输出通道
 
   // RGB 1, PB0 Channel3
-  TIM_SetCompare3(TIM3, 0);                            // 设置比较值
+  TIM_SetCompare3(TIM3, 0);                             // 设置比较值
   TIM_SelectOCxM(TIM3, TIM_Channel_3, TIM_OCMode_PWM1); // 设置输出通道模式
   TIM_CCxCmd(TIM3, TIM_Channel_3, TIM_CCx_Enable);      // 使能输出通道
+
+  // RGB EX, PA6 Channel1
+  TIM_SetCompare1(TIM3, 90);                             // 设置比较值
+  TIM_SelectOCxM(TIM3, TIM_Channel_1, TIM_OCMode_PWM1); // 设置输出通道模式
+  TIM_CCxCmd(TIM3, TIM_Channel_1, TIM_CCx_Enable);      // 使能输出通道
 
   // DMA配置
   DMA_InitStructure.DMA_PeripheralDataSize = DMA_PeripheralDataSize_HalfWord;
@@ -111,8 +128,14 @@ void Timer3_Config(void)
   DMA_Init(DMA1_Channel2, &DMA_InitStructure);
   DMA_Cmd(DMA1_Channel2, ENABLE);
 
+  // RGB EX, PA6 Channel1, DMA1, Channel6
+  DMA_InitStructure.DMA_PeripheralBaseAddr = (uint32_t) & (TIM3->CH1CVR);
+  DMA_InitStructure.DMA_MemoryBaseAddr     = (uint32_t)colorPWM[2];
+  DMA_Init(DMA1_Channel6, &DMA_InitStructure);
+  DMA_Cmd(DMA1_Channel6, ENABLE);
+
   // 使能定时器
-  TIM_DMACmd(TIM3, TIM_DMA_CC4 | TIM_DMA_CC3, ENABLE);
+  TIM_DMACmd(TIM3, TIM_DMA_CC4 | TIM_DMA_CC3 | TIM_DMA_CC1, ENABLE);
   TIM_Cmd(TIM3, ENABLE); // 使能定时器3
 }
 
@@ -121,26 +144,38 @@ void WS2812_Refresh()
   // 如果DMA繁忙，则拒绝本次刷新
   if (DMA_GetFlagStatus(DMA1_FLAG_TC3) == RESET) { return; }
   if (DMA_GetFlagStatus(DMA1_FLAG_TC2) == RESET) { return; }
+  if (DMA_GetFlagStatus(DMA1_FLAG_TC6) == RESET) { return; }
 
   DMA_ClearFlag(DMA1_FLAG_TC3); // 清除传输完成标志
   DMA_ClearFlag(DMA1_FLAG_TC2); // 清除传输完成标志
+  DMA_ClearFlag(DMA1_FLAG_TC6); // 清除传输完成标志
 
   TIM_Cmd(TIM3, DISABLE);
 
-  // RGB0 （PB1）
   DMA_Cmd(DMA1_Channel3, DISABLE);
+  DMA_Cmd(DMA1_Channel2, DISABLE);
+  DMA_Cmd(DMA1_Channel6, DISABLE);
+
+  // RGB0 （PB1）
+
   DMA_SetCurrDataCounter(DMA1_Channel3, TIMER_PER_BUFF_SIZE);
-  DMA_Cmd(DMA1_Channel3, ENABLE);
 
   // RGB1 （PB0）
-  DMA_Cmd(DMA1_Channel2, DISABLE);
+
   DMA_SetCurrDataCounter(DMA1_Channel2, TIMER_PER_BUFF_SIZE);
+
+  // RGBEX （PA6）
+
+  DMA_SetCurrDataCounter(DMA1_Channel6, TIMER_PER_BUFF_SIZE);
+
   DMA_Cmd(DMA1_Channel2, ENABLE);
+  DMA_Cmd(DMA1_Channel3, ENABLE);
+  DMA_Cmd(DMA1_Channel6, ENABLE);
 
   TIM_Cmd(TIM3, ENABLE);
 }
 
-void WS2812_Init(void)
+xdata void WS2812_Init(void)
 {
   setRgbColorAll(0, 0, 0);
   for (uint8_t i = 0; i < RGB_PORT_COUNT; i++) {
@@ -150,12 +185,35 @@ void WS2812_Init(void)
   Timer3_Config();
 }
 
-void initRgbColor()
+xdata void LED_Init_RGB()
 {
   WS2812_Init();
 }
 
-void showRgbColor()
+xdata void LED_Init()
+{
+  LED_Init_RGB();
+}
+
+void LED_RGB_Refresh()
 {
   WS2812_Refresh();
+}
+
+void LED_RGB_Set(uint8_t port, uint8_t index, uint8_t r, uint8_t g, uint8_t b)
+{
+  setRgbColor(port, index, r, g, b);
+  setTimeout(LED_RGB_Refresh, 0);
+}
+
+void LED_RGB_SetAll(uint8_t r, uint8_t g, uint8_t b)
+{
+  setRgbColorAll(r, g, b);
+  setTimeout(LED_RGB_Refresh, 0);
+}
+
+void LED_RGB_SetPort(uint8_t port, uint8_t r, uint8_t g, uint8_t b)
+{
+  setRgbColorPort(port, r, g, b);
+  setTimeout(LED_RGB_Refresh, 0);
 }

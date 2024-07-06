@@ -17,7 +17,7 @@ uint32_t KeyDebounceStatus[KEY_COUNT] = {0};
 
 uint8_t KeyStatus[KEY_COUNT] = {0};
 
-void KeyScan_Init()
+xdata void KeyScan_Init()
 {
   GPIO_InitTypeDef GPIO_InitStructure;
 
@@ -61,10 +61,10 @@ void DebounceKey(uint8_t keyIndex)
   // 将按键的触发状态加上按键的触发状态
   KeyDebounceStatus[keyIndex] |= GetKeyTriggerStatus(keyIndex);
 
-  if (KeyDebounceStatus[keyIndex] == 1 || KeyDebounceStatus[keyIndex] == KEY_DEBOUNCE_MASK) {
+  if (KeyDebounceStatus[keyIndex] == 0b11 || KeyDebounceStatus[keyIndex] == KEY_DEBOUNCE_MASK) {
     // 将按键的状态设置为1
     KeyStatus[keyIndex] = 1;
-  } else if (KeyDebounceStatus[keyIndex] == KEY_DEBOUNCE_MASK - 1 || KeyDebounceStatus[keyIndex] == 0) {
+  } else if (KeyDebounceStatus[keyIndex] == KEY_DEBOUNCE_MASK - 0b11 || KeyDebounceStatus[keyIndex] == 0) {
     // 将按键的状态设置为0
     KeyStatus[keyIndex] = 0;
   }
@@ -74,7 +74,7 @@ void KeyScan_Scan()
 {
   // 遍历每一行
   for (int row = 0; row < ROW_NUM; row++) {
-    // 设置当前行为输出高电平，其他行为输出低电平
+    // 设置当前行输出低电平，其他行输出高电平
     switch (row) {
       case 0:
         GPIO_ResetBits(GPIOA, ROW1);
@@ -102,7 +102,7 @@ void KeyScan_Scan()
         break;
     }
 
-    Delay_Us(1);
+    Delay_Us(4);
 
     // 检测每一列的输入状态
     for (int col = 0; col < COL_NUM; col++) {

@@ -9,8 +9,8 @@
 #include "led.h"
 #include "ch422.h"
 #include "hidio.h"
+#include "cdc.h"
 
-#include "uart.h"
 #include "usb_lib.h"
 
 #include "debug.h"
@@ -21,6 +21,7 @@ int main(void)
   SystemCoreClockUpdate();
 
   NVIC_PriorityGroupConfig(NVIC_PriorityGroup_1);
+
   Delay_Init();
   Timeout_Init();
 
@@ -36,21 +37,23 @@ int main(void)
 
   Delay_Ms(50);
 
-  initRgbColor();
+  LED_Init();
   CH422_Init();
   HIDIO_Init();
 
-  CH422_Set(~0x0001B6DB);
-
-  // setRgbColor(0, 0, 0xFF, 0x00, 0x00);
-  setRgbColorPort(1, 0xff, 0, 0);
-  // showRgbColor();
+  CH422_Set(0x00000000);
+  LED_RGB_Set(RGB_PORT_LEFT, 0, 0xFF, 0x00, 0xFF);
+  LED_RGB_Set(RGB_PORT_RIGHT, 0, 0xFF, 0x00, 0xFF);
+  LED_RGB_Set(2, 0, 0x00, 0x00, 0x00);
+  // setRgbColorPort(1, 0xff, 0, 0);
+  // LED_RGB_Refresh();
 
   // setRgbColor(2, 0, 0x00, 0x00, 0xFF);
 
-  setInterval(CH422_Refresh, 25);
-  setInterval(showRgbColor, 25);
-  setInterval(HIDIO_Check, 1);
+  setInterval(CH422_Refresh, 20);
+  setInterval(LED_RGB_Refresh, 20);
+  setInterval(HIDIO_Update, 1);
+  setInterval(CDC_Poll, 50);
 
   setInterval(HIDIO_Upload, 1500);
   while (1) {
@@ -58,7 +61,7 @@ int main(void)
 
     // Delay_Us(100); // Do Something
 
-    // showRgbColor();
+    // LED_RGB_Refresh();
     // CH422_Check();
 
     // UART2_DataRx_Deal();

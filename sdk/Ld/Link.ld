@@ -16,6 +16,7 @@ MEMORY
 /* CH32V20x_D6 - CH32V203K8-CH32V203C8-CH32V203G8-CH32V203F8 */
 /**/
 	FLASH (rx) : ORIGIN = 0x00000000, LENGTH = 64K
+	SFLASH (rx) : ORIGIN = 0x00010000, LENGTH = 160K
 	RAM (xrw) : ORIGIN = 0x20000000, LENGTH = 20K
 
   
@@ -60,6 +61,13 @@ SECTIONS
 		*(.gnu.linkonce.t.*)
 		. = ALIGN(4);
 	} >FLASH AT>FLASH 
+
+	.stext :
+	{
+		. = ALIGN(4);
+		*(.stext .ssrodata)
+		. = ALIGN(4);
+	} >SFLASH
 
 	.fini :
 	{

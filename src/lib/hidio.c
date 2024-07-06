@@ -5,10 +5,10 @@
 
 #include "debug.h"
 
-#include "led.h"
-
 #include "usb_lib.h"
 #include "usb_prop.h"
+
+#define OUT_EP ENDP1
 
 uint8_t HID_Buffer_OUT[64] = {0x00};
 uint8_t HID_Buffer_IN[64]  = {0x00};
@@ -76,25 +76,13 @@ void HIDIO_Receive_Handler()
 
 void HIDIO_Upload()
 {
-  USBD_ENDPx_DataUp(ENDP4, HID_Buffer_IN, 64);
+  USBD_ENDPx_DataUp(OUT_EP, HID_Buffer_IN, 64);
 }
 
 void HIDIO_FreshData()
 {
   // Roller
   dataUpload->analog[0] = activeRollerValue;
-  dataUpload->analog[1] = activeRollerValue;
-  dataUpload->analog[2] = activeRollerValue;
-  dataUpload->analog[3] = activeRollerValue;
-  dataUpload->analog[4] = activeRollerValue;
-  dataUpload->analog[5] = activeRollerValue;
-  dataUpload->analog[6] = activeRollerValue;
-  dataUpload->analog[7] = activeRollerValue;
-
-  dataUpload->rotary[0] = activeRollerValue;
-  dataUpload->rotary[1] = activeRollerValue;
-  dataUpload->rotary[2] = activeRollerValue;
-  dataUpload->rotary[3] = activeRollerValue;
 
   // Buttons
   dataUpload->buttons[0] = 0x00;
@@ -105,42 +93,33 @@ void HIDIO_FreshData()
   for (uint8_t i = 0; i < KEY_COUNT - 1; i++) {
     if (KeyScan_GetKeyDebouncedStatus(i)) {
       dataUpload->buttons[hid_key_map[i][0]] |= hid_key_map[i][1];
-      // dataUpload->buttons[0] = 0xFF;
-      // dataUpload->buttons[1] = 0xFF;
-      // dataUpload->buttons[2] = 0xFF;
-      // dataUpload->buttons[3] = 0xFF;
     }
   }
-  // dataUpload->buttons[3] ^= 0x80; // Lside取反
-  // dataUpload->buttons[1] ^= 0x40; // Rside取反
+  dataUpload->buttons[3] ^= 0x80; // Lside取反
+  dataUpload->buttons[1] ^= 0x40; // Rside取反
 
   // Coin
   if ((changedKeyStatus & (1 << (KEY_COUNT - 1))) && KeyScan_GetKeyDebouncedStatus(KEY_COUNT - 1)) {
     dataUpload->coin[0].count++;
-  }
-
-  if (KeyScan_GetKeyDebouncedStatus(1)) {
-    uint8_t angle = (((uint32_t)activeRollerValue) * 360 / 65536) & 0xFF;
-    setRgbColorPort(1, angle, angle, angle);
-  } else {
-    setRgbColorPort(1, 0, 0, 0);
+    dataUpload->coin[1].count++;
   }
 
   HIDIO_Upload();
 }
 
-void HIDIO_Check()
+void HIDIO_Update()
 {
   uint8_t freshRequired = 0;
   KeyScan_Scan();
   activeKeyStatus = KeyScan_GetAllKeyDebouncedStatus();
   if (activeKeyStatus != prevKeyStatus) {
-    changedKeyStatus = activeKeyStatus ^ prevKeyStatus;
-    freshRequired    = 1;
+    freshRequired = 1;
   }
-  prevKeyStatus = activeKeyStatus;
+  changedKeyStatus = activeKeyStatus ^ prevKeyStatus;
+  prevKeyStatus    = activeKeyStatus;
 
-  activeRollerValue = Roller_GetValue();
+  Roller_Update();
+  activeRollerValue = ~Roller_GetValue();
   if (activeRollerValue != prevRollerValue) {
     freshRequired = 1;
   }
@@ -151,7 +130,7 @@ void HIDIO_Check()
   }
 }
 
-void HIDIO_Init()
+xdata void HIDIO_Init()
 {
   KeyScan_Init();
   Roller_Init();
