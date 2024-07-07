@@ -11,13 +11,13 @@
 extern uint8_t LineCoding[LINECODING_SIZE];
 
 typedef struct {
-  uint8_t PutCharBuff[CDC_PUTCHARBUF_LEN];
+  uint8_t *PutCharBuff;
   uint8_t PutCharBuff_Last;
   uint8_t PutCharBuff_First;
   uint8_t Tx_Busy;
   uint8_t Tx_Full;
   uint8_t Rx_Pending;
-  uint8_t Rx_PendingBuf[64];
+  uint8_t *Rx_PendingBuf;
   uint8_t Rx_CurPos;
   uint8_t Req_PacketPos;
   uint8_t *Req_PacketBuf;
@@ -26,7 +26,9 @@ typedef struct {
 extern CDC_Struct cdc_led_io;
 extern CDC_Struct cdc_card_io;
 
-
+void CDC_Init();
 void CDC_Poll();
+
+void CDC_LED_IO_PutChar(uint8_t tdata);
 
 #endif // __CDC_H_

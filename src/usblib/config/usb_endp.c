@@ -56,10 +56,9 @@ void EP1_OUT_Callback(void)
  */
 void EP2_OUT_Callback(void)
 {
-  cdc_led_io.Rx_Pending = USB_SIL_Read(EP2_OUT, cdc_led_io.Rx_PendingBuf);
+  cdc_led_io.Rx_Pending = (uint8_t)USB_SIL_Read(EP2_OUT, cdc_led_io.Rx_PendingBuf);
   cdc_led_io.Rx_CurPos  = 0;
-  // SetEPRxStatus(CDC_LED_IO_EP, EP_RX_NAK);
-  SetEPRxValid(CDC_LED_IO_EP);
+  SetEPRxStatus(CDC_LED_IO_EP, EP_RX_NAK);
 }
 
 /*********************************************************************

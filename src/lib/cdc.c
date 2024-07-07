@@ -12,6 +12,12 @@
 // 初始化波特率为115200，1停止位，无校验，8数据位。
 uint8_t LineCoding[LINECODING_SIZE] = {0x00, 0xC2, 0x01, 0x00, 0x00, 0x00, 0x08};
 
+uint8_t ledIO_PutCharBuf[CDC_PUTCHARBUF_LEN];
+uint8_t cardIO_PutCharBuf[CDC_PUTCHARBUF_LEN];
+
+uint8_t ledIO_Rx_PendingBuf[64];
+uint8_t cardIO_Rx_PendingBuf[64];
+
 uint8_t ledIO_PacketBuf[256];
 uint8_t cardIO_PacketBuf[64];
 
@@ -19,6 +25,30 @@ uint8_t CDC_ResponseStringBuf[64];
 
 CDC_Struct cdc_led_io;
 CDC_Struct cdc_card_io;
+
+void CDC_Init(){
+  cdc_led_io.PutCharBuff = ledIO_PutCharBuf;
+  cdc_led_io.PutCharBuff_Last = 0;
+  cdc_led_io.PutCharBuff_First = 0;
+  cdc_led_io.Tx_Busy = 0;
+  cdc_led_io.Tx_Full = 0;
+  cdc_led_io.Rx_Pending = 0;
+  cdc_led_io.Rx_PendingBuf = ledIO_Rx_PendingBuf;
+  cdc_led_io.Rx_CurPos = 0;
+  cdc_led_io.Req_PacketPos = 0;
+  cdc_led_io.Req_PacketBuf = ledIO_PacketBuf;
+
+  cdc_card_io.PutCharBuff = cardIO_PutCharBuf;
+  cdc_card_io.PutCharBuff_Last = 0;
+  cdc_card_io.PutCharBuff_First = 0;
+  cdc_card_io.Tx_Busy = 0;
+  cdc_card_io.Tx_Full = 0;
+  cdc_card_io.Rx_Pending = 0;
+  cdc_card_io.Rx_PendingBuf = cardIO_Rx_PendingBuf;
+  cdc_card_io.Rx_CurPos = 0;
+  cdc_card_io.Req_PacketPos = 0;
+  cdc_card_io.Req_PacketBuf = cardIO_PacketBuf;
+}
 
 void CDC_LED_IO_Upload(uint8_t length)
 {
@@ -202,15 +232,6 @@ void LED_IO_Handler()
 
 void CDC_UART_Poll()
 {
-  // SetEPRxValid(CDC_LED_IO_EP);
-  // while (cdc_led_io.Rx_Pending){
-  //   CDC_LED_IO_PutChar(cdc_led_io.Rx_PendingBuf[cdc_led_io.Rx_CurPos]);
-  //   cdc_led_io.Rx_Pending--;
-  //   cdc_led_io.Rx_CurPos++;
-  // }
-  // SetEPRxValid(CDC_LED_IO_EP);
-  return;
-
   uint8_t cur_byte;
   static uint8_t checksum         = 0;
   static uint8_t led_io_prev_byte = 0, card_io_prev_byte = 0;
@@ -261,5 +282,4 @@ void CDC_Poll()
 {
   CDC_UART_Poll();
   CDC_USB_Poll();
-  CDC_LED_IO_PutChar(0xAA);
 }

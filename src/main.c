@@ -40,6 +40,7 @@ int main(void)
   LED_Init();
   CH422_Init();
   HIDIO_Init();
+  CDC_Init();
 
   CH422_Set(0x00000000);
   LED_RGB_Set(RGB_PORT_LEFT, 0, 0xFF, 0x00, 0xFF);
