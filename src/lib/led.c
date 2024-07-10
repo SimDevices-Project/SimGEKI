@@ -4,11 +4,11 @@
 #define RGB_PORT_COUNT      3
 #define RGB_COUNT_PER_PORT  1
 
-#define WS2812_TIME_0BIT    45
-#define WS2812_TIME_1BIT    115
-
 #define WS2812_FREQ         800000
-#define TIMER_CLOCK_FREQ    144000000
+#define TIMER_CLOCK_FREQ    96000000
+
+#define WS2812_TIME_0BIT    30
+#define WS2812_TIME_1BIT    75
 
 #define BUFF_FRONT_OFFSET   1
 #define BUFF_END_OFFSET     80
@@ -203,17 +203,17 @@ void LED_RGB_Refresh()
 void LED_RGB_Set(uint8_t port, uint8_t index, uint8_t r, uint8_t g, uint8_t b)
 {
   setRgbColor(port, index, r, g, b);
-  setTimeout(LED_RGB_Refresh, 0);
+  // setTimeout(LED_RGB_Refresh, 0);
 }
 
 void LED_RGB_SetAll(uint8_t r, uint8_t g, uint8_t b)
 {
   setRgbColorAll(r, g, b);
-  setTimeout(LED_RGB_Refresh, 0);
+  // setTimeout(LED_RGB_Refresh, 0);
 }
 
 void LED_RGB_SetPort(uint8_t port, uint8_t r, uint8_t g, uint8_t b)
 {
   setRgbColorPort(port, r, g, b);
-  setTimeout(LED_RGB_Refresh, 0);
+  // setTimeout(LED_RGB_Refresh, 0);
 }

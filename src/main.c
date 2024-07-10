@@ -42,7 +42,7 @@ int main(void)
   HIDIO_Init();
   CDC_Init();
 
-  CH422_Set(0x00000000);
+  CH422_Set(0x00022311);
   LED_RGB_Set(RGB_PORT_LEFT, 0, 0xFF, 0x00, 0xFF);
   LED_RGB_Set(RGB_PORT_RIGHT, 0, 0xFF, 0x00, 0xFF);
   LED_RGB_Set(2, 0, 0x00, 0x00, 0x00);
@@ -54,7 +54,7 @@ int main(void)
   setInterval(CH422_Refresh, 20);
   setInterval(LED_RGB_Refresh, 20);
   setInterval(HIDIO_Update, 1);
-  setInterval(CDC_Poll, 50);
+  setInterval(CDC_Poll, 3);
 
   setInterval(HIDIO_Upload, 1500);
   while (1) {

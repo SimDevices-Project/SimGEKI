@@ -26,28 +26,29 @@ uint8_t CDC_ResponseStringBuf[64];
 CDC_Struct cdc_led_io;
 CDC_Struct cdc_card_io;
 
-void CDC_Init(){
-  cdc_led_io.PutCharBuff = ledIO_PutCharBuf;
-  cdc_led_io.PutCharBuff_Last = 0;
+void CDC_Init()
+{
+  cdc_led_io.PutCharBuff       = ledIO_PutCharBuf;
+  cdc_led_io.PutCharBuff_Last  = 0;
   cdc_led_io.PutCharBuff_First = 0;
-  cdc_led_io.Tx_Busy = 0;
-  cdc_led_io.Tx_Full = 0;
-  cdc_led_io.Rx_Pending = 0;
-  cdc_led_io.Rx_PendingBuf = ledIO_Rx_PendingBuf;
-  cdc_led_io.Rx_CurPos = 0;
-  cdc_led_io.Req_PacketPos = 0;
-  cdc_led_io.Req_PacketBuf = ledIO_PacketBuf;
+  cdc_led_io.Tx_Busy           = 0;
+  cdc_led_io.Tx_Full           = 0;
+  cdc_led_io.Rx_Pending        = 0;
+  cdc_led_io.Rx_PendingBuf     = ledIO_Rx_PendingBuf;
+  cdc_led_io.Rx_CurPos         = 0;
+  cdc_led_io.Req_PacketPos     = 0;
+  cdc_led_io.Req_PacketBuf     = ledIO_PacketBuf;
 
-  cdc_card_io.PutCharBuff = cardIO_PutCharBuf;
-  cdc_card_io.PutCharBuff_Last = 0;
+  cdc_card_io.PutCharBuff       = cardIO_PutCharBuf;
+  cdc_card_io.PutCharBuff_Last  = 0;
   cdc_card_io.PutCharBuff_First = 0;
-  cdc_card_io.Tx_Busy = 0;
-  cdc_card_io.Tx_Full = 0;
-  cdc_card_io.Rx_Pending = 0;
-  cdc_card_io.Rx_PendingBuf = cardIO_Rx_PendingBuf;
-  cdc_card_io.Rx_CurPos = 0;
-  cdc_card_io.Req_PacketPos = 0;
-  cdc_card_io.Req_PacketBuf = cardIO_PacketBuf;
+  cdc_card_io.Tx_Busy           = 0;
+  cdc_card_io.Tx_Full           = 0;
+  cdc_card_io.Rx_Pending        = 0;
+  cdc_card_io.Rx_PendingBuf     = cardIO_Rx_PendingBuf;
+  cdc_card_io.Rx_CurPos         = 0;
+  cdc_card_io.Req_PacketPos     = 0;
+  cdc_card_io.Req_PacketBuf     = cardIO_PacketBuf;
 }
 
 void CDC_LED_IO_Upload(uint8_t length)
@@ -168,8 +169,8 @@ void LED_IO_Handler()
       resPackect->length           = 1;
       break;
     case CMD_EXT_BOARD_SET_LED_RGB_DIRECT:
-      LED_RGB_Set(RGB_PORT_RIGHT, 0, reqPacket->response.data[180], reqPacket->response.data[181], reqPacket->response.data[182]); // Right
-      LED_RGB_Set(RGB_PORT_LEFT, 0, reqPacket->response.data[3], reqPacket->response.data[4], reqPacket->response.data[5]);        // Left
+      LED_RGB_Set(RGB_PORT_RIGHT, 0, reqPacket->request.data[3], reqPacket->request.data[4], reqPacket->request.data[5]);      // Right
+      LED_RGB_Set(RGB_PORT_LEFT, 0, reqPacket->request.data[180], reqPacket->request.data[181], reqPacket->request.data[182]); // Left
       return;
       break;
     case CMD_EXT_BOARD_INFO:
@@ -235,8 +236,12 @@ void CDC_UART_Poll()
   uint8_t cur_byte;
   static uint8_t checksum         = 0;
   static uint8_t led_io_prev_byte = 0, card_io_prev_byte = 0;
-  IO_Packet *led_io_packect    = (IO_Packet *)ledIO_PacketBuf;
-  AIME_Request *card_io_packet = (AIME_Request *)cardIO_PacketBuf;
+  IO_Packet *led_io_packect    = (IO_Packet *)cdc_led_io.Req_PacketBuf;
+  AIME_Request *card_io_packet = (AIME_Request *)cdc_card_io.Req_PacketBuf;
+
+  // if (cdc_led_io.Rx_Pending) {
+  //   CDC_LED_IO_PutChar(cdc_led_io.Rx_Pending);
+  // }
 
   while (cdc_led_io.Rx_Pending) {
     cur_byte = cdc_led_io.Rx_PendingBuf[cdc_led_io.Rx_CurPos];
@@ -258,13 +263,27 @@ void CDC_UART_Poll()
     cdc_led_io.Req_PacketBuf[cdc_led_io.Req_PacketPos] = cur_byte;
     cdc_led_io.Req_PacketPos++;
     if (cdc_led_io.Req_PacketPos > 5 && cdc_led_io.Req_PacketPos - 5 == led_io_packect->length) {
+      // CDC_LED_IO_PutChar(led_io_packect->length);
+      // CDC_LED_IO_PutChar(checksum);
+      // CDC_LED_IO_PutChar(led_io_prev_byte);
+      // CDC_LED_IO_PutChar(cur_byte);
+      // CDC_LED_IO_PutChar(cdc_led_io.Rx_CurPos);
       if (checksum == cur_byte) {
+        // CDC_LED_IO_PutChar(0xAA);
         LED_IO_Handler();
       } else {
         // checksum error
-        cdc_led_io.Req_PacketPos = 0;
-        checksum                 = 0;
       }
+
+      cdc_led_io.Req_PacketPos = 0;
+      checksum                 = 0;
+      led_io_prev_byte         = 0;
+      cdc_led_io.Rx_Pending--;
+      cdc_led_io.Rx_CurPos++;
+      if (cdc_led_io.Rx_Pending == 0) {
+        SetEPRxValid(CDC_LED_IO_EP);
+      }
+      continue;
     }
 
     checksum += cur_byte;

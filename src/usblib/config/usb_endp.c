@@ -58,6 +58,9 @@ void EP2_OUT_Callback(void)
 {
   cdc_led_io.Rx_Pending = (uint8_t)USB_SIL_Read(EP2_OUT, cdc_led_io.Rx_PendingBuf);
   cdc_led_io.Rx_CurPos  = 0;
+
+  // CDC_LED_IO_PutChar(cdc_led_io.Rx_Pending);
+
   SetEPRxStatus(CDC_LED_IO_EP, EP_RX_NAK);
 }
 
@@ -70,7 +73,7 @@ void EP2_OUT_Callback(void)
  */
 void EP2_IN_Callback(void)
 {
-  if(cdc_led_io.Tx_Full){
+  if (cdc_led_io.Tx_Full) {
     USB_SIL_Write(0x80 | CDC_LED_IO_EP, 0, 0);
     cdc_led_io.Tx_Full = 0;
   } else {
