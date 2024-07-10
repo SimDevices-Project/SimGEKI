@@ -45,6 +45,7 @@ extern "C" {
 #define USBD_SIZE_STRING_SERIAL           22
 #define USBD_SIZE_STRING_CONFIG           22
 #define USBD_SIZE_STRING_HIDIO            188
+#define USBD_SIZE_STRING_LEDIO            30
 
 extern const uint8_t USBD_DeviceDescriptor[USBD_SIZE_DEVICE_DESC];
 extern const uint8_t USBD_ConfigDescriptor[USBD_SIZE_CONFIG_DESC];
@@ -55,6 +56,7 @@ extern const uint8_t USBD_HidRepDesc[USBD_SIZE_REPORT_DESC];
 extern uint8_t USBD_StringSerial[USBD_SIZE_STRING_SERIAL];
 extern const uint8_t USBD_StringConfig[USBD_SIZE_STRING_CONFIG];
 extern const uint8_t USBD_StringHIDIO[USBD_SIZE_STRING_HIDIO];
+extern const uint8_t USBD_StringLEDIO[USBD_SIZE_STRING_LEDIO];
 
 #ifdef __cplusplus
 }

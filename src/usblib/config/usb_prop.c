@@ -70,7 +70,7 @@ ONE_DESCRIPTOR Config_Descriptor =
 	USBD_SIZE_CONFIG_DESC
 };
 
-ONE_DESCRIPTOR String_Descriptor[6] =
+ONE_DESCRIPTOR String_Descriptor[7] =
 {
 	{(uint8_t*)USBD_StringLangID, USBD_SIZE_STRING_LANGID},
 	{(uint8_t*)USBD_StringVendor, USBD_SIZE_STRING_VENDOR},
@@ -78,6 +78,7 @@ ONE_DESCRIPTOR String_Descriptor[6] =
 	{(uint8_t*)USBD_StringSerial, USBD_SIZE_STRING_SERIAL},
   {(uint8_t*)USBD_StringConfig, USBD_SIZE_STRING_CONFIG},
   {(uint8_t*)USBD_StringHIDIO,  USBD_SIZE_STRING_HIDIO},
+  {(uint8_t*)USBD_StringLEDIO,  USBD_SIZE_STRING_LEDIO},
 };
 
 ONE_DESCRIPTOR Report_Descriptor[1] =
@@ -308,7 +309,7 @@ uint8_t *USBD_GetStringDescriptor(uint16_t Length)
 {
   uint8_t wValue0 = pInformation->USBwValue0;
 	
-  if (wValue0 >= 6)
+  if (wValue0 >= 7)
   {
     return NULL;
   }

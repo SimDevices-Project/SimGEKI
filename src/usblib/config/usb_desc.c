@@ -54,7 +54,7 @@ const uint8_t USBD_ConfigDescriptor[USBD_SIZE_CONFIG_DESC] = {
     0x02, // bInterfaceClass
     0x02, // bInterfaceSubClass
     0x01, // bInterfaceProtocol
-    0x00, // iInterface (String Index)
+    0x06, // iInterface (String Index)
 
     /* Functional Descriptors */
     0x05, 0x24, 0x00, 0x10, 0x01,
@@ -171,6 +171,11 @@ const uint8_t USBD_StringHIDIO[USBD_SIZE_STRING_HIDIO] = {
     USBD_SIZE_STRING_HIDIO,
     USB_STRING_DESCRIPTOR_TYPE,
     'I', 0, '/', 0, 'O', 0, ' ', 0, 'C', 0, 'O', 0, 'N', 0, 'T', 0, 'R', 0, 'O', 0, 'L', 0, ' ', 0, 'B', 0, 'D', 0, ';', 0, '1', 0, '5', 0, '2', 0, '5', 0, '7', 0, ';', 0, '0', 0, '1', 0, ';', 0, '9', 0, '0', 0, ';', 0, '1', 0, '8', 0, '3', 0, '1', 0, ';', 0, '6', 0, '6', 0, '7', 0, '9', 0, 'A', 0, ';', 0, '0', 0, '0', 0, ';', 0, 'G', 0, 'O', 0, 'U', 0, 'T', 0, '=', 0, '1', 0, '4', 0, '_', 0, 'A', 0, 'D', 0, 'I', 0, 'N', 0, '=', 0, '8', 0, ',', 0, 'E', 0, '_', 0, 'R', 0, 'O', 0, 'T', 0, 'I', 0, 'N', 0, '=', 0, '4', 0, '_', 0, 'C', 0, 'O', 0, 'I', 0, 'N', 0, 'I', 0, 'N', 0, '=', 0, '2', 0, '_', 0, 'S', 0, 'W', 0, 'I', 0, 'N', 0, '=', 0, '2', 0, ',', 0, 'E', 0, '_', 0, 'U', 0, 'Q', 0, '1', 0, '=', 0, '4', 0, '1', 0, ',', 0, '6', 0, ';', 0};
+
+const uint8_t USBD_StringLEDIO[USBD_SIZE_STRING_LEDIO] = {
+    USBD_SIZE_STRING_LEDIO,
+    USB_STRING_DESCRIPTOR_TYPE,
+    'L', 0, 'E', 0, 'D', 0, ' ', 0, 'B', 0, 'o', 0, 'a', 0, 'r', 0, 'd', 0, ' ', 0, 'C', 0, 'O', 0, 'M', 0, '3', 0};
 
 /* HID Report Descriptor */
 const uint8_t USBD_HidRepDesc[USBD_SIZE_REPORT_DESC] =
