@@ -6,7 +6,8 @@
 #define LINECODING_SIZE    7
 #define CDC_PUTCHARBUF_LEN 64
 
-#define CDC_LED_IO_EP ENDP2
+#define CDC_LED_IO_EP  ENDP2
+#define CDC_CARD_IO_EP ENDP3
 
 extern uint8_t LineCoding[LINECODING_SIZE];
 
@@ -29,6 +30,9 @@ extern CDC_Struct cdc_card_io;
 void CDC_Init();
 void CDC_Poll();
 
-// void CDC_LED_IO_PutChar(uint8_t tdata);
+void CDC_LED_IO_PutChar(uint8_t tdata);
+void CDC_CARD_IO_PutChar(uint8_t tdata);
+
+void CDC_CARD_IO_SendDataReady();
 
 #endif // __CDC_H_

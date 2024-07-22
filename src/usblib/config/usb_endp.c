@@ -59,8 +59,6 @@ void EP2_OUT_Callback(void)
   cdc_led_io.Rx_Pending = (uint8_t)USB_SIL_Read(EP2_OUT, cdc_led_io.Rx_PendingBuf);
   cdc_led_io.Rx_CurPos  = 0;
 
-  // CDC_LED_IO_PutChar(cdc_led_io.Rx_Pending);
-
   SetEPRxStatus(CDC_LED_IO_EP, EP_RX_NAK);
 }
 
@@ -79,6 +77,39 @@ void EP2_IN_Callback(void)
   } else {
     SetEPTxStatus(CDC_LED_IO_EP, EP_TX_NAK);
     cdc_led_io.Tx_Busy = 0;
+  }
+}
+
+/*********************************************************************
+ * @fn      EP3_OUT_Callback
+ *
+ * @brief  Endpoint 3 OUT.
+ *
+ * @return  none
+ */
+void EP3_OUT_Callback(void)
+{
+  cdc_card_io.Rx_Pending = (uint8_t)USB_SIL_Read(EP3_OUT, cdc_card_io.Rx_PendingBuf);
+  cdc_card_io.Rx_CurPos  = 0;
+
+  SetEPRxStatus(CDC_CARD_IO_EP, EP_RX_NAK);
+}
+
+/*********************************************************************
+ * @fn      EP3_IN_Callback
+ *
+ * @brief  Endpoint 3 IN.
+ *
+ * @return  none
+ */
+void EP3_IN_Callback(void)
+{
+  if (cdc_card_io.Tx_Full) {
+    USB_SIL_Write(0x80 | CDC_CARD_IO_EP, 0, 0);
+    cdc_card_io.Tx_Full = 0;
+  } else {
+    SetEPTxStatus(CDC_CARD_IO_EP, EP_TX_NAK);
+    cdc_card_io.Tx_Busy = 0;
   }
 }
 
@@ -110,6 +141,14 @@ uint8_t USBD_ENDPx_DataUp(uint8_t endp, uint8_t *pbuf, uint16_t len)
       }
       USB_SIL_Write(EP2_IN, pbuf, len);
       SetEPTxStatus(ENDP2, EP_TX_VALID);
+      break;
+    }
+    case ENDP3: {
+      if (GetEPTxStatus(ENDP3) == EP_TX_VALID) {
+        return USB_ERROR;
+      }
+      USB_SIL_Write(EP3_IN, pbuf, len);
+      SetEPTxStatus(ENDP3, EP_TX_VALID);
       break;
     }
     default:

@@ -3,8 +3,7 @@
 
 #include "bsp.h"
 
-typedef enum
-{
+typedef enum {
   ACK_OK                   = 0x01,
   ACK_SUM_ERROR            = 0x02,
   ACK_PARITY_ERROR         = 0x03,
@@ -14,8 +13,7 @@ typedef enum
   ACK_INVALID              = 0xFF,
 } __packed IO_ACK_STATUS;
 
-typedef enum
-{
+typedef enum {
   REPORT_OK = 1,
   REPORT_BUSY,
   REPORT_UNKNOWN_COMMAND,
@@ -23,8 +21,7 @@ typedef enum
   REPORT_INVALID = 255,
 } __packed IO_REPORT_STATUS;
 
-typedef enum
-{
+typedef enum {
   // Basic
   CMD_RESET       = 0x10,
   CMD_SET_TIMEOUT = 0x11,
@@ -76,21 +73,20 @@ typedef enum
 typedef struct
 {
   IO_COMMAND command;
-  uint8_t    data[];
+  uint8_t data[];
   // last byte: uint8_t checksum;
 } __packed IO_Request;
 
 typedef struct
 {
-  IO_ACK_STATUS    status;
-  IO_COMMAND       command;
+  IO_ACK_STATUS status;
+  IO_COMMAND command;
   IO_REPORT_STATUS report;
-  uint8_t          data[];
+  uint8_t data[];
   // last byte: uint8_t checksum;
 } __packed IO_Response;
 
-typedef union
-{
+typedef union {
   uint8_t buffer[0];
   struct
   {
@@ -98,16 +94,14 @@ typedef union
     uint8_t dstNodeId;
     uint8_t srcNodeId;
     uint8_t length;
-    union
-    {
-      IO_Request  request;
+    union {
+      IO_Request request;
       IO_Response response;
     };
   };
 } __packed IO_Packet;
 
-typedef union
-{
+typedef union {
   uint8_t buffer[64];
   struct
   {
@@ -117,9 +111,8 @@ typedef union
     uint8_t cmd;
     uint8_t status;
     uint8_t payload_len;
-    union
-    {
-      char    version[23];      // sg_nfc_res_get_fw_version,sg_nfc_res_get_hw_version
+    union {
+      char version[23];         // sg_nfc_res_get_fw_version,sg_nfc_res_get_hw_version
       uint8_t reset_payload;    // sg_led_res_reset
       uint8_t info_payload[12]; // sg_led_res_get_info
       uint8_t block[16];        // sg_nfc_res_mifare_read_block
@@ -128,8 +121,7 @@ typedef union
         uint8_t count;
         uint8_t type;
         uint8_t id_len;
-        union
-        {
+        union {
           uint8_t mifare_uid[4];
           struct
           {
@@ -143,8 +135,7 @@ typedef union
         uint8_t encap_len;
         uint8_t code;
         uint8_t encap_IDm[8];
-        union
-        {
+        union {
           struct
           { // FELICA_CMD_POLL
             uint8_t encap_PMm[8];
@@ -163,8 +154,7 @@ typedef union
   };
 } __packed AIME_Response;
 
-typedef union
-{
+typedef union {
   uint8_t buffer[64];
   struct
   {
@@ -172,10 +162,9 @@ typedef union
     uint8_t frame_len;
     uint8_t addr;
     uint8_t seq_no;
-    uint8_t cmd;
+    IO_COMMAND cmd;
     uint8_t payload_len;
-    union
-    {
+    union {
       uint8_t key[6];           // sg_nfc_req_mifare_set_key(bana or aime)
       uint8_t color_payload[3]; // sg_led_req_set_color
       struct

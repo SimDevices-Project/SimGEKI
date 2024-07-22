@@ -196,6 +196,7 @@ xdata void Roller_Init()
   DMA_Cmd(DMA1_Channel4, ENABLE);
 }
 
+// 重新读取编码器值
 void Roller_Update()
 {
   // SPI_I2S_SendData(SPI2, 0x05);
@@ -223,11 +224,12 @@ void Roller_Update()
   SPI_Cmd(SPI2, ENABLE);
 }
 
-
+// 获取原始编码器值
 uint16_t Roller_GetRawValue(){
   return EncoderValue;
 }
 
+// 获取经过OFFSET处理后的编码器值
 uint16_t Roller_GetValue()
 {
   if(EncoderValue <= VALUE_OFFSET_MASK - VALUE_OFFSET){

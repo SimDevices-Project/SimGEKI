@@ -36,14 +36,21 @@ const uint8_t USBD_ConfigDescriptor[USBD_SIZE_CONFIG_DESC] = {
     0x09,                                                     // bLength
     0x02,                                                     // bDescriptorType
     USBD_SIZE_CONFIG_DESC & 0xFF, USBD_SIZE_CONFIG_DESC >> 8, // wTotalLength
-    0x03,                                                     // bNumInterfaces
+    0x05,                                                     // bNumInterfaces
     0x01,                                                     // bConfigurationValue
     0x04,                                                     // iConfiguration
     0x80,                                                     // bmAttributes: Bus Powered; Remote Wakeup
     0x32,                                                     // MaxPower: 100mA
 
     /* IAD Descriptor(interface 0/1)*/
-    0x08, 0x0B, 0x00, 0x02, 0x02, 0x02, 0x01, 0x00,
+    8,                       // Length of the descriptor 描述符长度
+    USB_IAD_DESCRIPTOR_TYPE, // Type: Interface Association Descriptor (IAD) 描述符类型：接口关联描述符
+    0x00,                    // First interface: 2 in this case, see following 第一个要关联的接口ID
+    0x02,                    // Total number of grouped interfaces 总共要关联的接口数量
+    0x02,                    // bFunctionClass
+    0x02,                    // bFunctionSubClass
+    0x00,                    // bFunctionProtocol
+    0x06,                    // Index of string descriptor describing this function 字符串描述符索引
 
     /* Interface 0 (CDC) descriptor */
     0x09, // bLength
@@ -54,7 +61,7 @@ const uint8_t USBD_ConfigDescriptor[USBD_SIZE_CONFIG_DESC] = {
     0x02, // bInterfaceClass
     0x02, // bInterfaceSubClass
     0x01, // bInterfaceProtocol
-    0x06, // iInterface (String Index)
+    0x00, // iInterface (String Index)
 
     /* Functional Descriptors */
     0x05, 0x24, 0x00, 0x10, 0x01,
@@ -67,10 +74,10 @@ const uint8_t USBD_ConfigDescriptor[USBD_SIZE_CONFIG_DESC] = {
     /* Interrupt upload endpoint descriptor */
     0x07,       // bLength
     0x05,       // bDescriptorType (Endpoint)
-    0x87,       // bEndpointAddress (IN/D2H)
+    0x86,       // bEndpointAddress (IN/D2H)
     0x03,       // bmAttributes (Interrupt)
     0x40, 0x00, // wMaxPacketSize 64
-    0x05,       // bInterval 5 (unit depends on device speed)
+    0x40,       // bInterval 5 (unit depends on device speed)
 
     /* Interface 1 (data interface) descriptor */
     0x09, // bLength
@@ -99,10 +106,74 @@ const uint8_t USBD_ConfigDescriptor[USBD_SIZE_CONFIG_DESC] = {
     0x40, 0x00, // wMaxPacketSize 64
     0x00,       // bInterval 0 (unit depends on device speed)
 
-    /* interface 2 (HID interface) descriptor */
+    /* IAD Descriptor(interface 2/3)*/
+    8,                       // Length of the descriptor 描述符长度
+    USB_IAD_DESCRIPTOR_TYPE, // Type: Interface Association Descriptor (IAD) 描述符类型：接口关联描述符
+    0x02,                    // First interface: 2 in this case, see following 第一个要关联的接口ID
+    0x02,                    // Total number of grouped interfaces 总共要关联的接口数量
+    0x02,                    // bFunctionClass
+    0x02,                    // bFunctionSubClass
+    0x00,                    // bFunctionProtocol
+    0x07,                    // Index of string descriptor describing this function 字符串描述符索引
+
+    /* Interface 2 (CDC) descriptor */
     0x09, // bLength
     0x04, // bDescriptorType (Interface)
     0x02, // bInterfaceNumber 2
+    0x00, // bAlternateSetting
+    0x01, // bNumEndpoints 1
+    0x02, // bInterfaceClass
+    0x02, // bInterfaceSubClass
+    0x01, // bInterfaceProtocol
+    0x00, // iInterface (String Index)
+
+    /* Functional Descriptors */
+    0x05, 0x24, 0x00, 0x10, 0x01,
+
+    /* Length/management descriptor (data class interface 3) */
+    0x05, 0x24, 0x01, 0x00, 0x03,
+    0x04, 0x24, 0x02, 0x02,
+    0x05, 0x24, 0x06, 0x02, 0x03,
+
+    /* Interrupt upload endpoint descriptor */
+    0x07,       // bLength
+    0x05,       // bDescriptorType (Endpoint)
+    0x87,       // bEndpointAddress (IN/D2H)
+    0x03,       // bmAttributes (Interrupt)
+    0x40, 0x00, // wMaxPacketSize 64
+    0x40,       // bInterval 5 (unit depends on device speed)
+
+    /* Interface 3 (data interface) descriptor */
+    0x09, // bLength
+    0x04, // bDescriptorType (Interface)
+    0x03, // bInterfaceNumber 3
+    0x00, // bAlternateSetting
+    0x02, // bNumEndpoints 2
+    0x0A, // bInterfaceClass
+    0x00, // bInterfaceSubClass
+    0x00, // bInterfaceProtocol
+    0x00, // iInterface (String Index)
+
+    /* Endpoint descriptor */
+    0x07,       // bLength
+    0x05,       // bDescriptorType (Endpoint)
+    0x03,       // bEndpointAddress (OUT/H2D)
+    0x02,       // bmAttributes (Bulk)
+    0x40, 0x00, // wMaxPacketSize 64
+    0x00,       // bInterval 0 (unit depends on device speed)
+
+    /* Endpoint descriptor */
+    0x07,       // bLength
+    0x05,       // bDescriptorType (Endpoint)
+    0x83,       // bEndpointAddress (IN/D2H)
+    0x02,       // bmAttributes (Bulk)
+    0x40, 0x00, // wMaxPacketSize 64
+    0x00,       // bInterval 0 (unit depends on device speed)
+
+    /* interface 4 (HID interface) descriptor */
+    0x09, // bLength
+    0x04, // bDescriptorType (Interface)
+    0x04, // bInterfaceNumber 4
     0x00, // bAlternateSetting
     0x02, // bNumEndpoints 2
     0x03, // bInterfaceClass
@@ -110,7 +181,7 @@ const uint8_t USBD_ConfigDescriptor[USBD_SIZE_CONFIG_DESC] = {
     0x00, // bInterfaceProtocol
     0x05, // iInterface (String Index)
 
-    /* interface 2 HID descriptor */
+    /* interface 4 HID descriptor */
     0x09,                                                     // bLength
     0x21,                                                     // bDescriptorType
     0x11, 0x01,                                               // bcdHID
@@ -119,7 +190,7 @@ const uint8_t USBD_ConfigDescriptor[USBD_SIZE_CONFIG_DESC] = {
     0x22,                                                     // bDescriptorType
     USBD_SIZE_REPORT_DESC & 0xFF, USBD_SIZE_REPORT_DESC >> 8, // wDescriptorLength
 
-    /* interface 2 endpoint descriptor*/
+    /* interface 4 endpoint descriptor*/
     0x07,       // bLength
     0x05,       // bDescriptorType (Endpoint)
     0x81,       // bEndpointAddress (IN/D2H)
@@ -127,7 +198,7 @@ const uint8_t USBD_ConfigDescriptor[USBD_SIZE_CONFIG_DESC] = {
     0x40, 0x00, // wMaxPacketSize 64
     0x01,       // bInterval 1 (unit depends on device speed)
 
-    /* interface 2 endpoint descriptor */
+    /* interface 4 endpoint descriptor */
     0x07,       // bLength
     0x05,       // bDescriptorType (Endpoint)
     0x01,       // bEndpointAddress (OUT/H2D)
@@ -176,6 +247,11 @@ const uint8_t USBD_StringLEDIO[USBD_SIZE_STRING_LEDIO] = {
     USBD_SIZE_STRING_LEDIO,
     USB_STRING_DESCRIPTOR_TYPE,
     'L', 0, 'E', 0, 'D', 0, ' ', 0, 'B', 0, 'o', 0, 'a', 0, 'r', 0, 'd', 0, ' ', 0, 'C', 0, 'O', 0, 'M', 0, '3', 0};
+
+const uint8_t USBD_StringCardIO[USBD_SIZE_STRING_CARDIO] = {
+    USBD_SIZE_STRING_CARDIO,
+    USB_STRING_DESCRIPTOR_TYPE,
+    'C', 0, 'a', 0, 'r', 0, 'd', 0, ' ', 0, 'R', 0, 'e', 0, 'a', 0, 'd', 0, 'e', 0, 'r', 0, ' ', 0, 'C', 0, 'O', 0, 'M', 0, '1', 0};
 
 /* HID Report Descriptor */
 const uint8_t USBD_HidRepDesc[USBD_SIZE_REPORT_DESC] =

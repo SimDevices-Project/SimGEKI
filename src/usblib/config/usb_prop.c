@@ -70,7 +70,7 @@ ONE_DESCRIPTOR Config_Descriptor =
 	USBD_SIZE_CONFIG_DESC
 };
 
-ONE_DESCRIPTOR String_Descriptor[7] =
+ONE_DESCRIPTOR String_Descriptor[USBD_NUMOF_STRING_DESC] =
 {
 	{(uint8_t*)USBD_StringLangID, USBD_SIZE_STRING_LANGID},
 	{(uint8_t*)USBD_StringVendor, USBD_SIZE_STRING_VENDOR},
@@ -79,6 +79,7 @@ ONE_DESCRIPTOR String_Descriptor[7] =
   {(uint8_t*)USBD_StringConfig, USBD_SIZE_STRING_CONFIG},
   {(uint8_t*)USBD_StringHIDIO,  USBD_SIZE_STRING_HIDIO},
   {(uint8_t*)USBD_StringLEDIO,  USBD_SIZE_STRING_LEDIO},
+  {(uint8_t*)USBD_StringCardIO, USBD_SIZE_STRING_CARDIO},
 };
 
 ONE_DESCRIPTOR Report_Descriptor[1] =
@@ -247,12 +248,14 @@ void USBD_Reset(void)
   _ClearDTOG_RX(ENDP2);
   _ClearDTOG_TX(ENDP2);
 
-  // SetEPType(ENDP3, EP_BULK);
-  // SetEPTxStatus(ENDP3, EP_TX_NAK);
-  // SetEPTxAddr(ENDP3, ENDP3_TXADDR);
-  // SetEPRxStatus(ENDP3, EP_RX_DIS);
-  // _ClearDTOG_TX(ENDP3);
-  // _ClearDTOG_RX(ENDP3);
+  SetEPType(ENDP3, EP_BULK);
+  SetEPTxStatus(ENDP3, EP_TX_NAK);
+  SetEPTxAddr(ENDP3, ENDP3_TXADDR);
+  SetEPRxAddr(ENDP3, ENDP3_RXADDR);
+  SetEPRxCount(ENDP3, DEF_USBD_MAX_PACK_SIZE);
+  SetEPRxStatus(ENDP3, EP_RX_VALID);
+  _ClearDTOG_RX(ENDP3);
+  _ClearDTOG_TX(ENDP3);
 
   // SetEPType(ENDP4, EP_INTERRUPT);
   // SetEPTxStatus(ENDP4, EP_TX_NAK);
@@ -309,7 +312,7 @@ uint8_t *USBD_GetStringDescriptor(uint16_t Length)
 {
   uint8_t wValue0 = pInformation->USBwValue0;
 	
-  if (wValue0 >= 7)
+  if (wValue0 >= USBD_NUMOF_STRING_DESC)
   {
     return NULL;
   }

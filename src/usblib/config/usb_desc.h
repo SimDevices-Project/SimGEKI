@@ -33,12 +33,17 @@ extern "C" {
 #define USB_INTERFACE_DESCRIPTOR_TYPE     0x04
 #define USB_ENDPOINT_DESCRIPTOR_TYPE      0x05
 
-#define DEF_USBD_UEP0_SIZE                64
+#define USB_IAD_DESCRIPTOR_TYPE           0x0B
+
+#define DEF_USBD_UEP0_SIZE                32
 #define DEF_USBD_MAX_PACK_SIZE            64
 
 #define USBD_SIZE_DEVICE_DESC             18
-#define USBD_SIZE_CONFIG_DESC             107
+#define USBD_SIZE_CONFIG_DESC             173
 #define USBD_SIZE_REPORT_DESC             113
+
+#define USBD_NUMOF_STRING_DESC            8
+
 #define USBD_SIZE_STRING_LANGID           4
 #define USBD_SIZE_STRING_VENDOR           10
 #define USBD_SIZE_STRING_PRODUCT          16
@@ -46,6 +51,7 @@ extern "C" {
 #define USBD_SIZE_STRING_CONFIG           22
 #define USBD_SIZE_STRING_HIDIO            188
 #define USBD_SIZE_STRING_LEDIO            30
+#define USBD_SIZE_STRING_CARDIO           34
 
 extern const uint8_t USBD_DeviceDescriptor[USBD_SIZE_DEVICE_DESC];
 extern const uint8_t USBD_ConfigDescriptor[USBD_SIZE_CONFIG_DESC];
@@ -57,6 +63,7 @@ extern uint8_t USBD_StringSerial[USBD_SIZE_STRING_SERIAL];
 extern const uint8_t USBD_StringConfig[USBD_SIZE_STRING_CONFIG];
 extern const uint8_t USBD_StringHIDIO[USBD_SIZE_STRING_HIDIO];
 extern const uint8_t USBD_StringLEDIO[USBD_SIZE_STRING_LEDIO];
+extern const uint8_t USBD_StringCardIO[USBD_SIZE_STRING_CARDIO];
 
 #ifdef __cplusplus
 }
