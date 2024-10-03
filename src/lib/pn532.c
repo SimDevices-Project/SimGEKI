@@ -21,8 +21,8 @@ void PN532_Init()
 {
   INTR(begin)
   ();
-  INTR(wakeup)
-  ();
+  // INTR(wakeup)
+  // ();
 }
 
 void (*__samconfig_ack_callback)(uint8_t);
@@ -58,6 +58,6 @@ void PN532_SAMConfig(void (*callback)(uint8_t))
   pn532_packetbuffer[2]    = 0x14; // timeout 50ms * 20 = 1 second
   pn532_packetbuffer[3]    = 0x00; // dont use IRQ pin
   __samconfig_ack_callback = callback;
-  INTR(writeCommand)
-  (__PN532_SAMConfig_ACK_Handler, pn532_packetbuffer, 4, sizeof(data), NULL, 0);
+  // INTR(writeCommand)
+  // (__PN532_SAMConfig_ACK_Handler, pn532_packetbuffer, 4, sizeof(data), NULL, 0);
 }

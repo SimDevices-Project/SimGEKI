@@ -19,7 +19,9 @@ typedef enum {
   CLEAR_BOARD_STATUS = 0x03,
   SET_GENERAL_OUTPUT = 0x04,
   SET_PWM_OUTPUT     = 0x05,
-  // UPDATE_FIRMWARE    = 0x85,
+
+  SET_ROLLER_OFFSET = 0xA0,
+  UPDATE_FIRMWARE   = 0xF1,
 } __packed HidioCommand;
 
 typedef struct {

@@ -502,9 +502,9 @@ void CDC_LED_IO_UART_Poll()
   static uint8_t prev_byte = 0;
   IO_Packet *packect       = (IO_Packet *)cdc_led_io.Req_PacketBuf;
 
-  // if (cdc_led_io.Rx_Pending) {
-  //   CDC_LED_IO_PutChar(cdc_led_io.Rx_Pending);
-  // }
+  if (cdc_led_io.Rx_Pending) {
+    CDC_LED_IO_PutChar(cdc_led_io.Rx_Pending);
+  }
 
   while (cdc_led_io.Rx_Pending) {
     cur_byte = cdc_led_io.Rx_PendingBuf[cdc_led_io.Rx_CurPos];
@@ -567,13 +567,14 @@ void CDC_CARD_IO_UART_Poll()
   while (cdc_card_io.Rx_Pending) {
     dat = cdc_card_io.Rx_PendingBuf[cdc_card_io.Rx_CurPos];
     USART_SendData(USART1, dat);
+    //CDC_CARD_IO_PutChar(dat);
     while (USART_GetFlagStatus(USART1, USART_FLAG_TXE) == RESET);
     cdc_card_io.Rx_CurPos++;
     cdc_card_io.Rx_Pending--;
   }
   SetEPRxValid(CDC_CARD_IO_EP);
   return;
-#endif
+#else
   uint8_t cur_byte;
   static uint8_t checksum  = 0;
   static uint8_t prev_byte = 0;
@@ -625,6 +626,7 @@ void CDC_CARD_IO_UART_Poll()
     }
     prev_byte = cur_byte;
   }
+#endif
 }
 
 void CDC_UART_Poll()

@@ -5,6 +5,8 @@
 
 #include "cdc.h"
 
+#include "led.h"
+
 #define _SendByte(dat)           \
   (USART_SendData(USART1, dat)); \
   while (USART_GetFlagStatus(USART1, USART_FLAG_TXE) == RESET)
@@ -44,11 +46,12 @@ void USART1_IRQHandler(void)
 #if PN532_UART_DIRECT == 1
     CDC_CARD_IO_PutChar(USART_ReceiveData(USART1));
     return;
-#endif
+#else
     RxBuffer[RxCount++] = USART_ReceiveData(USART1);
     if (RxCount >= RX_BUFFER_SIZE) {
       RxCount = 0;
     }
+#endif
   }
 }
 
@@ -78,7 +81,7 @@ void PN532_UART_Init()
   USART_InitStructure.USART_Mode                = USART_Mode_Tx | USART_Mode_Rx;
 
   USART_Init(USART1, &USART_InitStructure);
-  // USART_ITConfig(USART1, USART_IT_RXNE, ENABLE);
+  USART_ITConfig(USART1, USART_IT_RXNE, ENABLE);
 
   NVIC_InitStructure.NVIC_IRQChannel                   = USART1_IRQn;
   NVIC_InitStructure.NVIC_IRQChannelPreemptionPriority = 0;

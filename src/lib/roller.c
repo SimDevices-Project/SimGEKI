@@ -1,11 +1,11 @@
 #include "roller.h"
+#include "data.h"
 
 /* Global define */
 
 // Actully 5 bytes, extra 1 byte for data safety
-#define DATA_LEN 6
+#define DATA_LEN          6
 #define VALUE_OFFSET_MASK 0xFFFF
-#define VALUE_OFFSET 0xA000
 
 const uint8_t TxData[DATA_LEN] = {0x05, 0x00};
 struct rxdata_t {
@@ -225,16 +225,27 @@ void Roller_Update()
 }
 
 // 获取原始编码器值
-uint16_t Roller_GetRawValue(){
+uint16_t Roller_GetRawValue()
+{
   return EncoderValue;
 }
 
 // 获取经过OFFSET处理后的编码器值
 uint16_t Roller_GetValue()
 {
-  if(EncoderValue <= VALUE_OFFSET_MASK - VALUE_OFFSET){
-    return EncoderValue + VALUE_OFFSET;
+  if (EncoderValue <= VALUE_OFFSET_MASK - GlobalData->RollerOffset) {
+    return EncoderValue + GlobalData->RollerOffset;
   } else {
-    return ((VALUE_OFFSET + EncoderValue) & VALUE_OFFSET_MASK) + 1;
+    return ((GlobalData->RollerOffset + EncoderValue) & VALUE_OFFSET_MASK) + 1;
   }
 }
+
+// uint16_t Roller_GetOffset()
+// {
+//   return EncoderOffset;
+// }
+
+// void Roller_SetOffset(uint16_t offset)
+// {
+//   EncoderOffset = offset;
+// }

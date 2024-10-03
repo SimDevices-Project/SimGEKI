@@ -135,4 +135,6 @@ typedef struct
   void (*readResponse)(void (*callback)(uint8_t), uint8_t *buf, uint8_t len, uint16_t timeout);
 } __packed PN532_Interface;
 
+void PN532_Init();
+
 #endif

@@ -3,7 +3,7 @@
 #include "keyscan.h"
 #include "roller.h"
 
-#include "debug.h"
+// #include "debug.h"
 
 #include "usb_lib.h"
 #include "usb_prop.h"
@@ -27,49 +27,68 @@ const uint8_t bitPosMap[] = {23, 20, 22, 19, 21, 18, 17, 16, 15, 14, 13, 12, 11,
 
 void HIDIO_Receive_Handler()
 {
-  if (dataReceive->reportID == 0x10) {
-    switch (dataReceive->command) {
-      case SET_COMM_TIMEOUT: {
-        dataUpload->systemStatus = 0x30;
-        break;
-      }
-      case SET_SAMPLING_COUNT: {
-        dataUpload->systemStatus = 0x30;
-        break;
-      }
-      case CLEAR_BOARD_STATUS: {
-        dataUpload->systemStatus = 0x00;
-
-        dataUpload->coin[0].count     = 0;
-        dataUpload->coin[0].condition = NORMAL;
-        dataUpload->coin[1].count     = 0;
-        dataUpload->coin[1].condition = NORMAL;
-        break;
-      }
-      case SET_GENERAL_OUTPUT: {
-        uint32_t raw_led_dat = (uint32_t)(dataReceive->payload[0]) << 16 | (uint32_t)(dataReceive->payload[1]) << 8 | dataReceive->payload[2];
-        uint32_t ch422_dat   = 0;
-        for (uint8_t i = 0; i < 3; i++) {
-          ch422_dat <<= 1;
-          ch422_dat |= (raw_led_dat >> bitPosMap[9 + i * 3]) & 1;
-          ch422_dat <<= 1;
-          ch422_dat |= (raw_led_dat >> bitPosMap[9 + i * 3 + 1]) & 1;
-          ch422_dat <<= 1;
-          ch422_dat |= (raw_led_dat >> bitPosMap[9 + i * 3 + 2]) & 1;
-
-          ch422_dat <<= 1;
-          ch422_dat |= (raw_led_dat >> bitPosMap[i * 3]) & 1; // R
-          ch422_dat <<= 1;
-          ch422_dat |= (raw_led_dat >> bitPosMap[i * 3 + 1]) & 1; // G
-          ch422_dat <<= 1;
-          ch422_dat |= (raw_led_dat >> bitPosMap[i * 3 + 2]) & 1; // B
+  switch (dataReceive->reportID) {
+    // Default HIDIO
+    case 0x10:
+      switch (dataReceive->command) {
+        case SET_COMM_TIMEOUT: {
+          dataUpload->systemStatus = 0x30;
+          break;
         }
-        CH422_Set(ch422_dat);
-        break;
+        case SET_SAMPLING_COUNT: {
+          dataUpload->systemStatus = 0x30;
+          break;
+        }
+        case CLEAR_BOARD_STATUS: {
+          dataUpload->systemStatus = 0x00;
+
+          dataUpload->coin[0].count     = 0;
+          dataUpload->coin[0].condition = NORMAL;
+          dataUpload->coin[1].count     = 0;
+          dataUpload->coin[1].condition = NORMAL;
+          break;
+        }
+        case SET_GENERAL_OUTPUT: {
+          uint32_t raw_led_dat = (uint32_t)(dataReceive->payload[0]) << 16 | (uint32_t)(dataReceive->payload[1]) << 8 | dataReceive->payload[2];
+          uint32_t ch422_dat   = 0;
+          for (uint8_t i = 0; i < 3; i++) {
+            ch422_dat <<= 1;
+            ch422_dat |= (raw_led_dat >> bitPosMap[9 + i * 3]) & 1;
+            ch422_dat <<= 1;
+            ch422_dat |= (raw_led_dat >> bitPosMap[9 + i * 3 + 1]) & 1;
+            ch422_dat <<= 1;
+            ch422_dat |= (raw_led_dat >> bitPosMap[9 + i * 3 + 2]) & 1;
+
+            ch422_dat <<= 1;
+            ch422_dat |= (raw_led_dat >> bitPosMap[i * 3]) & 1; // R
+            ch422_dat <<= 1;
+            ch422_dat |= (raw_led_dat >> bitPosMap[i * 3 + 1]) & 1; // G
+            ch422_dat <<= 1;
+            ch422_dat |= (raw_led_dat >> bitPosMap[i * 3 + 2]) & 1; // B
+          }
+          CH422_Set(ch422_dat);
+          break;
+        }
+        default: {
+          break;
+        }
       }
-      default: {
-        break;
+      break;
+    // Custom HIDIO
+    case 0xAA:
+      switch (dataReceive->command) {
+        case SET_ROLLER_OFFSET: {
+          // TODO
+          // Calc roller offset to 0x8000
+
+          break;
+        }
+        default: {
+          break;
+        }
       }
+    default: {
+      break;
     }
   }
 }

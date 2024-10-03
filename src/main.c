@@ -6,10 +6,13 @@
 #include "bsp.h"
 #include "timeout.h"
 
+#include "data.h"
+
 #include "led.h"
 #include "ch422.h"
 #include "hidio.h"
 #include "cdc.h"
+#include "pn532.h"
 
 #include "usb_lib.h"
 
@@ -37,15 +40,26 @@ int main(void)
 
   Delay_Ms(50);
 
+  LoadData();
+  // SaveData();
+  // LoadData();
+
   LED_Init();
   CH422_Init();
   HIDIO_Init();
   CDC_Init();
+  PN532_Init();
 
-  CH422_Set(0x00000000);
+  CH422_Set(~0x00000000);
   LED_RGB_Set(RGB_PORT_LEFT, 0, 0xFF, 0x00, 0xFF);
   LED_RGB_Set(RGB_PORT_RIGHT, 0, 0xFF, 0x00, 0xFF);
-  LED_RGB_Set(2, 0, 0x00, 0x00, 0x00);
+
+  if(GlobalData->RollerOffset == 0xAAAA){
+    LED_RGB_Set(RGB_PORT_UART, 0, 0x00, 0xFF, 0x00);
+  } else {
+    LED_RGB_Set(RGB_PORT_UART, 0, 0xFF, 0x00, 0x00);
+  }
+  // LED_RGB_Set(RGB_PORT_UART, 0, 0x00, 0x00, 0x00);
   // setRgbColorPort(1, 0xff, 0, 0);
   // LED_RGB_Refresh();
 
