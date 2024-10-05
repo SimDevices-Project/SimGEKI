@@ -23,7 +23,8 @@ uint8_t cardIO_Rx_PendingBuf[64];
 uint8_t ledIO_PacketBuf[256];
 uint8_t cardIO_PacketBuf[64];
 
-uint8_t CDC_ResponseStringBuf[64];
+uint8_t ledIO_ResponseStringBuf[64];
+uint8_t cardIO_ResponseStringBuf[64];
 
 CDC_Struct cdc_led_io;
 CDC_Struct cdc_card_io;
@@ -57,12 +58,12 @@ void CDC_Init()
 
 void CDC_LED_IO_Upload(uint8_t length)
 {
-  USBD_ENDPx_DataUp(CDC_LED_IO_EP, CDC_ResponseStringBuf, length);
+  USBD_ENDPx_DataUp(CDC_LED_IO_EP, ledIO_ResponseStringBuf, length);
 }
 
 void CDC_CARD_IO_Upload(uint8_t length)
 {
-  USBD_ENDPx_DataUp(CDC_CARD_IO_EP, CDC_ResponseStringBuf, length);
+  USBD_ENDPx_DataUp(CDC_CARD_IO_EP, cardIO_ResponseStringBuf, length);
 }
 
 void CDC_LED_IO_USB_Poll()
@@ -78,11 +79,11 @@ void CDC_LED_IO_USB_Poll()
 
           // length (the first byte to send, the end of the buffer)
           usb_tx_len = CDC_PUTCHARBUF_LEN - cdc_led_io.PutCharBuff_First;
-          memcpy(CDC_ResponseStringBuf, &cdc_led_io.PutCharBuff[cdc_led_io.PutCharBuff_First], usb_tx_len);
+          memcpy(ledIO_ResponseStringBuf, &cdc_led_io.PutCharBuff[cdc_led_io.PutCharBuff_First], usb_tx_len);
 
           // length (the first byte in the buffer, the last byte to send), if any
           if (cdc_led_io.PutCharBuff_Last > 0)
-            memcpy(&CDC_ResponseStringBuf[usb_tx_len], cdc_led_io.PutCharBuff, cdc_led_io.PutCharBuff_Last);
+            memcpy(&ledIO_ResponseStringBuf[usb_tx_len], cdc_led_io.PutCharBuff, cdc_led_io.PutCharBuff_Last);
 
           // Send the entire buffer
           CDC_LED_IO_Upload(CDC_PUTCHARBUF_LEN);
@@ -104,17 +105,17 @@ void CDC_LED_IO_USB_Poll()
           // Rollback
           // length (the first byte to send, the end of the buffer)
           usb_tx_len = CDC_PUTCHARBUF_LEN - cdc_led_io.PutCharBuff_First;
-          memcpy(CDC_ResponseStringBuf, &cdc_led_io.PutCharBuff[cdc_led_io.PutCharBuff_First], usb_tx_len);
+          memcpy(ledIO_ResponseStringBuf, &cdc_led_io.PutCharBuff[cdc_led_io.PutCharBuff_First], usb_tx_len);
 
           // length (the first byte in the buffer, the last byte to send), if any
           if (cdc_led_io.PutCharBuff_Last > 0) {
-            memcpy(&CDC_ResponseStringBuf[usb_tx_len], cdc_led_io.PutCharBuff, cdc_led_io.PutCharBuff_Last);
+            memcpy(&ledIO_ResponseStringBuf[usb_tx_len], cdc_led_io.PutCharBuff, cdc_led_io.PutCharBuff_Last);
             usb_tx_len += cdc_led_io.PutCharBuff_Last;
           }
 
         } else {
           usb_tx_len = cdc_led_io.PutCharBuff_Last - cdc_led_io.PutCharBuff_First;
-          memcpy(CDC_ResponseStringBuf, &cdc_led_io.PutCharBuff[cdc_led_io.PutCharBuff_First], usb_tx_len);
+          memcpy(ledIO_ResponseStringBuf, &cdc_led_io.PutCharBuff[cdc_led_io.PutCharBuff_First], usb_tx_len);
         }
 
         cdc_led_io.PutCharBuff_First += usb_tx_len;
@@ -141,11 +142,11 @@ void CDC_CARD_IO_USB_Poll()
 
           // length (the first byte to send, the end of the buffer)
           usb_tx_len = CDC_PUTCHARBUF_LEN - cdc_card_io.PutCharBuff_First;
-          memcpy(CDC_ResponseStringBuf, &cdc_card_io.PutCharBuff[cdc_card_io.PutCharBuff_First], usb_tx_len);
+          memcpy(cardIO_ResponseStringBuf, &cdc_card_io.PutCharBuff[cdc_card_io.PutCharBuff_First], usb_tx_len);
 
           // length (the first byte in the buffer, the last byte to send), if any
           if (cdc_card_io.PutCharBuff_Last > 0)
-            memcpy(&CDC_ResponseStringBuf[usb_tx_len], cdc_card_io.PutCharBuff, cdc_card_io.PutCharBuff_Last);
+            memcpy(&cardIO_ResponseStringBuf[usb_tx_len], cdc_card_io.PutCharBuff, cdc_card_io.PutCharBuff_Last);
 
           // Send the entire buffer
           CDC_CARD_IO_Upload(CDC_PUTCHARBUF_LEN);
@@ -167,17 +168,17 @@ void CDC_CARD_IO_USB_Poll()
           // Rollback
           // length (the first byte to send, the end of the buffer)
           usb_tx_len = CDC_PUTCHARBUF_LEN - cdc_card_io.PutCharBuff_First;
-          memcpy(CDC_ResponseStringBuf, &cdc_card_io.PutCharBuff[cdc_card_io.PutCharBuff_First], usb_tx_len);
+          memcpy(cardIO_ResponseStringBuf, &cdc_card_io.PutCharBuff[cdc_card_io.PutCharBuff_First], usb_tx_len);
 
           // length (the first byte in the buffer, the last byte to send), if any
           if (cdc_card_io.PutCharBuff_Last > 0) {
-            memcpy(&CDC_ResponseStringBuf[usb_tx_len], cdc_card_io.PutCharBuff, cdc_card_io.PutCharBuff_Last);
+            memcpy(&cardIO_ResponseStringBuf[usb_tx_len], cdc_card_io.PutCharBuff, cdc_card_io.PutCharBuff_Last);
             usb_tx_len += cdc_card_io.PutCharBuff_Last;
           }
 
         } else {
           usb_tx_len = cdc_card_io.PutCharBuff_Last - cdc_card_io.PutCharBuff_First;
-          memcpy(CDC_ResponseStringBuf, &cdc_card_io.PutCharBuff[cdc_card_io.PutCharBuff_First], usb_tx_len);
+          memcpy(cardIO_ResponseStringBuf, &cdc_card_io.PutCharBuff[cdc_card_io.PutCharBuff_First], usb_tx_len);
         }
 
         cdc_card_io.PutCharBuff_First += usb_tx_len;
@@ -231,9 +232,9 @@ void CDC_LED_IO_Handler()
 {
   uint8_t checksum, i; // Response flag, also use for checksum & i
   IO_Packet *reqPacket  = (IO_Packet *)cdc_led_io.Req_PacketBuf;
-  IO_Packet *resPackect = (IO_Packet *)CDC_ResponseStringBuf;
+  IO_Packet *resPackect = (IO_Packet *)ledIO_ResponseStringBuf;
 
-  memset(CDC_ResponseStringBuf, 0x00, 64); // Clear resPackect
+  memset(ledIO_ResponseStringBuf, 0x00, 64); // Clear resPackect
 
   resPackect->sync      = 0xE0;
   resPackect->srcNodeId = reqPacket->dstNodeId;
@@ -334,15 +335,17 @@ const uint8_t CARD_READER_VERSION_LOWRATE[] = "TN32MSEC003S H/W Ver3.0";
 const uint8_t CARD_READER_EXTRA_INFO_HIRATE[]  = "000-00000\xFF\x11\x40";
 const uint8_t CARD_READER_EXTRA_INFO_LOWRATE[] = "15084\xFF\x10\x00\x12";
 
+// 通知 Card IO 数据已准备好
 void CDC_CARD_IO_SendDataReady()
 {
   cardIO_SendDataReady_Flag = 1;
 }
 
+// 发送准备好的 Card IO 数据
 void CDC_CARD_IO_SendData()
 {
   uint8_t checksum, i;
-  AIME_Response *res = (AIME_Response *)CDC_ResponseStringBuf;
+  AIME_Response *res = (AIME_Response *)cardIO_ResponseStringBuf;
 
   cardIO_SendDataReady_Flag = 0;
 
@@ -364,14 +367,15 @@ void CDC_CARD_IO_SendData()
   }
 }
 
+// Card IO 处理函数
 void CDC_CARD_IO_Handler()
 {
-  AIME_Response *res = (AIME_Response *)CDC_ResponseStringBuf;
-  AIME_Request *req  = (AIME_Request *)cdc_card_io.Req_PacketBuf;
+  AIME_Response *res = (AIME_Response *)cardIO_ResponseStringBuf; // Card IO Response
+  AIME_Request *req  = (AIME_Request *)cdc_card_io.Req_PacketBuf; // Card IO Request
   static uint8_t AimeKey[6], BanaKey[6];
   uint16_t SystemCode;
 
-  memset(CDC_ResponseStringBuf, 0x00, 64); // Clear resPackect
+  memset(cardIO_ResponseStringBuf, 0x00, 64); // Clear resPackect
 
   res->addr   = req->addr;
   res->seq_no = req->seq_no;
@@ -560,6 +564,7 @@ void CDC_LED_IO_UART_Poll()
   }
 }
 
+// Card IO CDC 数据读取
 void CDC_CARD_IO_UART_Poll()
 {
 #if PN532_UART_DIRECT == 1

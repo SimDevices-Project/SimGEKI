@@ -5,7 +5,8 @@
 
 #define PN532_UART_TIMEOUT 1000
 
-#define PN532_UART_DIRECT 1
+// 是否启用 UART 直通模式
+#define PN532_UART_DIRECT 0
 
 void PN532_UART_Init();
 
