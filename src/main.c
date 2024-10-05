@@ -68,7 +68,7 @@ int main(void)
   setInterval(CH422_Refresh, 20);
   setInterval(LED_RGB_Refresh, 20);
   setInterval(HIDIO_Update, 1);
-  setInterval(CDC_Poll, 3);
+  setInterval(CDC_Check, 3);
 
   setInterval(HIDIO_Upload, 1500);
   while (1) {

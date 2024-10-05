@@ -28,7 +28,7 @@ extern CDC_Struct cdc_led_io;
 extern CDC_Struct cdc_card_io;
 
 void CDC_Init();
-void CDC_Poll();
+void CDC_Check();
 
 void CDC_LED_IO_PutChar(uint8_t tdata);
 void CDC_CARD_IO_PutChar(uint8_t tdata);

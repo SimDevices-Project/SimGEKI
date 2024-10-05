@@ -572,7 +572,7 @@ void CDC_CARD_IO_UART_Poll()
   while (cdc_card_io.Rx_Pending) {
     dat = cdc_card_io.Rx_PendingBuf[cdc_card_io.Rx_CurPos];
     USART_SendData(USART1, dat);
-    //CDC_CARD_IO_PutChar(dat);
+    // CDC_CARD_IO_PutChar(dat);
     while (USART_GetFlagStatus(USART1, USART_FLAG_TXE) == RESET);
     cdc_card_io.Rx_CurPos++;
     cdc_card_io.Rx_Pending--;
@@ -646,8 +646,24 @@ void CDC_USB_Poll()
   CDC_CARD_IO_USB_Poll();
 }
 
+// CDC 数据轮询
 void CDC_Poll()
 {
   CDC_UART_Poll();
   CDC_USB_Poll();
+}
+
+// CDC 状态机检查
+void CDC_States()
+{
+  if (cardIO_SendDataReady_Flag) {
+    CDC_CARD_IO_SendData();
+  }
+}
+
+// CDC 定时检查，需注册全局定时器
+void CDC_Check()
+{
+  CDC_Poll();
+  CDC_States();
 }
