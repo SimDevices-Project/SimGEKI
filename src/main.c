@@ -16,6 +16,8 @@
 
 #include "usb_lib.h"
 
+#include "string.h"
+
 #include "debug.h"
 
 int main(void)
@@ -41,6 +43,7 @@ int main(void)
   Delay_Ms(50);
 
   LoadData();
+  // memset((uint8_t *)GlobalData, 0xAA, FLASH_FAST_DATA_SIZE);
   // SaveData();
   // LoadData();
 
@@ -54,11 +57,12 @@ int main(void)
   LED_RGB_Set(RGB_PORT_LEFT, 0, 0xFF, 0x00, 0xFF);
   LED_RGB_Set(RGB_PORT_RIGHT, 0, 0xFF, 0x00, 0xFF);
 
-  if(GlobalData->RollerOffset == 0xAAAA){
-    LED_RGB_Set(RGB_PORT_UART, 0, 0x00, 0xFF, 0x00);
-  } else {
+  // if(GlobalData->RollerOffset == 0xAAAA){
+  //   LED_RGB_Set(RGB_PORT_UART, 0, 0x00, 0xFF, 0x00);
+  // } else {
     LED_RGB_Set(RGB_PORT_UART, 0, 0xFF, 0x00, 0x00);
-  }
+    LED_RGB_Set(RGB_PORT_UART, 0, (GlobalData->RollerOffset) >> 8, (GlobalData->RollerOffset) & 0xFF, 0x00);
+  //}
   // LED_RGB_Set(RGB_PORT_UART, 0, 0x00, 0x00, 0x00);
   // setRgbColorPort(1, 0xff, 0, 0);
   // LED_RGB_Refresh();

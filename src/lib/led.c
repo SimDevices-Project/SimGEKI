@@ -5,7 +5,7 @@
 #define RGB_COUNT_PER_PORT  1
 
 #define WS2812_FREQ         800000
-#define TIMER_CLOCK_FREQ    96000000
+#define TIMER_CLOCK_FREQ    144000000
 
 #define WS2812_TIME_0BIT    30
 #define WS2812_TIME_1BIT    75

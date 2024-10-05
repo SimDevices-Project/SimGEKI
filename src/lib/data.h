@@ -16,7 +16,7 @@ typedef struct {
 
 typedef struct {
   uint16_t RollerOffset;
-  const uint8_t _unused[FLASH_FAST_DATA_SIZE - 2];
+  uint8_t _unused[FLASH_FAST_DATA_SIZE - 2];
 } __packed RamData;
 
 // extern FlashData *Data;
