@@ -13,7 +13,7 @@
 
 uint8_t command;
 
-#define RX_BUFFER_SIZE 64
+#define RX_BUFFER_SIZE 128
 
 uint8_t RxBuffer[RX_BUFFER_SIZE];
 uint8_t RxCount = 0;
