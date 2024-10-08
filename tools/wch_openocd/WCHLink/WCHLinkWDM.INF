@@ -1,0 +1,219 @@
+; WCHLinkWDM.INF
+; Driver for WCHLink V1.2
+; WDM/DLL for Windows XP/Vista/7/8/8.1/10/11/ SERVER 2003/2008/2012/2016/2019/2022
+; Copyright (C) WCH 2022
+;
+
+[Version]
+Signature = "$Chicago$"
+Class     = WCH
+ClassGuid = {77989ADF-06DB-4025-92E8-40D902C03B0A}
+Provider  = %WinChipHead%
+DriverVer = 08/23/2022, 1.2.2022.08
+CatalogFile = WCHLinkWDM.CAT
+
+[ControlFlags]
+ExcludeFromSelect = USB\VID_1A86&PID_8010&MI_00,USB\VID_1A86&PID_8012&MI_00
+
+[ClassInstall32]
+Addreg = WCHReg
+
+[ClassInstall]
+Addreg = WCHReg
+
+[WCHReg]
+HKR, , , 0, %ClassName%
+HKR, , Icon, , -5
+HKR, , NoInstallClass, , 1
+
+[Manufacturer]
+%WinChipHead% = WinChipHead,NT,NTamd64,NTia64,NTarm64
+
+[WinChipHead]
+%WCHLink.DeviceDesc% = WCHLink.Install, USB\VID_1A86&PID_8010&MI_00
+%WCHLinkDAP.DevDesc% = USB_Install, USB\VID_1A86&PID_8012&MI_00
+
+[WinChipHead.NT]
+%WCHLink.DeviceDesc% = WCHLink.Install, USB\VID_1A86&PID_8010&MI_00
+%WCHLinkDAP.DevDesc% = USB_Install, USB\VID_1A86&PID_8012&MI_00
+
+[WinChipHead.NTamd64]
+%WCHLink.DeviceDesc% = WCHLink.Install.NTamd64, USB\VID_1A86&PID_8010&MI_00
+%WCHLinkDAP.DevDesc% = USB_Install, USB\VID_1A86&PID_8012&MI_00
+
+[WinChipHead.NTia64]
+%WCHLink.DeviceDesc% = WCHLink.Install.NTia64, USB\VID_1A86&PID_8010&MI_00
+%WCHLinkDAP.DevDesc% = USB_Install, USB\VID_1A86&PID_8012&MI_00
+
+[WinChipHead.NTarm64]
+%WCHLink.DeviceDesc% = WCHLink.Install.NTarm64, USB\VID_1A86&PID_8010&MI_00
+%WCHLinkDAP.DevDesc% = USB_Install, USB\VID_1A86&PID_8012&MI_00
+
+[USB_Install]
+Include=winusb.inf
+Needs=WINUSB.NT
+
+[USB_Install.Services]
+Include = Winusb.inf
+AddService = WinUSB,0x00000002,WinUSB_ServiceInstall
+
+[USB_Install.HW]
+AddReg = USB_Install.HW.AddReg
+
+[USB_Install.HW.AddReg]
+HKR,,DeviceInterfaceGUIDs,0x10000,"{CDB3B5AD-293B-4663-AA36-1AAE46463776}"
+
+[WinUSB_ServiceInstall]
+DisplayName     = %USB_Install_SvcDesc%
+ServiceType     = 1
+StartType       = 3
+ErrorControl    = 1
+ServiceBinary   = %12%\WinUSB.sys
+
+[WCHLink.Install]
+CopyFiles = WCHLink.CopyFiles.SYS, WCHLink.CopyFiles.DLL
+AddReg    = WCHLink.9X.AddReg, WCHLink.AddReg
+
+[WCHLink.Install.NT]
+CopyFiles = WCHLink.CopyFiles.SYS, WCHLink.CopyFiles.DLL
+AddReg    = WCHLink.NT.AddReg, WCHLink.AddReg
+
+[WCHLink.Install.NTamd64]
+CopyFiles = WCHLink.CopyFiles.SYSA64, WCHLink.CopyFiles.DLLA64
+AddReg    = WCHLink.NT.AddReg, WCHLink.AddReg
+
+[WCHLink.Install.NTia64]
+CopyFiles = WCHLink.CopyFiles.SYSI64, WCHLink.CopyFiles.DLLI64
+AddReg    = WCHLink.NT.AddReg, WCHLink.AddReg
+
+[WCHLink.Install.NTarm64]
+CopyFiles = WCHLink.CopyFiles.SYSM64, WCHLink.CopyFiles.DLLM64
+AddReg    = WCHLink.NT.AddReg, WCHLink.AddReg
+
+[WCHLink.CopyFiles.SYS]
+WCHLinkWDM.SYS, , , 2
+
+[WCHLink.CopyFiles.SYSA64]
+WCHLinkW64.SYS, , , 2
+
+[WCHLink.CopyFiles.SYSI64]
+;WCHLinkI64.SYS, , , 2
+
+[WCHLink.CopyFiles.SYSM64]
+WCHLinkM64.SYS, , , 2
+
+[WCHLink.CopyFiles.DLL]
+WCHLinkDLL.DLL, , , 2
+
+[WCHLink.CopyFiles.DLLA64]
+WCHLinkDLL.DLL, , , 2
+
+[WCHLink.CopyFiles.DLLI64]
+WCHLinkDLL.DLL, , , 2
+
+[WCHLink.CopyFiles.DLLM64]
+WCHLinkDLL.DLL, , , 2
+
+[WCHLink.9X.AddReg]
+HKR, , DevLoader, , *NTKERN
+HKR, , NTMPDriver, , WCHLinkWDM.SYS
+
+[WCHLink.NT.AddReg]
+
+[WCHLink.AddReg]
+HKLM, SOFTWARE\WinChipHead\IC\WCHLink, WDM, 0x00010001, 0x00000025
+HKLM, SOFTWARE\WinChipHead\IC\WCHLink, DLL, 0x00010001, 0x00000022
+HKLM, SOFTWARE\WinChipHead\IC\WCHLink, Function, , "USB slave"
+
+[WCHLink.Install.NT.Services]
+AddService = WCHLink, 2, WCHLink.Service
+
+[WCHLink.Install.NTamd64.Services]
+AddService = WCHLink_A64, 2, WCHLink.ServiceA64
+
+[WCHLink.Install.NTia64.Services]
+AddService = WCHLink_I64, 2, WCHLink.ServiceI64
+
+[WCHLink.Install.NTarm64.Services]
+AddService = WCHLink_M64, 2, WCHLink.ServiceM64
+
+[WCHLink.Service]
+DisplayName   = "WCHLinkWDM"
+ServiceType   = 1
+StartType     = 3
+ErrorControl  = 1
+ServiceBinary = %10%\System32\Drivers\WCHLinkWDM.SYS
+
+[WCHLink.ServiceA64]
+DisplayName   = "WCHLinkWDM_A64"
+ServiceType   = 1
+StartType     = 3
+ErrorControl  = 1
+ServiceBinary = %10%\System32\Drivers\WCHLinkW64.SYS
+
+[WCHLink.ServiceI64]
+DisplayName   = "WCHLinkWDM_I64"
+ServiceType   = 1
+StartType     = 3
+ErrorControl  = 1
+ServiceBinary = %10%\System32\Drivers\WCHLinkI64.SYS
+
+[WCHLink.ServiceM64]
+DisplayName   = "WCHLinkWDM_M64"
+ServiceType   = 1
+StartType     = 3
+ErrorControl  = 1
+ServiceBinary = %10%\System32\Drivers\WCHLinkM64.SYS
+
+[DestinationDirs]
+DefaultDestDir      = 10, System32\Drivers
+WCHLink.CopyFiles.DLL = 11
+WCHLink.CopyFiles.DLLA64 = 10, Syswow64 
+WCHLink.CopyFiles.DLLI64 = 10, Syswow64 
+WCHLink.CopyFiles.DLLM64 = 10, Syswow64 
+WCHLink.CopyFiles.SYS = 10, System32\Drivers
+WCHLink.CopyFiles.SYSA64 = 10, System32\Drivers
+WCHLink.CopyFiles.SYSM64 = 10, System32\Drivers
+;WCHLink.CopyFiles.SYSI64 = 10, System32\Drivers
+
+[SourceDisksFiles]
+WCHLinkWDM.SYS  = 1
+WCHLinkDLL.DLL  = 1
+WCHLinkW64.SYS  = 1
+WCHLinkM64.SYS  = 1
+
+[SourceDisksFiles.amd64]
+WCHLinkW64.SYS  = 1
+WCHLinkDLL.DLL  = 1
+
+[SourceDisksFiles.arm64]
+WCHLinkM64.SYS  = 1
+WCHLinkDLL.DLL  = 1
+
+[SourceDisksNames]
+1 = %DISK_NAME%, , ,
+
+[SourceDisksNames.amd64]
+1 = %DISK_NAME%, , ,
+
+[SourceDisksNames.ia64]
+;1 = %DISK_NAME%, , ,
+
+[SourceDisksNames.arm64]
+1 = %DISK_NAME%, , ,
+
+[Strings]
+ClassName        = "Interface"
+WinChipHead      = "wch.cn"
+USB_Install_SvcDesc = "WinUSB"
+WCHLink.DeviceDesc  = "WCH-LinkRV"
+WCHLinkDAP.DevDesc  = "WCH CMSIS-DAP"
+DISK_NAME = "WCH-Link Installation Disk"
+
+[Strings.0804]
+ClassName        = "外部接口"
+WinChipHead      = "wch.cn"
+USB_Install_SvcDesc = "WinUSB"
+WCHLink.DeviceDesc  = "WCH-LinkRV"
+WCHLinkDAP.DevDesc  = "WCH CMSIS-DAP"
+DISK_NAME = "WCH-Link Installation Disk"

@@ -9,4 +9,4 @@ build
 *.ept
 *.eide-template
 
-tools
+# tools
