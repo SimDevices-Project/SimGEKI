@@ -309,5 +309,14 @@ const uint8_t USBD_HidRepDesc[USBD_SIZE_REPORT_DESC] =
         0x95, 0x3F,                   //     Report Count (63)
         0x91, 0x02,                   //     Output (Data,Var,Abs,No Wrap,Linear,Preferred State,No Null Position,Non-volatile)
         0xC0,                         //   End Collection
+        0x85, 0xAA,                   //   Report ID (170)
+        0xA1, 0x01,                   //   Collection (Application)
+        0x09, 0x00,                   //     Usage (0x00)
+        0x15, 0x00,                   //     Logical Minimum (0)
+        0x26, 0xFF, 0x00,             //     Logical Maximum (255)
+        0x75, 0x08,                   //     Report Size (8)
+        0x95, 0x3F,                   //     Report Count (63)
+        0x91, 0x02,                   //     Output (Data,Var,Abs,No Wrap,Linear,Preferred State,No Null Position,Non-volatile)
+        0xC0,                         //   End Collection
         0xC0,                         // End Collection
 };

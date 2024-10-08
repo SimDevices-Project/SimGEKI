@@ -21,10 +21,12 @@
 /* buffer table base address */
 #define BTABLE_ADDRESS      (0x00)
 
+// 0x50-0x5F 为空
+
 /* EP0  */
 /* rx/tx buffer base address */
-#define ENDP0_RXADDR        (0x40)
-#define ENDP0_TXADDR        (0x60)
+#define ENDP0_RXADDR        (0x60)
+#define ENDP0_TXADDR        (0x70)
 
 /* EP1  */
 /* tx buffer base address */
@@ -34,7 +36,7 @@
 #define ENDP2_RXADDR        (ENDP2_TXADDR + 0x40)
 #define ENDP3_TXADDR        (ENDP2_RXADDR + 0x40)
 #define ENDP3_RXADDR        (ENDP3_TXADDR + 0x40)
-// #define ENDP4_RXADDR        (ENDP4_TXADDR + 0x40)
+#define ENDP4_RXADDR        (ENDP4_TXADDR + 0x40)
 
 /* ISTR events */
 /* IMR_MSK */
