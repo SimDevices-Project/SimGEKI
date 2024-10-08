@@ -12,4 +12,6 @@ uint16_t Roller_GetRawValue();
 // uint16_t Roller_GetOffset();
 // void Roller_SetOffset(uint16_t offset);
 
+void Roller_ResetOffset();
+
 #endif // !__ROLLER_H_

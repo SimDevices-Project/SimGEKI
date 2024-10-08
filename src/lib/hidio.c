@@ -78,9 +78,8 @@ void HIDIO_Receive_Handler()
     case 0xAA:
       switch (dataReceive->command) {
         case SET_ROLLER_OFFSET: {
-          // TODO
           // Calc roller offset to 0x8000
-
+          Roller_ResetOffset();
           break;
         }
         default: {

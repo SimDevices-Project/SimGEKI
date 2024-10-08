@@ -17,8 +17,8 @@ uint8_t LineCoding[LINECODING_SIZE] = {0x00, 0xC2, 0x01, 0x00, 0x00, 0x00, 0x08}
 uint8_t ledIO_PutCharBuf[CDC_PUTCHARBUF_LEN];
 uint8_t cardIO_PutCharBuf[CDC_PUTCHARBUF_LEN];
 
-uint8_t ledIO_Rx_PendingBuf[64];
-uint8_t cardIO_Rx_PendingBuf[64];
+uint8_t ledIO_Rx_PendingBuf[CDC_PENDINGBUF_LEN];
+uint8_t cardIO_Rx_PendingBuf[CDC_PENDINGBUF_LEN];
 
 uint8_t ledIO_PacketBuf[256];
 uint8_t cardIO_PacketBuf[64];

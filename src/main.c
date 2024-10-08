@@ -54,7 +54,8 @@ int main(void)
   LED_RGB_Set(RGB_PORT_LEFT, 0, 0xFF, 0x00, 0xFF);
   LED_RGB_Set(RGB_PORT_RIGHT, 0, 0xFF, 0x00, 0xFF);
 
-  // LED_RGB_Set(RGB_PORT_UART, 0, 0x00, 0x00, 0x00);
+  LED_RGB_Set(RGB_PORT_UART, 0, 0xFF, 0xFF, 0xFF);
+
   // setRgbColorPort(1, 0xff, 0, 0);
   // LED_RGB_Refresh();
 

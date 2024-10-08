@@ -3,8 +3,8 @@
 
 __attribute__((aligned(8))) RamData dat;
 
-FlashData *Data;
-RamData *GlobalData;
+const FlashData *Data = (FlashData *)FLASH_FAST_DATA_BASE_ADDR;
+RamData *GlobalData = &dat;
 
 /*********************************************************************
  * @fn      FLASH_read
@@ -23,17 +23,14 @@ RamData *GlobalData;
 
 void LoadData()
 {
-  Data       = (FlashData *)FLASH_FAST_DATA_BASE_ADDR;
-  GlobalData = &dat;
-
   /* HCLK = SYSCLK/2 */
   RCC->CFGR0 |= (uint32_t)RCC_HPRE_DIV2;
 
   // FLASH_read((uint32_t)Data, (uint8_t *)((uint32_t)GlobalData), FLASH_FAST_DATA_SIZE);
-  memset((uint8_t *)GlobalData, 0xAA, FLASH_FAST_DATA_SIZE);
+  // memset((uint8_t *)GlobalData, 0xAA, FLASH_FAST_DATA_SIZE);
 
   // GlobalData->RollerOffset = 0xAAAA;
-  // memcpy((uint8_t *)GlobalData, &Data, FLASH_FAST_DATA_SIZE);
+  memcpy((uint8_t *)GlobalData, (uint8_t *)Data, FLASH_FAST_DATA_SIZE);
 
   /* HCLK = SYSCLK */
   RCC->CFGR0 &= ~(uint32_t)RCC_HPRE_DIV2;

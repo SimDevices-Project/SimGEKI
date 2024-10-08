@@ -7,6 +7,9 @@
 #define DATA_LEN          6
 #define VALUE_OFFSET_MASK 0xFFFF
 
+#define _offset           GlobalData->RollerOffset
+#define VALUE_DEFAULT     0x8000
+
 const uint8_t TxData[DATA_LEN] = {0x05, 0x00};
 struct rxdata_t {
   uint8_t zero;
@@ -233,10 +236,11 @@ uint16_t Roller_GetRawValue()
 // 获取经过OFFSET处理后的编码器值
 uint16_t Roller_GetValue()
 {
-  if (EncoderValue <= VALUE_OFFSET_MASK - GlobalData->RollerOffset) {
-    return EncoderValue + GlobalData->RollerOffset;
+  uint16_t rawVal = Roller_GetRawValue();
+  if (rawVal <= VALUE_OFFSET_MASK - _offset) {
+    return rawVal + _offset;
   } else {
-    return ((GlobalData->RollerOffset + EncoderValue) & VALUE_OFFSET_MASK) + 1;
+    return ((_offset + rawVal) & VALUE_OFFSET_MASK) + 1;
   }
 }
 
@@ -245,7 +249,16 @@ uint16_t Roller_GetValue()
 //   return EncoderOffset;
 // }
 
-// void Roller_SetOffset(uint16_t offset)
-// {
-//   EncoderOffset = offset;
-// }
+// 重设Offset，使经过Offset处理后的编码器值为 0x8000
+void Roller_ResetOffset()
+{
+  uint16_t newVal;
+  uint16_t rawVal = Roller_GetRawValue();
+  if (rawVal <= VALUE_DEFAULT) {
+    newVal = VALUE_DEFAULT - rawVal;
+  } else {
+    newVal = VALUE_OFFSET_MASK - rawVal + VALUE_DEFAULT + 1;
+  }
+  _offset = newVal;
+  SaveData();
+}
