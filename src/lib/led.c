@@ -7,8 +7,8 @@
 #define WS2812_FREQ         800000
 #define TIMER_CLOCK_FREQ    144000000
 
-#define WS2812_TIME_0BIT    30
-#define WS2812_TIME_1BIT    75
+#define WS2812_TIME_0BIT    45
+#define WS2812_TIME_1BIT    115
 
 #define BUFF_FRONT_OFFSET   1
 #define BUFF_END_OFFSET     80

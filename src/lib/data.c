@@ -13,21 +13,30 @@ RamData *GlobalData;
  *
  * @return  none
  */
-void FLASH_read(uint32_t addr, uint8_t *pData, uint32_t len)
-{
-  uint32_t i;
-  for (i = 0; i < len; i++) {
-    *pData++ = *(uint8_t *)addr++;
-  }
-}
+// void FLASH_read(uint32_t addr, uint8_t *pData, uint32_t len)
+// {
+//   uint32_t i;
+//   for (i = 0; i < len; i++) {
+//     *pData++ = *(uint8_t *)addr++;
+//   }
+// }
 
 void LoadData()
 {
   Data       = (FlashData *)FLASH_FAST_DATA_BASE_ADDR;
   GlobalData = &dat;
 
-  FLASH_read((uint32_t)Data, (uint8_t *)((uint32_t)GlobalData), FLASH_FAST_DATA_SIZE);
-  // memset((uint8_t *)GlobalData, 0xAA, FLASH_FAST_DATA_SIZE);
+  /* HCLK = SYSCLK/2 */
+  RCC->CFGR0 |= (uint32_t)RCC_HPRE_DIV2;
+
+  // FLASH_read((uint32_t)Data, (uint8_t *)((uint32_t)GlobalData), FLASH_FAST_DATA_SIZE);
+  memset((uint8_t *)GlobalData, 0xAA, FLASH_FAST_DATA_SIZE);
+
+  // GlobalData->RollerOffset = 0xAAAA;
+  // memcpy((uint8_t *)GlobalData, &Data, FLASH_FAST_DATA_SIZE);
+
+  /* HCLK = SYSCLK */
+  RCC->CFGR0 &= ~(uint32_t)RCC_HPRE_DIV2;
 }
 
 void SaveData()
