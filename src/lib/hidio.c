@@ -113,8 +113,10 @@ void HIDIO_FreshData()
       dataUpload->buttons[hid_key_map[i][0]] |= hid_key_map[i][1];
     }
   }
-  dataUpload->buttons[3] ^= 0x80; // Lside取反
-  dataUpload->buttons[1] ^= 0x40; // Rside取反
+
+  // 仅早于 v3.8 的主控版本需要取反
+  // dataUpload->buttons[3] ^= 0x80; // Lside取反
+  // dataUpload->buttons[1] ^= 0x40; // Rside取反
 
   // Coin
   if ((changedKeyStatus & (1 << (KEY_COUNT - 1))) && KeyScan_GetKeyDebouncedStatus(KEY_COUNT - 1)) {
