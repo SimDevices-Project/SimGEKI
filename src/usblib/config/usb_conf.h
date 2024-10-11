@@ -36,6 +36,7 @@
 #define ENDP2_RXADDR        (ENDP2_TXADDR + 0x40)
 #define ENDP3_TXADDR        (ENDP2_RXADDR + 0x40)
 #define ENDP3_RXADDR        (ENDP3_TXADDR + 0x40)
+#define ENDP4_TXADDR        (ENDP3_RXADDR + 0x40)
 #define ENDP4_RXADDR        (ENDP4_TXADDR + 0x40)
 
 /* ISTR events */

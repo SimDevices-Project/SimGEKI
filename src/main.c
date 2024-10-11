@@ -16,8 +16,6 @@
 
 #include "usb_lib.h"
 
-#include "string.h"
-
 #include "debug.h"
 
 int main(void)
@@ -51,8 +49,8 @@ int main(void)
   PN532_Init();
 
   CH422_Set(~0x00000000);
-  LED_RGB_Set(RGB_PORT_LEFT, 0, 0xFF, 0x00, 0xFF);
-  LED_RGB_Set(RGB_PORT_RIGHT, 0, 0xFF, 0x00, 0xFF);
+  LED_RGB_Set(RGB_PORT_LEFT, 0, 0xFF, 0xFF, 0xFF);
+  LED_RGB_Set(RGB_PORT_RIGHT, 0, 0xFF, 0xFF, 0xFF);
 
   LED_RGB_Set(RGB_PORT_UART, 0, 0xFF, 0xFF, 0xFF);
 

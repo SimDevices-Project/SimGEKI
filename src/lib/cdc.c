@@ -506,10 +506,6 @@ void CDC_LED_IO_UART_Poll()
   static uint8_t prev_byte = 0;
   IO_Packet *packect       = (IO_Packet *)cdc_led_io.Req_PacketBuf;
 
-  if (cdc_led_io.Rx_Pending) {
-    CDC_LED_IO_PutChar(cdc_led_io.Rx_Pending);
-  }
-
   while (cdc_led_io.Rx_Pending) {
     cur_byte = cdc_led_io.Rx_PendingBuf[cdc_led_io.Rx_CurPos];
     if (cur_byte == 0xE0 && prev_byte != 0xD0) {
