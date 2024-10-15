@@ -48,7 +48,7 @@ int main(void)
   CDC_Init();
   PN532_Init();
 
-  CH422_Set(~0x00000000);
+  CH422_Set(0b100010001100010001);
   LED_RGB_Set(RGB_PORT_LEFT, 0, 0xFF, 0xFF, 0xFF);
   LED_RGB_Set(RGB_PORT_RIGHT, 0, 0xFF, 0xFF, 0xFF);
 

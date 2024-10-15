@@ -41,7 +41,7 @@ xdata void KeyScan_Init()
   GPIO_InitStructure.GPIO_Mode = GPIO_Mode_IPU;
   GPIO_Init(GPIOB, &GPIO_InitStructure);
 
-  // 设置PB4为输入
+  // 设置PA4为输入
   GPIO_InitStructure.GPIO_Pin  = GPIO_Pin_4;
   GPIO_InitStructure.GPIO_Mode = GPIO_Mode_IPU;
   GPIO_Init(GPIOA, &GPIO_InitStructure);
