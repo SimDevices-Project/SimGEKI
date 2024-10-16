@@ -25,6 +25,13 @@ void PN532_Init()
   // ();
 }
 
+void PN532_Check()
+{
+#ifdef PN532_INTERFACE_UART
+  PN532_UART_Check();
+#endif
+}
+
 void (*__samconfig_ack_callback)(uint8_t);
 
 void __PN532_SAMConfig_ACK_Handler_2(uint8_t status)

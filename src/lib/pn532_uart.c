@@ -16,9 +16,12 @@ uint8_t command;
 #define RX_BUFFER_SIZE 128
 
 uint8_t RxBuffer[RX_BUFFER_SIZE];
-uint8_t RxCount = 0;
+uint8_t RxIndex = 0;
+
+uint8_t RxBufferSize = 0;
 
 void USART1_IRQHandler(void) __attribute__((interrupt("WCH-Interrupt-fast")));
+
 void PN532_UART_WriteCommand(void (*callback)(uint8_t), const uint8_t *header, uint8_t hlen, const uint8_t *body, uint8_t blen);
 void PN532_UART_ReadResponse(void (*callback)(uint8_t), uint8_t *buf, uint8_t len, uint16_t timeout);
 void PN532_UART_Receive(void (*callback)(uint8_t), uint8_t *buf, uint8_t len, uint16_t timeout);
@@ -47,11 +50,21 @@ void USART1_IRQHandler(void)
     CDC_CARD_IO_PutChar(USART_ReceiveData(USART1));
     return;
 #else
-    RxBuffer[RxCount++] = USART_ReceiveData(USART1);
-    if (RxCount >= RX_BUFFER_SIZE) {
-      RxCount = 0;
-    }
+    RxBuffer[RxIndex++] = USART_ReceiveData(USART1);
 #endif
+  }
+  if (USART_GetITStatus(USART1, USART_IT_IDLE) != RESET) {
+    RxBufferSize = RxIndex;
+    RxIndex      = 0;
+  }
+}
+
+void PN532_UART_Check()
+{
+  if (RxBufferSize > 0) {
+    // Do something
+    // RxBuffer 为接收到的数据
+    // RxBufferSize 为接收到的数据长度
   }
 }
 
@@ -82,6 +95,7 @@ void PN532_UART_Init()
 
   USART_Init(USART1, &USART_InitStructure);
   USART_ITConfig(USART1, USART_IT_RXNE, ENABLE);
+  USART_ITConfig(USART1, USART_IT_IDLE, ENABLE);
 
   NVIC_InitStructure.NVIC_IRQChannel                   = USART1_IRQn;
   NVIC_InitStructure.NVIC_IRQChannelPreemptionPriority = 0;
@@ -244,7 +258,7 @@ void __PN532_UART_Receive_Timeout()
 
 void __PN532_UART_Receive_Handler()
 {
-  if (RxCount >= __receive_handler_len) {
+  if (RxIndex >= __receive_handler_len) {
     USART_ITConfig(USART1, USART_IT_RXNE, DISABLE);
     clearTimeout(__receive_handler_timeout_id);
     clearInterval(__receive_handler_interval_id);
@@ -269,7 +283,7 @@ void __PN532_UART_Receive_Handler()
 void PN532_UART_Receive(void (*callback)(uint8_t), uint8_t *buf, uint8_t len, uint16_t timeout)
 {
   USART_ITConfig(USART1, USART_IT_RXNE, DISABLE);
-  RxCount               = 0;
+  RxIndex               = 0;
   __receive_handler_buf = buf;
   __receive_handler_len = len;
   clearTimeout(__receive_handler_timeout_id);

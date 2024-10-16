@@ -15,8 +15,8 @@ MEMORY
 
 /* CH32V20x_D6 - CH32V203K8-CH32V203C8-CH32V203G8-CH32V203F8 */
 /**/
-	FLASH (rx) : ORIGIN = 0x00001800, LENGTH = (64K - 2K -6K)
-	/* 实际上有64K，但是最后2K用于高速Flash存储数据 */
+	FLASH (rx) : ORIGIN = 0x00002800, LENGTH = (64K - 2K - 10K)
+	/* 实际上有64K，但是开头10K IAP，最后2K用于高速Flash存储数据 */
 	SFLASH (rx) : ORIGIN = 0x00010000, LENGTH = (160K - 20K)
 	/* 实际上有160K，但是最后20K用于Flash存储数据 */
 	RAM (xrw) : ORIGIN = 0x20000000, LENGTH = 20K
