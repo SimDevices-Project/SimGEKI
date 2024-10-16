@@ -136,5 +136,6 @@ typedef struct
 } __packed PN532_Interface;
 
 void PN532_Init();
+void PN532_Check();
 
 #endif
