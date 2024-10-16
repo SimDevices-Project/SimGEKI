@@ -79,7 +79,7 @@ void Set_USBConfig( )
  */
 void Enter_LowPowerMode(void)
 {  
- 	printf("usb enter low power mode\r\n");
+ 	// printf("usb enter low power mode\r\n");
 	bDeviceState=SUSPENDED;
 } 
 
@@ -93,7 +93,7 @@ void Enter_LowPowerMode(void)
 void Leave_LowPowerMode(void)
 {
 	DEVICE_INFO *pInfo=&Device_Info;
-	printf("usb leave low power mode\r\n"); 
+	// printf("usb leave low power mode\r\n"); 
 	if (pInfo->Current_Configuration!=0)bDeviceState=CONFIGURED; 
 	else bDeviceState = ATTACHED; 
 } 

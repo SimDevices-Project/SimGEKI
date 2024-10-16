@@ -40,7 +40,7 @@ const uint8_t USBD_ConfigDescriptor[USBD_SIZE_CONFIG_DESC] = {
     0x01,                                                     // bConfigurationValue
     0x04,                                                     // iConfiguration
     0x80,                                                     // bmAttributes: Bus Powered; Remote Wakeup
-    0x32,                                                     // MaxPower: 100mA
+    0xfa,                                                     // MaxPower: 500mA
 
     /* IAD Descriptor(interface 0/1)*/
     8,                       // Length of the descriptor 描述符长度
