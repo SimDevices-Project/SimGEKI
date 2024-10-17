@@ -233,21 +233,58 @@ uint16_t Roller_GetRawValue()
   return EncoderValue;
 }
 
-// 获取经过OFFSET处理后的编码器值
+#define DEBOUNCE_LENGTH 8
+#define DEBOUNCE_LIMIT_A  32
+#define DEBOUNCE_LIMIT_B  8
+uint16_t debounceBuffer[DEBOUNCE_LENGTH] = {0};
+uint32_t debounceSumValue                = 0;
+uint16_t debounceAvgValue                = 0;
+uint16_t outputValue                     = 0;
+uint8_t debounceIndex                    = 0;
+
+// 获取经过OFFSET处理并去抖后的编码器值
 uint16_t Roller_GetValue()
 {
-  uint16_t rawVal = Roller_GetRawValue();
-  if (rawVal <= VALUE_OFFSET_MASK - _offset) {
-    return rawVal + _offset;
+  uint16_t rawVal     = Roller_GetRawValue();
+  uint8_t refreshFlag = 0;
+
+  // 去抖
+  if (rawVal > debounceAvgValue) {
+    if (rawVal - debounceAvgValue > DEBOUNCE_LIMIT_A) {
+      refreshFlag = 1;
+    }
   } else {
-    return ((_offset + rawVal) & VALUE_OFFSET_MASK) + 1;
+    if (debounceAvgValue - rawVal > DEBOUNCE_LIMIT_A) {
+      refreshFlag = 1;
+    }
+  }
+  if (refreshFlag == 1) {
+    for (uint8_t i = 0; i < DEBOUNCE_LENGTH; i++) {
+      debounceBuffer[i] = rawVal;
+    }
+    debounceAvgValue = rawVal;
+    debounceSumValue = rawVal * DEBOUNCE_LENGTH;
+  } else {
+    debounceSumValue -= debounceBuffer[debounceIndex];
+    debounceBuffer[debounceIndex] = rawVal;
+    debounceSumValue += rawVal;
+    debounceIndex    = (debounceIndex + 1) % DEBOUNCE_LENGTH;
+    debounceAvgValue = debounceSumValue / DEBOUNCE_LENGTH;
+  }
+
+  if (outputValue > debounceAvgValue && outputValue - debounceAvgValue > DEBOUNCE_LIMIT_B) {
+    outputValue = debounceAvgValue;
+  } else if (debounceAvgValue >= outputValue && debounceAvgValue - outputValue > DEBOUNCE_LIMIT_B) {
+    outputValue = debounceAvgValue;
+  }
+
+  // offset 计算
+  if (outputValue <= VALUE_OFFSET_MASK - _offset) {
+    return outputValue + _offset;
+  } else {
+    return ((_offset + outputValue) & VALUE_OFFSET_MASK) + 1;
   }
 }
-
-// uint16_t Roller_GetOffset()
-// {
-//   return EncoderOffset;
-// }
 
 // 重设Offset，使经过Offset处理后的编码器值为 0x8000
 void Roller_ResetOffset()
