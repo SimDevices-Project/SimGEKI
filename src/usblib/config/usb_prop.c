@@ -89,7 +89,7 @@ ONE_DESCRIPTOR Report_Descriptor[1] =
 
 ONE_DESCRIPTOR Hid_Descriptor[1] =
 {
-	{(uint8_t*)&USBD_ConfigDescriptor[84], 0x09},
+	{(uint8_t*)&USBD_ConfigDescriptor[150], 0x09},
 };
 /*********************************************************************
  * @fn      USBD_SetConfiguration.
