@@ -5,6 +5,8 @@
 
 // #include "debug.h"
 
+#include "timeout.h"
+
 #include "usb_lib.h"
 #include "usb_prop.h"
 
@@ -23,6 +25,8 @@ static uint16_t changedKeyStatus = 0;
 static uint16_t prevRollerValue   = 0;
 static uint16_t activeRollerValue = 0;
 
+uint8_t intervalID = 0xFF;
+
 const uint8_t bitPosMap[] = {23, 20, 22, 19, 21, 18, 17, 16, 15, 14, 13, 12, 11, 10, 9, 8, 7, 6};
 
 void HIDIO_Receive_Handler()
@@ -33,6 +37,9 @@ void HIDIO_Receive_Handler()
       switch (dataReceive->command) {
         case SET_COMM_TIMEOUT: {
           dataUpload->systemStatus = 0x30;
+
+          clearInterval(intervalID);
+          intervalID = setInterval(HIDIO_Upload, 5);
           break;
         }
         case SET_SAMPLING_COUNT: {
@@ -166,4 +173,7 @@ xdata void HIDIO_Init()
   dataUpload->systemStatus = 0x30;
 
   HIDIO_FreshData();
+
+  clearInterval(intervalID);
+  intervalID = setInterval(HIDIO_Upload, 30);
 }

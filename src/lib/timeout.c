@@ -2,7 +2,7 @@
 
 #define TIMER_CLOCK_FREQ 144000000
 
-#define MAX_TIMER_COUNT  8
+#define MAX_TIMER_COUNT  16
 
 typedef struct {
   uint16_t time;

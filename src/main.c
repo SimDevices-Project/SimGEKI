@@ -67,7 +67,6 @@ int main(void)
   setInterval(CDC_Check, 3);
   setInterval(PN532_Check, 3);
 
-  setInterval(HIDIO_Upload, 1500);
   while (1) {
     Timer_Process();
 
