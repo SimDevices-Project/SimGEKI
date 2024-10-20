@@ -115,8 +115,10 @@ void HIDIO_FreshData()
   }
 
   // 仅早于 v3.8 的主控版本需要取反
-  // dataUpload->buttons[3] ^= 0x80; // Lside取反
-  // dataUpload->buttons[1] ^= 0x40; // Rside取反
+#ifdef EARLY_HARDWARE
+  dataUpload->buttons[3] ^= 0x80; // Lside取反
+  dataUpload->buttons[1] ^= 0x40; // Rside取反
+#endif
 
   // Coin
   if ((changedKeyStatus & (1 << (KEY_COUNT - 1))) && KeyScan_GetKeyDebouncedStatus(KEY_COUNT - 1)) {

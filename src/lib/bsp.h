@@ -7,4 +7,9 @@
 
 #define xdata __attribute__((section(".stext"))) 
 
+#ifndef TARGET_SIMGEKI
+
+
+#endif
+
 #endif // ! __BSP_H
