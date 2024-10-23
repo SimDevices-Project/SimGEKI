@@ -9,7 +9,6 @@
 #include "data.h"
 
 #include "led.h"
-#include "ch422.h"
 #include "hidio.h"
 #include "cdc.h"
 #include "pn532.h"
@@ -43,26 +42,30 @@ int main(void)
   LoadData();
 
   LED_Init();
-  CH422_Init();
   HIDIO_Init();
   CDC_Init();
   PN532_Init();
 
   // 111444222555333666
 
-  CH422_Set(0b100100010010001001);
-  LED_RGB_Set(RGB_PORT_LEFT, 0, 0xFF, 0x00, 0xFF);
-  LED_RGB_Set(RGB_PORT_RIGHT, 0, 0xFF, 0x00, 0xFF);
+  LED_7C_Set(LED_7C_L1, LED_ON, LED_OFF, LED_OFF);
+  LED_7C_Set(LED_7C_L2, LED_OFF, LED_ON, LED_OFF);
+  LED_7C_Set(LED_7C_L3, LED_OFF, LED_OFF, LED_ON);
+  LED_7C_Set(LED_7C_R1, LED_ON, LED_OFF, LED_OFF);
+  LED_7C_Set(LED_7C_R2, LED_OFF, LED_ON, LED_OFF);
+  LED_7C_Set(LED_7C_R3, LED_OFF, LED_OFF, LED_ON);
 
-  LED_RGB_Set(RGB_PORT_UART, 0, 0xFF, 0xFF, 0xFF);
+  LED_RGB_Set(LED_RGB_PORT_LEFT, 0, 0xFF, 0x00, 0xFF);
+  LED_RGB_Set(LED_RGB_PORT_RIGHT, 0, 0xFF, 0x00, 0xFF);
+
+  LED_RGB_Set(LED_RGB_PORT_UART, 0, 0xFF, 0xFF, 0xFF);
 
   // setRgbColorPort(1, 0xff, 0, 0);
-  // LED_RGB_Refresh();
+  // LED_Refresh();
 
   // setRgbColor(2, 0, 0x00, 0x00, 0xFF);
 
-  setInterval(CH422_Refresh, 20);
-  setInterval(LED_RGB_Refresh, 20);
+  setInterval(LED_Refresh, 20);
   setInterval(HIDIO_Update, 1);
   setInterval(CDC_Check, 3);
   setInterval(PN532_Check, 3);
@@ -72,7 +75,7 @@ int main(void)
 
     // Delay_Us(100); // Do Something
 
-    // LED_RGB_Refresh();
+    // LED_Refresh();
     // CH422_Check();
 
     // UART2_DataRx_Deal();

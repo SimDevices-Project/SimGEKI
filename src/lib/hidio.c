@@ -1,5 +1,5 @@
 #include "hidio.h"
-#include "ch422.h"
+#include "led.h"
 #include "keyscan.h"
 #include "roller.h"
 
@@ -57,23 +57,12 @@ void HIDIO_Receive_Handler()
         }
         case SET_GENERAL_OUTPUT: {
           uint32_t raw_led_dat = (uint32_t)(dataReceive->payload[0]) << 16 | (uint32_t)(dataReceive->payload[1]) << 8 | dataReceive->payload[2];
-          uint32_t ch422_dat   = 0;
+          // uint32_t ch422_dat   = 0;
           for (uint8_t i = 0; i < 3; i++) {
-            ch422_dat <<= 1;
-            ch422_dat |= (raw_led_dat >> bitPosMap[9 + i * 3]) & 1;
-            ch422_dat <<= 1;
-            ch422_dat |= (raw_led_dat >> bitPosMap[9 + i * 3 + 1]) & 1;
-            ch422_dat <<= 1;
-            ch422_dat |= (raw_led_dat >> bitPosMap[9 + i * 3 + 2]) & 1;
-
-            ch422_dat <<= 1;
-            ch422_dat |= (raw_led_dat >> bitPosMap[i * 3]) & 1; // R
-            ch422_dat <<= 1;
-            ch422_dat |= (raw_led_dat >> bitPosMap[i * 3 + 1]) & 1; // G
-            ch422_dat <<= 1;
-            ch422_dat |= (raw_led_dat >> bitPosMap[i * 3 + 2]) & 1; // B
+            LED_7C_Set(i * 2, (raw_led_dat >> bitPosMap[9 + i * 3]) & 1, (raw_led_dat >> bitPosMap[9 + i * 3 + 1]) & 1, (raw_led_dat >> bitPosMap[9 + i * 3 + 2]) & 1);
+            LED_7C_Set(i * 2 + 1, (raw_led_dat >> bitPosMap[i * 3]) & 1, (raw_led_dat >> bitPosMap[i * 3 + 1]) & 1, (raw_led_dat >> bitPosMap[i * 3 + 2]) & 1);
           }
-          CH422_Set(ch422_dat);
+          // CH422_Set(ch422_dat);
           break;
         }
         default: {

@@ -1,8 +1,11 @@
 #include "led.h"
+#include "ch422.h"
 #include "timeout.h"
 
 #define RGB_PORT_COUNT      3
 #define RGB_COUNT_PER_PORT  1
+
+#define RGB_7COLORS_COUNT   6
 
 #define WS2812_FREQ         800000
 #define TIMER_CLOCK_FREQ    144000000
@@ -18,6 +21,9 @@
 
 uint32_t colorList[RGB_PORT_COUNT][RGB_COUNT_PER_PORT] = {0}; // GRB format
 uint8_t colorPWM[RGB_PORT_COUNT][TIMER_PER_BUFF_SIZE]  = {0}; // GRB format in 24 bits
+
+uint32_t colorRawCh422                    = 0;
+uint8_t colorListCh422[RGB_7COLORS_COUNT] = {0};
 
 void setRgbColor32(uint8_t port, uint8_t index, uint32_t color)
 {
@@ -101,7 +107,7 @@ void Timer3_Config(void)
   TIM_CCxCmd(TIM3, TIM_Channel_3, TIM_CCx_Enable);      // 使能输出通道
 
   // RGB EX, PA6 Channel1
-  TIM_SetCompare1(TIM3, 90);                             // 设置比较值
+  TIM_SetCompare1(TIM3, 90);                            // 设置比较值
   TIM_SelectOCxM(TIM3, TIM_Channel_1, TIM_OCMode_PWM1); // 设置输出通道模式
   TIM_CCxCmd(TIM3, TIM_Channel_1, TIM_CCx_Enable);      // 使能输出通道
 
@@ -193,27 +199,48 @@ xdata void LED_Init_RGB()
 xdata void LED_Init()
 {
   LED_Init_RGB();
+  CH422_Init();
 }
 
-void LED_RGB_Refresh()
+void LED_Refresh()
 {
   WS2812_Refresh();
+  CH422_Refresh();
 }
 
-void LED_RGB_Set(uint8_t port, uint8_t index, uint8_t r, uint8_t g, uint8_t b)
+void LED_RGB_Set(LED_RGB_Port port, uint8_t index, uint8_t r, uint8_t g, uint8_t b)
 {
   setRgbColor(port, index, r, g, b);
-  // setTimeout(LED_RGB_Refresh, 0);
+  // setTimeout(LED_Refresh, 0);
 }
 
 void LED_RGB_SetAll(uint8_t r, uint8_t g, uint8_t b)
 {
   setRgbColorAll(r, g, b);
-  // setTimeout(LED_RGB_Refresh, 0);
+  // setTimeout(LED_Refresh, 0);
 }
 
-void LED_RGB_SetPort(uint8_t port, uint8_t r, uint8_t g, uint8_t b)
+void LED_RGB_SetPort(LED_RGB_Port port, uint8_t r, uint8_t g, uint8_t b)
 {
   setRgbColorPort(port, r, g, b);
-  // setTimeout(LED_RGB_Refresh, 0);
+  // setTimeout(LED_Refresh, 0);
+}
+
+void updateColorRawCh422()
+{
+  colorRawCh422 = 0;
+  for (uint8_t i = 0; i < RGB_7COLORS_COUNT; i++) {
+    colorRawCh422 |= (uint32_t)(colorListCh422[i]) << ((RGB_7COLORS_COUNT - 1 - i) * 3);
+  }
+  CH422_Set(colorRawCh422);
+}
+
+void LED_7C_Set(uint8_t index, LED_State r, LED_State g, LED_State b)
+{
+  uint8_t color = 0;
+  color |= r << 2;
+  color |= g << 1;
+  color |= b;
+  colorListCh422[index] = color;
+  updateColorRawCh422();
 }

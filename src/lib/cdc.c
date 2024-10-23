@@ -246,8 +246,8 @@ void CDC_LED_IO_Handler()
 
   switch (reqPacket->request.command) {
     case CMD_RESET:
-      LED_RGB_Set(RGB_PORT_LEFT, 0, 0, 0, 0);
-      LED_RGB_Set(RGB_PORT_RIGHT, 0, 0, 0, 0);
+      LED_RGB_Set(LED_RGB_PORT_LEFT, 0, 0, 0, 0);
+      LED_RGB_Set(LED_RGB_PORT_RIGHT, 0, 0, 0, 0);
       resPackect->length = 0;
       break;
     case CMD_SET_TIMEOUT:
@@ -260,8 +260,8 @@ void CDC_LED_IO_Handler()
       resPackect->length           = 1;
       break;
     case CMD_EXT_BOARD_SET_LED_RGB_DIRECT:
-      LED_RGB_Set(RGB_PORT_RIGHT, 0, reqPacket->request.data[3], reqPacket->request.data[4], reqPacket->request.data[5]);      // Right
-      LED_RGB_Set(RGB_PORT_LEFT, 0, reqPacket->request.data[180], reqPacket->request.data[181], reqPacket->request.data[182]); // Left
+      LED_RGB_Set(LED_RGB_PORT_RIGHT, 0, reqPacket->request.data[3], reqPacket->request.data[4], reqPacket->request.data[5]);      // Right
+      LED_RGB_Set(LED_RGB_PORT_LEFT, 0, reqPacket->request.data[180], reqPacket->request.data[181], reqPacket->request.data[182]); // Left
       return;
       break;
     case CMD_EXT_BOARD_INFO:
@@ -491,7 +491,7 @@ void CDC_CARD_IO_Handler()
       // TODO
       break;
     case CMD_EXT_BOARD_SET_LED_RGB:
-      LED_RGB_Set(RGB_PORT_UART, 0, req->color_payload[0], req->color_payload[1], req->color_payload[2]);
+      LED_RGB_Set(LED_RGB_PORT_UART, 0, req->color_payload[0], req->color_payload[1], req->color_payload[2]);
       CDC_CARD_IO_SendDataReady();
       break;
     default:
