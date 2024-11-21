@@ -22,7 +22,7 @@ uint8_t RxBufferSize = 0;
 
 void USART1_IRQHandler(void) __attribute__((interrupt("WCH-Interrupt-fast")));
 
-void PN532_UART_WriteCommand(void (*callback)(uint8_t), const uint8_t *header, uint8_t hlen, const uint8_t *body, uint8_t blen);
+void PN532_UART_WriteCommand(const uint8_t *header, uint8_t hlen, const uint8_t *body, uint8_t blen);
 void PN532_UART_ReadResponse(void (*callback)(uint8_t), uint8_t *buf, uint8_t len, uint16_t timeout);
 void PN532_UART_Receive(void (*callback)(uint8_t), uint8_t *buf, uint8_t len, uint16_t timeout);
 void PN532_UART_ReadAckFrame(void (*callback)(uint8_t), uint16_t timeout);
@@ -118,6 +118,7 @@ void PN532_UART_Wakeup()
 void PN532_UART_WriteCommand(const uint8_t *header, uint8_t hlen, const uint8_t *body, uint8_t blen)
 {
   // 00 - 00 FF - LEN - LCS - TFI -  PD0...PDn - DCS - 00
+
   command = header[0];
 
   _SendByte(PN532_PREAMBLE);
@@ -145,6 +146,130 @@ void PN532_UART_WriteCommand(const uint8_t *header, uint8_t hlen, const uint8_t 
   uint8_t DCS = ~sum + 1; // checksum of data
   _SendByte(DCS);
   _SendByte(PN532_POSTAMBLE);
+}
+
+uint8_t __read_response_tmp_buf[64];
+void (*__read_response_callback)(uint8_t);
+uint8_t *__read_response_buf;
+uint8_t __read_response_len;
+
+void __PN532_UART_ReadResponse_Clear()
+{
+  __read_response_buf      = NULL;
+  __read_response_len      = 0;
+  __read_response_callback = NULL;
+}
+
+void __PN532_UART_ReadResponse_Handler(uint8_t len)
+{
+  if (len == __read_response_len) {
+    if (memcmp("\x00,\x00,\xff", __read_response_buf, 3) != 0) {
+      __read_response_callback(PN532_INVALID_FRAME);
+      __PN532_UART_ReadResponse_Clear();
+      return;
+    }
+    if (__read_response_buf[3] + __read_response_buf[4] != 0) {
+      __read_response_callback(PN532_INVALID_FRAME);
+      __PN532_UART_ReadResponse_Clear();
+      return;
+    }
+    uint8_t cmd = command + 1;
+    if (__read_response_buf[5] != PN532_PN532TOHOST || __read_response_buf[6] != cmd) {
+      __read_response_callback(PN532_INVALID_FRAME);
+      __PN532_UART_ReadResponse_Clear();
+      return;
+    }
+    uint8_t sum = PN532_PN532TOHOST + cmd;
+    for (uint8_t i = 7; i < len - 2; i++) {
+      sum += __read_response_buf[i];
+    }
+    if (__read_response_buf[len - 2] != ~sum + 1 || __read_response_buf[len - 1] != PN532_POSTAMBLE) {
+      __read_response_callback(PN532_INVALID_FRAME);
+      __PN532_UART_ReadResponse_Clear();
+      return;
+    }
+    for (uint8_t i = 0; i < len - 7; i++) {
+      __read_response_buf[i] = __read_response_tmp_buf[i + 6];
+    }
+    __read_response_callback(len - 7);
+  }
+  if (len > 0xF0) {
+    __read_response_callback(len);
+    __PN532_UART_ReadResponse_Clear();
+    __PN532_UART_ReadResponse_Clear();
+  }
+  __read_response_callback(PN532_INVALID_FRAME);
+  __PN532_UART_ReadResponse_Clear();
+}
+void PN532_UART_ReadResponse(void (*callback)(uint8_t), uint8_t *buf, uint8_t len, uint16_t timeout)
+{
+  __read_response_callback = callback;
+  __read_response_buf      = buf;
+  __read_response_len      = len;
+  PN532_UART_Receive(__PN532_UART_ReadResponse_Handler, __read_response_tmp_buf, len, timeout);
+}
+
+void (*__read_ack_frame_handler_callback)(uint8_t);
+uint8_t __ack_frame_buf[6];
+
+void __PN532_UART_ReadAckFrame_Handler(uint8_t len)
+{
+  const uint8_t PN532_ACK[] = {0, 0, 0xFF, 0, 0xFF, 0};
+  if (len != 6) {
+    __read_ack_frame_handler_callback(len);
+    __read_ack_frame_handler_callback = NULL;
+    return;
+  }
+  if (memcmp(PN532_ACK, __ack_frame_buf, 6) == 0) {
+    __read_ack_frame_handler_callback(PN532_OK);
+    __read_ack_frame_handler_callback = NULL;
+  } else {
+    __read_ack_frame_handler_callback(PN532_INVALID_ACK);
+    __read_ack_frame_handler_callback = NULL;
+  }
+}
+
+void PN532_UART_ReadAckFrame(void (*callback)(uint8_t), uint16_t timeout)
+{
+  __read_ack_frame_handler_callback = callback;
+  PN532_UART_Receive(__PN532_UART_ReadAckFrame_Handler, __ack_frame_buf, 6, timeout);
+}
+
+uint8_t *__receive_handler_buf;
+uint8_t __receive_handler_len;
+void (*__receive_handler_callback)(uint8_t);
+uint8_t __receive_handler_timeout_id  = 0xFF;
+uint8_t __receive_handler_interval_id = 0xFF;
+
+void __PN532_UART_Receive_Timeout()
+{
+  USART_ITConfig(USART1, USART_IT_RXNE, DISABLE);
+  clearTimeout(__receive_handler_timeout_id);
+  clearInterval(__receive_handler_interval_id);
+  __receive_handler_timeout_id  = 0xFF;
+  __receive_handler_interval_id = 0xFF;
+  __receive_handler_buf         = NULL;
+  __receive_handler_len         = 0;
+  __receive_handler_callback(PN532_TIMEOUT);
+  __receive_handler_callback = NULL;
+}
+
+void __PN532_UART_Receive_Handler()
+{
+  if (RxIndex >= __receive_handler_len) {
+    USART_ITConfig(USART1, USART_IT_RXNE, DISABLE);
+    clearTimeout(__receive_handler_timeout_id);
+    clearInterval(__receive_handler_interval_id);
+    __receive_handler_timeout_id  = 0xFF;
+    __receive_handler_interval_id = 0xFF;
+    for (uint8_t i = 0; i < __receive_handler_len; i++) {
+      __receive_handler_buf[i] = RxBuffer[i];
+    }
+    __receive_handler_callback(__receive_handler_len);
+    __receive_handler_buf      = NULL;
+    __receive_handler_len      = 0;
+    __receive_handler_callback = NULL;
+  }
 }
 
 /**
