@@ -22,7 +22,7 @@ uint8_t RxBufferSize = 0;
 
 void USART1_IRQHandler(void) __attribute__((interrupt("WCH-Interrupt-fast")));
 
-void PN532_UART_WriteCommand(void (*callback)(uint8_t), const uint8_t *header, uint8_t hlen, const uint8_t *body, uint8_t blen);
+void PN532_UART_WriteCommand(const uint8_t *header, uint8_t hlen, const uint8_t *body, uint8_t blen);
 void PN532_UART_ReadResponse(void (*callback)(uint8_t), uint8_t *buf, uint8_t len, uint16_t timeout);
 void PN532_UART_Receive(void (*callback)(uint8_t), uint8_t *buf, uint8_t len, uint16_t timeout);
 void PN532_UART_ReadAckFrame(void (*callback)(uint8_t), uint16_t timeout);
@@ -115,7 +115,7 @@ void PN532_UART_Wakeup()
   _SendByte(0);
 }
 
-void PN532_UART_WriteCommand(void (*callback)(uint8_t), const uint8_t *header, uint8_t hlen, const uint8_t *body, uint8_t blen)
+void PN532_UART_WriteCommand(const uint8_t *header, uint8_t hlen, const uint8_t *body, uint8_t blen)
 {
   // 00 - 00 FF - LEN - LCS - TFI -  PD0...PDn - DCS - 00
 
@@ -146,8 +146,6 @@ void PN532_UART_WriteCommand(void (*callback)(uint8_t), const uint8_t *header, u
   uint8_t DCS = ~sum + 1; // checksum of data
   _SendByte(DCS);
   _SendByte(PN532_POSTAMBLE);
-
-  PN532_UART_ReadAckFrame(callback, PN532_UART_TIMEOUT);
 }
 
 uint8_t __read_response_tmp_buf[64];

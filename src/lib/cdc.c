@@ -381,7 +381,6 @@ void CDC_CARD_IO_Handler()
   res->seq_no = req->seq_no;
   res->cmd    = req->cmd;
   res->status = 0;
-
   switch (req->cmd) {
     case CMD_TO_NORMAL_MODE:
       // _writeCommand(CDC2_RequestPacketBuf, 0, CDC_ResponseStringBuf, 0);
@@ -391,42 +390,81 @@ void CDC_CARD_IO_Handler()
       //   res->payload_len = 0;
       // }
       // else
-      {
-        res->status      = 0x01;
+        res->frame_len = 6;
+        res->status = 0;
+        res->seq_no = 0;
+        res->payload_len = 0;
+        CDC_CARD_IO_SendDataReady();
+      break;
+    case CMD_GET_FW_VERSION:
+// #if CARD_READER_RATE == CARD_READER_RATE_HI
+//       memcpy(res->version, CARD_READER_FW_VERSION_HIRATE, sizeof(CARD_READER_FW_VERSION_HIRATE));
+//       res->payload_len = sizeof(CARD_READER_FW_VERSION_HIRATE);
+// #elif CARD_READER_RATE == CARD_READER_RATE_LOW
+      memcpy(res->version, CARD_READER_FW_VERSION_LOWRATE, sizeof(CARD_READER_FW_VERSION_LOWRATE));
+      res->payload_len = sizeof(CARD_READER_FW_VERSION_LOWRATE);
+      res->frame_len = 6 + res->payload_len;
+// #endif
+      CDC_CARD_IO_SendDataReady();
+      break;
+    case CMD_GET_HW_VERSION:
+// #if CARD_READER_RATE == CARD_READER_RATE_HI
+//       memcpy(res->version, CARD_READER_VERSION_HIRATE, 9);
+//       res->payload_len = 9;
+// #elif CARD_READER_RATE == CARD_READER_RATE_LOW
+      memcpy(res->version, CARD_READER_VERSION_LOWRATE, 23);
+      res->payload_len = 23;
+      res->frame_len = 6 + res->payload_len;
+// #endif
+      CDC_CARD_IO_SendDataReady();
+      break;
+    case CMD_EXT_BOARD_INFO:
+// #if CARD_READER_RATE == CARD_READER_RATE_HI
+//       memcpy(res->info_payload, CARD_READER_EXTRA_INFO_HIRATE, 12);
+//       res->payload_len = 12;
+// #elif CARD_READER_RATE == CARD_READER_RATE_LOW
+      memcpy(res->info_payload, CARD_READER_EXTRA_INFO_LOWRATE, 9);
+      res->payload_len = 9;
+      res->frame_len = 6 + res->payload_len;
+// #endif
+      CDC_CARD_IO_SendDataReady();
+      break;
+    case CMD_MIFARE_KEY_SET_B:
+      memcpy(AimeKey, req->key, 6);
+      CDC_CARD_IO_SendDataReady();
+      break;
+    case CMD_MIFARE_KEY_SET_A:
+      memcpy(BanaKey, req->key, 6);
+      CDC_CARD_IO_SendDataReady();
+      break;
+    case CMD_EXT_BOARD_SET_LED_RGB:
+      LED_RGB_Set(LED_RGB_PORT_UART, 0, req->color_payload[0], req->color_payload[1], req->color_payload[2]);
+      CDC_CARD_IO_SendDataReady();
+      break;
+    case CMD_EXT_TO_NORMAL_MODE:
+      if (PN532_Status.PN532_Connected_Status){
+        res->frame_len = 6;
+        res->status = 0;
+        res->seq_no = 0;
         res->payload_len = 0;
         CDC_CARD_IO_SendDataReady();
       }
       break;
-    case CMD_GET_FW_VERSION:
-#if CARD_READER_RATE == CARD_READER_RATE_HI
-      memcpy(res->version, CARD_READER_FW_VERSION_HIRATE, sizeof(CARD_READER_FW_VERSION_HIRATE));
-      res->payload_len = sizeof(CARD_READER_FW_VERSION_HIRATE);
-#elif CARD_READER_RATE == CARD_READER_RATE_LOW
-      memcpy(res->version, CARD_READER_FW_VERSION_LOWRATE, sizeof(CARD_READER_FW_VERSION_LOWRATE));
-      res->payload_len = sizeof(CARD_READER_FW_VERSION_LOWRATE);
-#endif
+    case CMD_START_POLLING:
+      res->frame_len = 6;
+      res->status = 0;
+      res->payload_len =0;
+      PN532_setRFField(0,1);
       CDC_CARD_IO_SendDataReady();
       break;
-    case CMD_GET_HW_VERSION:
-#if CARD_READER_RATE == CARD_READER_RATE_HI
-      memcpy(res->version, CARD_READER_VERSION_HIRATE, 9);
-      res->payload_len = 9;
-#elif CARD_READER_RATE == CARD_READER_RATE_LOW
-      memcpy(res->version, CARD_READER_VERSION_LOWRATE, 23);
-      res->payload_len = 23;
-#endif
+    case CMD_STOP_POLLING:
+      res->frame_len = 6;
+      res->status = 0;
+      res->payload_len =0;
+      PN532_setRFField(0,0);
       CDC_CARD_IO_SendDataReady();
       break;
-    case CMD_EXT_BOARD_INFO:
-#if CARD_READER_RATE == CARD_READER_RATE_HI
-      memcpy(res->info_payload, CARD_READER_EXTRA_INFO_HIRATE, 12);
-      res->payload_len = 12;
-#elif CARD_READER_RATE == CARD_READER_RATE_LOW
-      memcpy(res->info_payload, CARD_READER_EXTRA_INFO_LOWRATE, 9);
-      res->payload_len = 9;
-#endif
-      CDC_CARD_IO_SendDataReady();
-      break;
+    //下列状态是非阻塞式处理，这里仅对PN532的发送进行处理
     case CMD_CARD_DETECT:
       // 卡号发送
 
@@ -447,54 +485,25 @@ void CDC_CARD_IO_Handler()
       //   break;
       // }
       // else
-      {
-
-        res->payload_len = 1;
-        res->count       = 0;
+        PN532_Polling();
         break;
-      }
-
     case CMD_MIFARE_READ:
-      // TODO
-      res->status = 0x01;
+      PN532_mifareclassic_ReadDataBlock(req->block_no, res->block);
       break;
     case CMD_FELICA_THROUGH:
       // TODO
       res->status = 0x01;
       break;
     case CMD_MIFARE_AUTHORIZE_B:
-      // TODO
-      res->status = 0x01;
+      PN532_mifareclassic_AuthenticateBlock(req->uid, 4, req->block_no, 0, BanaKey);
       break;
     case CMD_MIFARE_AUTHORIZE_A:
-      // TODO
-      res->status = 0x01;
-      break;
-    case CMD_CARD_SELECT:
-      // TODO
-      break;
-    case CMD_MIFARE_KEY_SET_B:
-      memcpy(AimeKey, req->key, 6);
-      CDC_CARD_IO_SendDataReady();
-      break;
-    case CMD_MIFARE_KEY_SET_A:
-      memcpy(BanaKey, req->key, 6);
-      CDC_CARD_IO_SendDataReady();
-      break;
-    case CMD_START_POLLING:
-      // TODO
-      break;
-    case CMD_STOP_POLLING:
-      // TODO
-      break;
-    case CMD_EXT_TO_NORMAL_MODE:
-      // TODO
-      break;
-    case CMD_EXT_BOARD_SET_LED_RGB:
-      LED_RGB_Set(LED_RGB_PORT_UART, 0, req->color_payload[0], req->color_payload[1], req->color_payload[2]);
-      CDC_CARD_IO_SendDataReady();
+      PN532_mifareclassic_AuthenticateBlock(req->uid, 4, req->block_no, 0, AimeKey);
       break;
     default:
+      res->frame_len = 6;
+      res->status = 0;
+      res->payload_len = 0;
       break;
   }
 }
