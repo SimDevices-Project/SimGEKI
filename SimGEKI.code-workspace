@@ -17,7 +17,21 @@
             "*.cpp": "cpp",
             "*.cxx": "cpp",
             "*.cc": "cpp",
-            "*.a51": "a51"
+            "*.a51": "a51",
+            "array": "c",
+            "deque": "c",
+            "forward_list": "c",
+            "list": "c",
+            "string": "c",
+            "unordered_map": "c",
+            "unordered_set": "c",
+            "vector": "c",
+            "string_view": "c",
+            "rope": "c",
+            "slist": "c",
+            "initializer_list": "c",
+            "regex": "c",
+            "valarray": "c"
         },
         "[yaml]": {
             "editor.insertSpaces": true,

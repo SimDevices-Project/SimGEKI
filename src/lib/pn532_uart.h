@@ -5,7 +5,12 @@
 
 #define PN532_UART_TIMEOUT 1000
 
-// 是否启用 UART 直通模式
+/**
+ * @brief 是否启用串口直通模式
+ * 0 - 禁用
+ * 1 - 模式1
+ * 2 - 模式2
+ */
 #define PN532_UART_DIRECT 0
 
 void PN532_UART_Check();
@@ -18,8 +23,8 @@ typedef struct
 {
   void (*begin)(void);
   void (*wakeup)(void);
-  void (*writeCommand)(void (*callback)(uint8_t), const uint8_t *header, uint8_t hlen, const uint8_t *body, uint8_t blen);
-  void (*readResponse)(void (*callback)(uint8_t), uint8_t *buf, uint8_t len, uint16_t timeout);
+  void (*writeCommand)(const uint8_t *header, uint8_t hlen, const uint8_t *body, uint8_t blen);
+  void (*readResponse)(uint8_t *buf, uint8_t len, uint16_t timeout);
 } __packed PN532_Interface;
 
 extern PN532_Interface PN532_UART;
