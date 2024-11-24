@@ -81,6 +81,10 @@ uint8_t __HasNextRxBuffer()
 void __GetNextRxBuffer(uint8_t **buf, uint8_t *len)
 {
   uint8_t next;
+  USART_ITConfig(USART1, USART_IT_RXNE, DISABLE);
+#if PN532_UART_DIRECT != 1
+  USART_ITConfig(USART1, USART_IT_IDLE, DISABLE);
+#endif
   if (RxBufferCount > RxBufferIndex) {
     next = (RX_BUFFER_COUNT - RxBufferCount) + RxBufferIndex;
   } else {
@@ -89,6 +93,10 @@ void __GetNextRxBuffer(uint8_t **buf, uint8_t *len)
   *buf = RxBuffer[next];
   *len = RxIndex[next];
   RxBufferCount--;
+  USART_ITConfig(USART1, USART_IT_RXNE, ENABLE);
+#if PN532_UART_DIRECT != 1
+  USART_ITConfig(USART1, USART_IT_IDLE, ENABLE);
+#endif
 }
 
 void PN532_UART_RxDataCheck()
