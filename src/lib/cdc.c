@@ -572,7 +572,7 @@ void CDC_LED_IO_UART_Poll()
 // Card IO CDC 数据读取
 void CDC_CARD_IO_UART_Poll()
 {
-#if PN532_UART_DIRECT == 1
+#if PN532_UART_DIRECT != 0
   uint8_t dat;
   while (cdc_card_io.Rx_Pending) {
     dat = cdc_card_io.Rx_PendingBuf[cdc_card_io.Rx_CurPos];
