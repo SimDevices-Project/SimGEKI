@@ -2,6 +2,12 @@
     "folders": [
         {
             "path": "."
+        },
+        {
+            "path": "C:/Users/Qinh/Documents/Arduino/libraries/PN532_HSU"
+        },
+        {
+            "path": "C:/Users/Qinh/Documents/Arduino/libraries/PN532"
         }
     ],
     "settings": {
@@ -31,7 +37,9 @@
             "slist": "c",
             "initializer_list": "c",
             "regex": "c",
-            "valarray": "c"
+            "valarray": "c",
+            "bitset": "c",
+            "chrono": "c"
         },
         "[yaml]": {
             "editor.insertSpaces": true,
