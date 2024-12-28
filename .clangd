@@ -1,0 +1,11 @@
+CompileFlags:
+    Add:
+        - -Id:\segatool\simgeki\tools\wch_riscv_gcc_8_2_0\riscv-none-embed\include\newlib-nano
+        - -Id:\segatool\simgeki\tools\wch_riscv_gcc_8_2_0\riscv-none-embed\include\c++\8.2.0
+        - -Id:\segatool\simgeki\tools\wch_riscv_gcc_8_2_0\riscv-none-embed\include\c++\8.2.0\riscv-none-embed\rv32imac\ilp32
+        - -Id:\segatool\simgeki\tools\wch_riscv_gcc_8_2_0\riscv-none-embed\include\c++\8.2.0\backward
+        - -Id:\segatool\simgeki\tools\wch_riscv_gcc_8_2_0\lib\gcc\riscv-none-embed\8.2.0\include
+        - -Id:\segatool\simgeki\tools\wch_riscv_gcc_8_2_0\lib\gcc\riscv-none-embed\8.2.0\include-fixed
+        - -Id:\segatool\simgeki\tools\wch_riscv_gcc_8_2_0\riscv-none-embed\include
+    CompilationDatabase: ./build/SimGETRO_Public
+    Compiler: d:\Download\新建文件夹\SimGEKI\tools\wch_riscv_gcc_8_2_0\bin\riscv-none-embed-g++.exe

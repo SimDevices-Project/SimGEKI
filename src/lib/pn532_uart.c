@@ -10,6 +10,12 @@
 #define _SendByte(dat)           \
   (USART_SendData(USART1, dat)); \
   while (USART_GetFlagStatus(USART1, USART_FLAG_TXE) == RESET)
+// void _SendByte(uint8_t dat) {
+//     USART_SendData(USART1, dat); 
+//     CDC_LED_IO_PutChar(dat);
+//     while (USART_GetFlagStatus(USART1, USART_FLAG_TXE) == RESET) {
+//     }
+// }
 
 uint8_t command;
 
@@ -98,7 +104,7 @@ uint8_t __GetNextRxBuffer(uint8_t **buf, uint8_t *len)
   return 1;
 }
 
-void PN532_UART_RxDataCheck()
+void PN532_UART_Check(uint8_t *_buffer,uint8_t *_size)
 {
   uint8_t *buffer;
   uint8_t size;
@@ -108,17 +114,12 @@ void PN532_UART_RxDataCheck()
       CDC_CARD_IO_PutChar(buffer[i]);
     }
 #elif PN532_UART_DIRECT == 0
-    // Do something
-    // buffer 为接收到的数据
-    // size 为接收到的数据长度
+    memcpy(_buffer,buffer,size);
+    *_size = size;
 #endif
   }
 }
 
-void PN532_UART_Check()
-{
-  PN532_UART_RxDataCheck();
-}
 
 void PN532_UART_Init()
 {
@@ -161,17 +162,19 @@ void PN532_UART_Init()
 
 void PN532_UART_Wakeup()
 {
-  _SendByte(0x55);
-  _SendByte(0x55);
-  _SendByte(0);
-  _SendByte(0);
-  _SendByte(0);
+  const uint8_t startup532[] = {
+    0x55 , 0x55 , 0x00 , 0x00 , 0x00 , 0x00 , 0x00 , 0x00 , 0x00 , 0x00 , 0x00 , 0x00 , 0x00 , 0x00 , 0x00 , 0x00 , 0xFF , 0x03 , 0xFD , 0xD4 , 0x14 , 0x01 , 0x17 , 0x00,
+    0x00 , 0x00 , 0xff , 0x05 , 0xfb , 0xd4 , 0x14 , 0x01 , 0x14 , 0x01 , 0x02 , 0x00
+  };
+
+  for(uint8_t i = 0;i < sizeof(startup532);i++){
+  _SendByte(startup532[i]);
+  }
 }
 
 void PN532_UART_WriteCommand(const uint8_t *header, uint8_t hlen, const uint8_t *body, uint8_t blen)
 {
   // 00 - 00 FF - LEN - LCS - TFI -  PD0...PDn - DCS - 00
-
   command = header[0];
 
   _SendByte(PN532_PREAMBLE);

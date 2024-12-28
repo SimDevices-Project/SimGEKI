@@ -13,7 +13,7 @@
  */
 #define PN532_UART_DIRECT 0
 
-void PN532_UART_Check();
+void PN532_UART_Check(uint8_t *buffer,uint8_t *size);
 void PN532_UART_Init();
 void PN532_UART_WriteCommand(const uint8_t *header, uint8_t hlen, const uint8_t *body, uint8_t blen);
 
