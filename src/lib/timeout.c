@@ -11,7 +11,7 @@ typedef struct {
 } Timer_TypeDef;
 
 Timer_TypeDef interval[MAX_TIMER_COUNT] = {0};
-Timer_TypeDef timeout[MAX_TIMER_COUNT] = {0};
+Timer_TypeDef timeout[MAX_TIMER_COUNT]  = {0};
 
 uint16_t timerSet = 0;
 
@@ -28,8 +28,8 @@ xdata void Timer4_Config(void)
 
   NVIC_InitTypeDef NVIC_InitStructure;
   NVIC_InitStructure.NVIC_IRQChannel                   = TIM4_IRQn;
-  NVIC_InitStructure.NVIC_IRQChannelPreemptionPriority = 1;
-  NVIC_InitStructure.NVIC_IRQChannelSubPriority        = 0;
+  NVIC_InitStructure.NVIC_IRQChannelPreemptionPriority = 15;
+  NVIC_InitStructure.NVIC_IRQChannelSubPriority        = 15;
   NVIC_InitStructure.NVIC_IRQChannelCmd                = ENABLE;
   NVIC_Init(&NVIC_InitStructure);
 
@@ -40,7 +40,8 @@ xdata void Timer4_Config(void)
 void TIM4_IRQHandler(void) __attribute__((interrupt("WCH-Interrupt-fast")));
 void TIM4_IRQHandler(void)
 {
-  timerSet += TIM_GetCounter(TIM4) + 1;
+  timerSet += TIM_GetCounter(TIM4);
+  // timerSet++;
 
   if (TIM_GetITStatus(TIM4, TIM_IT_Update) != RESET) {
     TIM_ClearITPendingBit(TIM4, TIM_IT_Update);
@@ -73,7 +74,6 @@ uint8_t setTimeout(void (*callback)(void), uint16_t period)
   }
   return 0xFF;
 }
-
 
 void clearInterval(uint8_t id)
 {

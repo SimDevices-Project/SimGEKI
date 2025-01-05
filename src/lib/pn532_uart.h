@@ -7,11 +7,11 @@
 
 /**
  * @brief 是否启用串口直通模式
- * 0 - 禁用
- * 1 - 模式1
- * 2 - 模式2
+ * - 0 禁用
+ * - 1 模式1
+ * - 2 模式2
  */
-#define PN532_UART_DIRECT 0
+#define PN532_UART_DIRECT 2
 
 void PN532_UART_Check();
 void PN532_UART_Init();
