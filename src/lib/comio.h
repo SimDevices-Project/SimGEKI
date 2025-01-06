@@ -102,7 +102,7 @@ typedef union {
 } __packed IO_Packet;
 
 typedef union {
-  uint8_t buffer[64];
+  uint8_t buffer[128];
   struct
   {
     uint8_t frame_len;
@@ -133,21 +133,20 @@ typedef union {
       struct
       { // sg_nfc_res_felica_encap
         uint8_t encap_len;
-        uint8_t code;
+        uint8_t encap_code;
         uint8_t encap_IDm[8];
         union {
           struct
           { // FELICA_CMD_POLL
-            uint8_t encap_PMm[8];
-            uint8_t system_code[2];
+            uint8_t poll_PMm[8];
+            uint8_t poll_system_code[2];
           };
-          struct
-          { // NDA06
-            uint8_t NDA06_code[3];
-            uint8_t NDA06_IDm[8];
-            uint8_t NDA06_Data[8];
+          struct {
+            uint8_t RW_status[2];
+            uint8_t numBlock;
+            uint8_t blockData[4][16];
           };
-          uint8_t felica_payload[48];
+          uint8_t felica_payload[1];
         };
       };
     };
@@ -158,7 +157,6 @@ typedef union {
   uint8_t buffer[64];
   struct
   {
-    uint8_t sync;
     uint8_t frame_len;
     uint8_t addr;
     uint8_t seq_no;
@@ -172,16 +170,38 @@ typedef union {
         uint8_t uid[4];
         uint8_t block_no;
       };
-      struct
-      { // sg_nfc_req_felica_encap
-        uint8_t IDm[8];
+      struct {  // CMD_FELICA_THROUGH
+        uint8_t encap_IDm[8];
         uint8_t encap_len;
-        uint8_t code;
-        uint8_t felica_payload[48];
+        uint8_t encap_code;
+        union {
+          struct {  // CMD_FELICA_THROUGH_POLL
+            uint8_t poll_systemCode[2];
+            uint8_t poll_requestCode;
+            uint8_t poll_timeout;
+          };
+          struct {  // CMD_FELICA_THROUGH_READ,WRITE,NDA_A4
+            uint8_t RW_IDm[8];
+            uint8_t numService;
+            uint8_t serviceCodeList[2];
+            uint8_t numBlock;
+            union{
+              uint8_t blockList[4][2];  // CMD_FELICA_THROUGH_READ
+              struct{
+                uint8_t blockList_write[1][2];  
+                uint8_t blockData[16];    // CMD_FELICA_THROUGH_WRITE
+              };
+
+            };
+          };
+          uint8_t felica_payload[1];
+        };
       };
     };
   };
 
 } __packed AIME_Request;
+
+
 
 #endif

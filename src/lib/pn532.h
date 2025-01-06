@@ -2,6 +2,7 @@
 #define __PN532_H
 
 #include "bsp.h"
+#include "comio.h"
 //#include <std_Bool.h>
 
 #define PN532_HOSTTOPN532   0xD4
@@ -132,6 +133,7 @@ struct _PN532_Status{
   _Bool PN532_Connected_Status;
   uint8_t PN532_Option_Status;   
   uint8_t PN532_CMD_Status;
+  uint8_t PN532_PARAMETER;
   uint8_t PN532_Failed_task_key;
 };
 extern struct _PN532_Status PN532_Status;
@@ -165,15 +167,16 @@ enum PN532_cmd{
 void PN532_Init();
 void PN532_Failed();
 void PN532_Check();
+void PN532_Polling();
 
 // Generic PN532 functions
 void PN532_SAMConfig(void);
 void PN532_getFirmwareVersion(void);
-void PN532_setPassiveActivationRetries(uint8_t maxRetries);
+void PN532_setPassiveActivationRetries(void);
 void PN532_setRFField(uint8_t autoRFCA, uint8_t rFOnOff);
 // Polling functions
-void PN532_readPassiveTargetID(uint8_t cardbaudrate, uint8_t *uid, uint8_t *uidLength, uint16_t timeout, _Bool inlist);
-void PN532_felica_Polling(uint16_t systemCode, uint8_t requestCode, uint8_t *idm, uint8_t *pmm, uint16_t *systemCodeResponse, uint16_t timeout);
+void PN532_readPassiveTargetID(uint8_t cardbaudrate, uint16_t timeout);
+void PN532_felica_Polling(uint16_t systemCode, uint8_t requestCode, uint16_t timeout);
 
 // Mifare Classic functions
 void PN532_mifareclassic_AuthenticateBlock (uint8_t *uid, uint8_t uidLen, uint32_t blockNumber, uint8_t keyNumber, uint8_t *keyData);
@@ -198,5 +201,8 @@ uint8_t PN532_mifareclassic_ReadDataBlock_callback (void);
   // FeliCa Functions
 int8_t PN532_felica_ReadWithoutEncryption_callback(void);
 int8_t PN532_felica_WriteWithoutEncryption_callback(void);
+
+void res_init(uint8_t payload_len);
+void PN532_felica_through();
 
 #endif
