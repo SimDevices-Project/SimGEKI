@@ -71,13 +71,13 @@ void EP2_OUT_Callback(void)
  */
 void EP2_IN_Callback(void)
 {
-  if (cdc_led_io.Tx_Full) {
+  // if (cdc_led_io.Tx_Full) {
     USB_SIL_Write(0x80 | CDC_LED_IO_EP, 0, 0);
-    cdc_led_io.Tx_Full = 0;
-  } else {
+  //  cdc_led_io.Tx_Full = 0;
+  // } else {
     SetEPTxStatus(CDC_LED_IO_EP, EP_TX_NAK);
     cdc_led_io.Tx_Busy = 0;
-  }
+  // }
 }
 
 /*********************************************************************
@@ -104,13 +104,13 @@ void EP3_OUT_Callback(void)
  */
 void EP3_IN_Callback(void)
 {
-  if (cdc_card_io.Tx_Full) {
+  // if (cdc_card_io.Tx_Full) {
     USB_SIL_Write(0x80 | CDC_CARD_IO_EP, 0, 0);
-    cdc_card_io.Tx_Full = 0;
-  } else {
+  //   cdc_card_io.Tx_Full = 0;
+  // } else {
     SetEPTxStatus(CDC_CARD_IO_EP, EP_TX_NAK);
     cdc_card_io.Tx_Busy = 0;
-  }
+  // }
 }
 
 /*********************************************************************
