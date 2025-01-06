@@ -474,7 +474,7 @@ void PN532_felica_through() {
     @brief  Setups the HW
 */
 /**************************************************************************/
-void PN532_Init()
+xdata void PN532_Init()
 {
   INTR(begin)
   ();

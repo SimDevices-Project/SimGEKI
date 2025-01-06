@@ -53,7 +53,7 @@ void USB_LP_CAN1_RX0_IRQHandler(void)
  *
  * @return    None
  */
-void Set_USBConfig( )
+xdata void Set_USBConfig( )
 {
 	if( SystemCoreClock == 144000000 )
     {
@@ -105,7 +105,7 @@ void Leave_LowPowerMode(void)
  *
  * @return     None
  */
-void USB_Interrupts_Config(void)
+xdata void USB_Interrupts_Config(void)
 { 
 	NVIC_InitTypeDef NVIC_InitStructure;
 	EXTI_InitTypeDef EXTI_InitStructure;

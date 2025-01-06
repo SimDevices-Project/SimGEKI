@@ -41,7 +41,7 @@ extern AIME_Response res;
 
 uint8_t cardIO_SendDataReady_Flag = 0;
 
-void CDC_Init()
+xdata void CDC_Init()
 {
   cdc_led_io.PutCharBuff       = ledIO_PutCharBuf;
   cdc_led_io.PutCharBuff_Last  = 0;

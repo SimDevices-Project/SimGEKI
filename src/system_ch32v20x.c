@@ -106,7 +106,7 @@ static void SetSysClockTo144_HSI( void );
  *
  * @return  none
  */
-void SystemInit (void)
+xdata void SystemInit (void)
 {
   RCC->CTLR |= (uint32_t)0x00000001;
   RCC->CFGR0 &= (uint32_t)0xF8FF0000;
@@ -125,7 +125,7 @@ void SystemInit (void)
  *
  * @return  none
  */
-void SystemCoreClockUpdate (void)
+xdata void SystemCoreClockUpdate (void)
 {
   uint32_t tmp = 0, pllmull = 0, pllsource = 0, Pll_6_5 = 0;
 

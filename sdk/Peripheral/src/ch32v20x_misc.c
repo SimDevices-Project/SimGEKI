@@ -30,7 +30,7 @@ __IO uint32_t NVIC_Priority_Group = 0;
  *
  * @return  none
  */
-void NVIC_PriorityGroupConfig(uint32_t NVIC_PriorityGroup)
+xdata void NVIC_PriorityGroupConfig(uint32_t NVIC_PriorityGroup)
 {
     NVIC_Priority_Group = NVIC_PriorityGroup;
 }

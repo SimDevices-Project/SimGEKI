@@ -5,8 +5,6 @@
 #include "stdio.h"
 #include "ch32v20x.h"
 
-#define xdata __attribute__((section(".stext"))) 
-
 #ifndef TARGET_SIMGEKI
 
 

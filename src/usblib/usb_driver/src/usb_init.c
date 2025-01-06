@@ -27,7 +27,7 @@ USER_STANDARD_REQUESTS  *pUser_Standard_Requests;
  * @return    None.
  *
  */
-void USB_Init(void)
+xdata void USB_Init(void)
 {
   pInformation = &Device_Info;
   pInformation->ControlState = 2;

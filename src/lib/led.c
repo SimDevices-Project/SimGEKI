@@ -54,7 +54,7 @@ void setRgbColorPort(uint8_t port, uint8_t r, uint8_t g, uint8_t b)
   }
 }
 
-void Timer3_Config(void)
+xdata void Timer3_Config(void)
 {
   GPIO_InitTypeDef GPIO_InitStructure;
   DMA_InitTypeDef DMA_InitStructure;

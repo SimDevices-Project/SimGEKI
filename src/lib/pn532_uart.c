@@ -116,7 +116,7 @@ void PN532_UART_Check(uint8_t *_buffer,uint8_t *_size)
 }
 
 
-void PN532_UART_Init()
+xdata void PN532_UART_Init()
 {
   GPIO_InitTypeDef GPIO_InitStructure   = {0};
   USART_InitTypeDef USART_InitStructure = {0};

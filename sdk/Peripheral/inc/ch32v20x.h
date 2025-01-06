@@ -14,6 +14,10 @@
 extern "C" {
 #endif
 
+#ifndef xdata
+  #define xdata __attribute__((section(".stext"))) 
+#endif // !xdata
+
 #if !defined(CH32V20x_D8W) && !defined(CH32V20x_D8) && !defined(CH32V20x_D6)
 #define CH32V20x_D6              /* CH32V203F6-CH32V203F8-CH32V203G6-CH32V203G8-CH32V203K6-CH32V203K8-CH32V203C6-CH32V203C8 */
 //#define CH32V20x_D8              /* CH32V203RBT6 */
