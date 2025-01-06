@@ -7,6 +7,8 @@
 #define CDC_PUTCHARBUF_LEN 64
 #define CDC_PENDINGBUF_LEN 64
 
+#define CDC_USB_BUFF_SIZE 64
+
 #define CDC_LED_IO_EP  ENDP2
 #define CDC_CARD_IO_EP ENDP3
 

@@ -22,6 +22,8 @@ uint8_t cardIO_PutCharBuf[CDC_PUTCHARBUF_LEN];
 uint8_t ledIO_Rx_PendingBuf[CDC_PENDINGBUF_LEN];
 uint8_t cardIO_Rx_PendingBuf[CDC_PENDINGBUF_LEN];
 
+uint8_t usb_DataUpBuf[CDC_USB_BUFF_SIZE];
+
 uint8_t ledIO_PacketBuf[256];
 uint8_t cardIO_PacketBuf[64];
 
@@ -66,12 +68,12 @@ void CDC_Init()
 
 void CDC_LED_IO_Upload(uint8_t length)
 {
-  USBD_ENDPx_DataUp(CDC_LED_IO_EP, ledIO_ResponseStringBuf, length);
+  USBD_ENDPx_DataUp(CDC_LED_IO_EP, usb_DataUpBuf, length);
 }
 
 void CDC_CARD_IO_Upload(uint8_t length)
 {
-  USBD_ENDPx_DataUp(CDC_CARD_IO_EP, cardIO_ResponseStringBuf, length);
+  USBD_ENDPx_DataUp(CDC_CARD_IO_EP, usb_DataUpBuf, length);
 }
 
 void CDC_LED_IO_USB_Poll()
@@ -87,14 +89,16 @@ void CDC_LED_IO_USB_Poll()
 
           // length (the first byte to send, the end of the buffer)
           usb_tx_len = CDC_PUTCHARBUF_LEN - cdc_led_io.PutCharBuff_First;
-          memcpy(ledIO_ResponseStringBuf, &cdc_led_io.PutCharBuff[cdc_led_io.PutCharBuff_First], usb_tx_len);
+          memcpy(usb_DataUpBuf, &cdc_led_io.PutCharBuff[cdc_led_io.PutCharBuff_First], usb_tx_len);
 
           // length (the first byte in the buffer, the last byte to send), if any
           if (cdc_led_io.PutCharBuff_Last > 0)
-            memcpy(&ledIO_ResponseStringBuf[usb_tx_len], cdc_led_io.PutCharBuff, cdc_led_io.PutCharBuff_Last);
+            memcpy(&usb_DataUpBuf[usb_tx_len], cdc_led_io.PutCharBuff, cdc_led_io.PutCharBuff_Last);
 
           // Send the entire buffer
           CDC_LED_IO_Upload(CDC_PUTCHARBUF_LEN);
+
+          cdc_led_io.Tx_Full = 0;
 
           // A 64-byte packet is going to be sent, according to USB specification, USB uses a less-than-max-length packet to demarcate an end-of-transfer
           // As a result, we need to send a zero-length-packet.
@@ -113,17 +117,17 @@ void CDC_LED_IO_USB_Poll()
           // Rollback
           // length (the first byte to send, the end of the buffer)
           usb_tx_len = CDC_PUTCHARBUF_LEN - cdc_led_io.PutCharBuff_First;
-          memcpy(ledIO_ResponseStringBuf, &cdc_led_io.PutCharBuff[cdc_led_io.PutCharBuff_First], usb_tx_len);
+          memcpy(usb_DataUpBuf, &cdc_led_io.PutCharBuff[cdc_led_io.PutCharBuff_First], usb_tx_len);
 
           // length (the first byte in the buffer, the last byte to send), if any
           if (cdc_led_io.PutCharBuff_Last > 0) {
-            memcpy(&ledIO_ResponseStringBuf[usb_tx_len], cdc_led_io.PutCharBuff, cdc_led_io.PutCharBuff_Last);
+            memcpy(&usb_DataUpBuf[usb_tx_len], cdc_led_io.PutCharBuff, cdc_led_io.PutCharBuff_Last);
             usb_tx_len += cdc_led_io.PutCharBuff_Last;
           }
 
         } else {
           usb_tx_len = cdc_led_io.PutCharBuff_Last - cdc_led_io.PutCharBuff_First;
-          memcpy(ledIO_ResponseStringBuf, &cdc_led_io.PutCharBuff[cdc_led_io.PutCharBuff_First], usb_tx_len);
+          memcpy(usb_DataUpBuf, &cdc_led_io.PutCharBuff[cdc_led_io.PutCharBuff_First], usb_tx_len);
         }
 
         cdc_led_io.PutCharBuff_First += usb_tx_len;
@@ -150,14 +154,16 @@ void CDC_CARD_IO_USB_Poll()
 
           // length (the first byte to send, the end of the buffer)
           usb_tx_len = CDC_PUTCHARBUF_LEN - cdc_card_io.PutCharBuff_First;
-          memcpy(cardIO_ResponseStringBuf, &cdc_card_io.PutCharBuff[cdc_card_io.PutCharBuff_First], usb_tx_len);
+          memcpy(usb_DataUpBuf, &cdc_card_io.PutCharBuff[cdc_card_io.PutCharBuff_First], usb_tx_len);
 
           // length (the first byte in the buffer, the last byte to send), if any
           if (cdc_card_io.PutCharBuff_Last > 0)
-            memcpy(&cardIO_ResponseStringBuf[usb_tx_len], cdc_card_io.PutCharBuff, cdc_card_io.PutCharBuff_Last);
+            memcpy(&usb_DataUpBuf[usb_tx_len], cdc_card_io.PutCharBuff, cdc_card_io.PutCharBuff_Last);
 
           // Send the entire buffer
           CDC_CARD_IO_Upload(CDC_PUTCHARBUF_LEN);
+
+          cdc_card_io.Tx_Full = 0;
 
           // A 64-byte packet is going to be sent, according to USB specification, USB uses a less-than-max-length packet to demarcate an end-of-transfer
           // As a result, we need to send a zero-length-packet.
@@ -176,17 +182,17 @@ void CDC_CARD_IO_USB_Poll()
           // Rollback
           // length (the first byte to send, the end of the buffer)
           usb_tx_len = CDC_PUTCHARBUF_LEN - cdc_card_io.PutCharBuff_First;
-          memcpy(cardIO_ResponseStringBuf, &cdc_card_io.PutCharBuff[cdc_card_io.PutCharBuff_First], usb_tx_len);
+          memcpy(usb_DataUpBuf, &cdc_card_io.PutCharBuff[cdc_card_io.PutCharBuff_First], usb_tx_len);
 
           // length (the first byte in the buffer, the last byte to send), if any
           if (cdc_card_io.PutCharBuff_Last > 0) {
-            memcpy(&cardIO_ResponseStringBuf[usb_tx_len], cdc_card_io.PutCharBuff, cdc_card_io.PutCharBuff_Last);
+            memcpy(&usb_DataUpBuf[usb_tx_len], cdc_card_io.PutCharBuff, cdc_card_io.PutCharBuff_Last);
             usb_tx_len += cdc_card_io.PutCharBuff_Last;
           }
 
         } else {
           usb_tx_len = cdc_card_io.PutCharBuff_Last - cdc_card_io.PutCharBuff_First;
-          memcpy(cardIO_ResponseStringBuf, &cdc_card_io.PutCharBuff[cdc_card_io.PutCharBuff_First], usb_tx_len);
+          memcpy(usb_DataUpBuf, &cdc_card_io.PutCharBuff[cdc_card_io.PutCharBuff_First], usb_tx_len);
         }
 
         cdc_card_io.PutCharBuff_First += usb_tx_len;
