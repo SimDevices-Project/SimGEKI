@@ -40,8 +40,8 @@ xdata void Timer4_Config(void)
 void TIM4_IRQHandler(void) __attribute__((interrupt("WCH-Interrupt-fast")));
 void TIM4_IRQHandler(void)
 {
-  timerSet += TIM_GetCounter(TIM4);
-  // timerSet++;
+  // timerSet += TIM_GetCounter(TIM4);
+  timerSet++;
 
   if (TIM_GetITStatus(TIM4, TIM_IT_Update) != RESET) {
     TIM_ClearITPendingBit(TIM4, TIM_IT_Update);
