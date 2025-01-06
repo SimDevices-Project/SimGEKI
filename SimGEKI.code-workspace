@@ -2,12 +2,6 @@
     "folders": [
         {
             "path": "."
-        },
-        {
-            "path": "C:/Users/Qinh/Documents/Arduino/libraries/PN532_HSU"
-        },
-        {
-            "path": "C:/Users/Qinh/Documents/Arduino/libraries/PN532"
         }
     ],
     "settings": {
