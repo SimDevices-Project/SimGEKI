@@ -4,8 +4,6 @@
 #include "bsp.h"
 
 #define LINECODING_SIZE    7
-#define CDC_PUTCHARBUF_LEN 64
-#define CDC_PENDINGBUF_LEN 64
 
 #define CDC_USB_BUFF_SIZE 64
 
@@ -18,6 +16,8 @@ typedef struct {
   uint8_t *PutCharBuff;
   uint8_t PutCharBuff_Last;
   uint8_t PutCharBuff_First;
+  uint8_t PutCharBuff_Len;
+  uint8_t USB_EndPoint;
   uint8_t Tx_Busy;
   uint8_t Tx_Full;
   uint8_t Rx_Pending;

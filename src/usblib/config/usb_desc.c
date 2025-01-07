@@ -11,6 +11,7 @@
  *******************************************************************************/
 #include "usb_lib.h"
 #include "usb_desc.h"
+#include "usb_conf.h"
 
 /* USB Device Descriptors */
 const uint8_t USBD_DeviceDescriptor[] = {
@@ -91,20 +92,20 @@ const uint8_t USBD_ConfigDescriptor[USBD_SIZE_CONFIG_DESC] = {
     0x00, // iInterface (String Index)
 
     /* Endpoint descriptor */
-    0x07,       // bLength
-    0x05,       // bDescriptorType (Endpoint)
-    0x02,       // bEndpointAddress (OUT/H2D)
-    0x02,       // bmAttributes (Bulk)
-    0x40, 0x00, // wMaxPacketSize 64
-    0x00,       // bInterval 0 (unit depends on device speed)
+    0x07,                    // bLength
+    0x05,                    // bDescriptorType (Endpoint)
+    0x02,                    // bEndpointAddress (OUT/H2D)
+    0x02,                    // bmAttributes (Bulk)
+    ENDP2_PACKET_SIZE, 0x00, // wMaxPacketSize 64
+    0x00,                    // bInterval 0 (unit depends on device speed)
 
     /* Endpoint descriptor */
-    0x07,       // bLength
-    0x05,       // bDescriptorType (Endpoint)
-    0x82,       // bEndpointAddress (IN/D2H)
-    0x02,       // bmAttributes (Bulk)
-    0x40, 0x00, // wMaxPacketSize 64
-    0x00,       // bInterval 0 (unit depends on device speed)
+    0x07,                    // bLength
+    0x05,                    // bDescriptorType (Endpoint)
+    0x82,                    // bEndpointAddress (IN/D2H)
+    0x02,                    // bmAttributes (Bulk)
+    ENDP2_PACKET_SIZE, 0x00, // wMaxPacketSize 64
+    0x00,                    // bInterval 0 (unit depends on device speed)
 
     /* IAD Descriptor(interface 2/3)*/
     8,                       // Length of the descriptor 描述符长度
@@ -155,20 +156,20 @@ const uint8_t USBD_ConfigDescriptor[USBD_SIZE_CONFIG_DESC] = {
     0x00, // iInterface (String Index)
 
     /* Endpoint descriptor */
-    0x07,       // bLength
-    0x05,       // bDescriptorType (Endpoint)
-    0x03,       // bEndpointAddress (OUT/H2D)
-    0x02,       // bmAttributes (Bulk)
-    0x40, 0x00, // wMaxPacketSize 64
-    0x00,       // bInterval 0 (unit depends on device speed)
+    0x07,                    // bLength
+    0x05,                    // bDescriptorType (Endpoint)
+    0x03,                    // bEndpointAddress (OUT/H2D)
+    0x02,                    // bmAttributes (Bulk)
+    ENDP3_PACKET_SIZE, 0x00, // wMaxPacketSize 64
+    0x00,                    // bInterval 0 (unit depends on device speed)
 
     /* Endpoint descriptor */
-    0x07,       // bLength
-    0x05,       // bDescriptorType (Endpoint)
-    0x83,       // bEndpointAddress (IN/D2H)
-    0x02,       // bmAttributes (Bulk)
-    0x40, 0x00, // wMaxPacketSize 64
-    0x00,       // bInterval 0 (unit depends on device speed)
+    0x07,                    // bLength
+    0x05,                    // bDescriptorType (Endpoint)
+    0x83,                    // bEndpointAddress (IN/D2H)
+    0x02,                    // bmAttributes (Bulk)
+    ENDP3_PACKET_SIZE, 0x00, // wMaxPacketSize 64
+    0x00,                    // bInterval 0 (unit depends on device speed)
 
     /* interface 4 (HID interface) descriptor */
     0x09, // bLength
@@ -191,20 +192,20 @@ const uint8_t USBD_ConfigDescriptor[USBD_SIZE_CONFIG_DESC] = {
     USBD_SIZE_REPORT_DESC & 0xFF, USBD_SIZE_REPORT_DESC >> 8, // wDescriptorLength
 
     /* interface 4 endpoint descriptor*/
-    0x07,       // bLength
-    0x05,       // bDescriptorType (Endpoint)
-    0x81,       // bEndpointAddress (IN/D2H)
-    0x03,       // bmAttributes (Interrupt)
-    0x40, 0x00, // wMaxPacketSize 64
-    0x01,       // bInterval 1 (unit depends on device speed)
+    0x07,                    // bLength
+    0x05,                    // bDescriptorType (Endpoint)
+    0x81,                    // bEndpointAddress (IN/D2H)
+    0x03,                    // bmAttributes (Interrupt)
+    ENDP1_PACKET_SIZE, 0x00, // wMaxPacketSize 64
+    0x01,                    // bInterval 1 (unit depends on device speed)
 
     /* interface 4 endpoint descriptor */
-    0x07,       // bLength
-    0x05,       // bDescriptorType (Endpoint)
-    0x01,       // bEndpointAddress (OUT/H2D)
-    0x03,       // bmAttributes (Interrupt)
-    0x40, 0x00, // wMaxPacketSize 64
-    0x05,       // bInterval 5 (unit depends on device speed)
+    0x07,                    // bLength
+    0x05,                    // bDescriptorType (Endpoint)
+    0x01,                    // bEndpointAddress (OUT/H2D)
+    0x03,                    // bmAttributes (Interrupt)
+    ENDP1_PACKET_SIZE, 0x00, // wMaxPacketSize 64
+    0x05,                    // bInterval 5 (unit depends on device speed)
 
 };
 

@@ -16,6 +16,9 @@
 // 初始化波特率为115200，1停止位，无校验，8数据位。
 uint8_t LineCoding[LINECODING_SIZE] = {0x00, 0xC2, 0x01, 0x00, 0x00, 0x00, 0x08};
 
+#define CDC_PUTCHARBUF_LEN 64
+#define CDC_PENDINGBUF_LEN 64
+
 uint8_t ledIO_PutCharBuf[CDC_PUTCHARBUF_LEN];
 uint8_t cardIO_PutCharBuf[CDC_PUTCHARBUF_LEN];
 
@@ -46,6 +49,8 @@ xdata void CDC_Init()
   cdc_led_io.PutCharBuff       = ledIO_PutCharBuf;
   cdc_led_io.PutCharBuff_Last  = 0;
   cdc_led_io.PutCharBuff_First = 0;
+  cdc_led_io.PutCharBuff_Len   = sizeof(ledIO_PutCharBuf);
+  cdc_led_io.USB_EndPoint      = CDC_LED_IO_EP;
   cdc_led_io.Tx_Busy           = 0;
   cdc_led_io.Tx_Full           = 0;
   cdc_led_io.Rx_Pending        = 0;
@@ -57,6 +62,8 @@ xdata void CDC_Init()
   cdc_card_io.PutCharBuff       = cardIO_PutCharBuf;
   cdc_card_io.PutCharBuff_Last  = 0;
   cdc_card_io.PutCharBuff_First = 0;
+  cdc_card_io.PutCharBuff_Len   = sizeof(cardIO_PutCharBuf);
+  cdc_card_io.USB_EndPoint      = CDC_CARD_IO_EP;
   cdc_card_io.Tx_Busy           = 0;
   cdc_card_io.Tx_Full           = 0;
   cdc_card_io.Rx_Pending        = 0;
@@ -206,6 +213,8 @@ void CDC_CARD_IO_USB_Poll()
   }
 }
 
+
+
 void CDC_LED_IO_PutChar(uint8_t tdata)
 {
   // Add new data to LED IO PutCharBuf
@@ -257,7 +266,6 @@ void CDC_LED_IO_Handler()
   resPackect->response.status  = ACK_OK;
   resPackect->response.report  = REPORT_OK;
   resPackect->response.command = reqPacket->request.command;
-
 
   switch (reqPacket->request.command) {
     case CMD_RESET:
@@ -322,7 +330,7 @@ void CDC_LED_IO_Handler()
   checksum += resPackect->response.report;
 
   for (i = 0; i < resPackect->length - 3; i++) {
-    checksum += resPackect->response.data[i]; 
+    checksum += resPackect->response.data[i];
   }
   resPackect->response.data[resPackect->length - 3] = checksum;
 
@@ -341,7 +349,7 @@ void CDC_LED_IO_Handler()
 #define CARD_READER_RATE_LOW 0
 #define CARD_READER_RATE     CARD_READER_RATE_HI
 
-const uint8_t CARD_READER_FW_VERSION_HIRATE[2]  = "\x94";
+const uint8_t CARD_READER_FW_VERSION_HIRATE[2]   = "\x94";
 const uint8_t CARD_READER_FW_VERSION_LOWRATE[24] = "TN32MSEC003S F/W Ver1.2";
 
 const uint8_t CARD_READER_VERSION_HIRATE[10]  = "837-15396";
@@ -364,7 +372,7 @@ void CDC_CARD_IO_SendData()
   cardIO_SendDataReady_Flag = 0;
 
   res.frame_len = 6 + res.payload_len;
-  checksum       = 0;
+  checksum      = 0;
   for (i = 0; i < res.frame_len; i++) {
     checksum += res.buffer[i];
   }
@@ -384,18 +392,18 @@ void CDC_CARD_IO_SendData()
 // Card IO 处理函数
 void CDC_CARD_IO_Handler()
 {
-  
+
   static uint8_t AimeKey[6], BanaKey[6];
   uint16_t SystemCode;
   memset(cardIO_ResponseStringBuf, 0x00, 64); // Clear resPackect
 
-  res.addr   = _req.addr;
-  res.seq_no = _req.seq_no;
-  res.cmd    = _req.cmd;
-  res.frame_len = 6;
-  res.status = 0;
+  res.addr        = _req.addr;
+  res.seq_no      = _req.seq_no;
+  res.cmd         = _req.cmd;
+  res.frame_len   = 6;
+  res.status      = 0;
   res.payload_len = 0;
-  //CDC_LED_IO_PutChar(_req.cmd);
+  // CDC_LED_IO_PutChar(_req.cmd);
   switch (_req.cmd) {
     case CMD_TO_NORMAL_MODE:
       // _writeCommand(CDC2_RequestPacketBuf, 0, CDC_ResponseStringBuf, 0);
@@ -405,87 +413,87 @@ void CDC_CARD_IO_Handler()
       //   res.payload_len = 0;
       // }
       // else
-        res.frame_len = 6;
-        res.status = 0;
-        res.seq_no = 0;
-        res.payload_len = 0;
-        memcpy(cardIO_ResponseStringBuf,res.buffer,128);
-        CDC_CARD_IO_SendDataReady();
+      res.frame_len   = 6;
+      res.status      = 0;
+      res.seq_no      = 0;
+      res.payload_len = 0;
+      memcpy(cardIO_ResponseStringBuf, res.buffer, 128);
+      CDC_CARD_IO_SendDataReady();
       break;
     case CMD_GET_FW_VERSION:
-// #if CARD_READER_RATE == CARD_READER_RATE_HI
-//       memcpy(res.version, CARD_READER_FW_VERSION_HIRATE, sizeof(CARD_READER_FW_VERSION_HIRATE));
-//       res.payload_len = sizeof(CARD_READER_FW_VERSION_HIRATE);
-// #elif CARD_READER_RATE == CARD_READER_RATE_LOW
+      // #if CARD_READER_RATE == CARD_READER_RATE_HI
+      //       memcpy(res.version, CARD_READER_FW_VERSION_HIRATE, sizeof(CARD_READER_FW_VERSION_HIRATE));
+      //       res.payload_len = sizeof(CARD_READER_FW_VERSION_HIRATE);
+      // #elif CARD_READER_RATE == CARD_READER_RATE_LOW
       memcpy(res.version, CARD_READER_FW_VERSION_LOWRATE, sizeof(CARD_READER_FW_VERSION_LOWRATE) - 1);
       res.payload_len = sizeof(CARD_READER_FW_VERSION_LOWRATE) - 1;
-      res.frame_len = 6 + res.payload_len;
-// #endif
-      memcpy(cardIO_ResponseStringBuf,res.buffer,128);
+      res.frame_len   = 6 + res.payload_len;
+      // #endif
+      memcpy(cardIO_ResponseStringBuf, res.buffer, 128);
       CDC_CARD_IO_SendDataReady();
       break;
     case CMD_GET_HW_VERSION:
-// #if CARD_READER_RATE == CARD_READER_RATE_HI
-//       memcpy(res.version, CARD_READER_VERSION_HIRATE, 9);
-//       res.payload_len = 9;
-// #elif CARD_READER_RATE == CARD_READER_RATE_LOW
-      memcpy(res.version, CARD_READER_VERSION_LOWRATE, sizeof(CARD_READER_VERSION_LOWRATE) - 1 );
+      // #if CARD_READER_RATE == CARD_READER_RATE_HI
+      //       memcpy(res.version, CARD_READER_VERSION_HIRATE, 9);
+      //       res.payload_len = 9;
+      // #elif CARD_READER_RATE == CARD_READER_RATE_LOW
+      memcpy(res.version, CARD_READER_VERSION_LOWRATE, sizeof(CARD_READER_VERSION_LOWRATE) - 1);
       res.payload_len = sizeof(CARD_READER_VERSION_LOWRATE) - 1;
-      res.frame_len = 6 + res.payload_len;
-// #endif
-      memcpy(cardIO_ResponseStringBuf,res.buffer,128);
+      res.frame_len   = 6 + res.payload_len;
+      // #endif
+      memcpy(cardIO_ResponseStringBuf, res.buffer, 128);
       CDC_CARD_IO_SendDataReady();
       break;
     case CMD_EXT_BOARD_INFO:
-// #if CARD_READER_RATE == CARD_READER_RATE_HI
-//       memcpy(res.info_payload, CARD_READER_EXTRA_INFO_HIRATE, 12);
-//       res.payload_len = 12;
-// #elif CARD_READER_RATE == CARD_READER_RATE_LOW
+      // #if CARD_READER_RATE == CARD_READER_RATE_HI
+      //       memcpy(res.info_payload, CARD_READER_EXTRA_INFO_HIRATE, 12);
+      //       res.payload_len = 12;
+      // #elif CARD_READER_RATE == CARD_READER_RATE_LOW
       memcpy(res.info_payload, CARD_READER_EXTRA_INFO_LOWRATE, sizeof(CARD_READER_EXTRA_INFO_LOWRATE) - 1);
       res.payload_len = sizeof(CARD_READER_EXTRA_INFO_LOWRATE) - 1;
-      res.frame_len = 6 + res.payload_len;
-// #endif
-      memcpy(cardIO_ResponseStringBuf,res.buffer,128);
+      res.frame_len   = 6 + res.payload_len;
+      // #endif
+      memcpy(cardIO_ResponseStringBuf, res.buffer, 128);
       CDC_CARD_IO_SendDataReady();
       break;
     case CMD_MIFARE_KEY_SET_B:
       memcpy(key_B, _req.key, 6);
-      memcpy(cardIO_ResponseStringBuf,res.buffer,128);
+      memcpy(cardIO_ResponseStringBuf, res.buffer, 128);
       CDC_CARD_IO_SendDataReady();
       break;
     case CMD_MIFARE_KEY_SET_A:
       memcpy(key_A, _req.key, 6);
-      memcpy(cardIO_ResponseStringBuf,res.buffer,128);
+      memcpy(cardIO_ResponseStringBuf, res.buffer, 128);
       CDC_CARD_IO_SendDataReady();
       break;
     case CMD_EXT_BOARD_SET_LED_RGB:
       LED_RGB_Set(LED_RGB_PORT_UART, 0, _req.color_payload[0], _req.color_payload[1], _req.color_payload[2]);
-      memcpy(cardIO_ResponseStringBuf,res.buffer,128);
+      memcpy(cardIO_ResponseStringBuf, res.buffer, 128);
       CDC_CARD_IO_SendDataReady();
       break;
     case CMD_EXT_TO_NORMAL_MODE:
-      memcpy(cardIO_ResponseStringBuf,res.buffer,128);
+      memcpy(cardIO_ResponseStringBuf, res.buffer, 128);
       CDC_CARD_IO_SendDataReady();
       break;
     case CMD_START_POLLING:
-      PN532_setRFField(0,1);
-      memcpy(cardIO_ResponseStringBuf,res.buffer,128);
+      PN532_setRFField(0, 1);
+      memcpy(cardIO_ResponseStringBuf, res.buffer, 128);
       CDC_CARD_IO_SendDataReady();
       break;
     case CMD_STOP_POLLING:
-      PN532_setRFField(0,0);
-      memcpy(cardIO_ResponseStringBuf,res.buffer,128);
+      PN532_setRFField(0, 0);
+      memcpy(cardIO_ResponseStringBuf, res.buffer, 128);
       CDC_CARD_IO_SendDataReady();
       break;
     case CMD_SEND_HEX_DATA:
       res.status = 0x20;
-      memcpy(cardIO_ResponseStringBuf,res.buffer,128);
+      memcpy(cardIO_ResponseStringBuf, res.buffer, 128);
       CDC_CARD_IO_SendDataReady();
       break;
-    //下列状态是非阻塞式处理，这里仅对PN532的发送进行处理
+    // 下列状态是非阻塞式处理，这里仅对PN532的发送进行处理
     case CMD_CARD_DETECT:
-        PN532_Polling();
-        break;
+      PN532_Polling();
+      break;
     case CMD_MIFARE_READ:
       CDC_LED_IO_PutChar(0Xe1);
       PN532_mifareclassic_ReadDataBlock(_req.block_no, res.block);
@@ -494,13 +502,13 @@ void CDC_CARD_IO_Handler()
       PN532_felica_through();
       break;
     case CMD_MIFARE_AUTHORIZE_B:
-      PN532_mifareclassic_AuthenticateBlock(_req.uid, 4, _req.block_no, 1,key_B);
+      PN532_mifareclassic_AuthenticateBlock(_req.uid, 4, _req.block_no, 1, key_B);
       break;
     case CMD_MIFARE_AUTHORIZE_A:
-      PN532_mifareclassic_AuthenticateBlock(_req.uid, 4, _req.block_no, 0,key_A);
+      PN532_mifareclassic_AuthenticateBlock(_req.uid, 4, _req.block_no, 0, key_A);
       break;
     default:
-      memcpy(cardIO_ResponseStringBuf,res.buffer,128);
+      memcpy(cardIO_ResponseStringBuf, res.buffer, 128);
       CDC_CARD_IO_SendDataReady();
       break;
   }
@@ -586,24 +594,24 @@ void CDC_CARD_IO_UART_Poll()
   uint8_t cur_byte;
   static uint8_t checksum  = 0;
   static uint8_t prev_byte = 0;
-  uint8_t len = 0;
-  cdc_card_io.Rx_CurPos = 0;
-  uint8_t ret = cdc_card_io.Rx_Pending;
-  for(uint8_t i = 0;i<ret;i++) {
+  uint8_t len              = 0;
+  cdc_card_io.Rx_CurPos    = 0;
+  uint8_t ret              = cdc_card_io.Rx_Pending;
+  for (uint8_t i = 0; i < ret; i++) {
     cur_byte = cdc_card_io.Rx_PendingBuf[i];
     if (cur_byte == 0xE0) {
-      _req.frame_len        = 0xFF;
+      _req.frame_len = 0xFF;
       continue;
-    } 
+    }
     if (_req.frame_len == 0xFF) {
       _req.frame_len = cur_byte;
-      checksum = cur_byte;
-      len = 0;
+      checksum       = cur_byte;
+      len            = 0;
       continue;
     }
     if (cur_byte == 0xD0) {
       prev_byte = 0xD0;
-      
+
       // if (cdc_card_io.Rx_Pending == 0) {
       //   SetEPRxValid(CDC_CARD_IO_EP);
       // }
@@ -619,7 +627,7 @@ void CDC_CARD_IO_UART_Poll()
       if (checksum == cur_byte) {
         CDC_CARD_IO_Handler();
       } else {
-        //cdc_card_io.Req_PacketBuf[3] = 0x05; //STATUS_SUM_ERROR
+        // cdc_card_io.Req_PacketBuf[3] = 0x05; //STATUS_SUM_ERROR
         CDC_CARD_IO_Handler();
       }
 
@@ -634,7 +642,7 @@ void CDC_CARD_IO_UART_Poll()
     }
 
     checksum += cur_byte;
-    cdc_card_io.Rx_Pending --;
+    cdc_card_io.Rx_Pending--;
   }
   SetEPRxValid(CDC_CARD_IO_EP);
 #endif
