@@ -51,7 +51,6 @@ xdata void CDC_Init()
   cdc_led_io.PutCharBuff_First = 0;
   cdc_led_io.PutCharBuff_Len   = sizeof(ledIO_PutCharBuf);
   cdc_led_io.USB_EndPoint      = CDC_LED_IO_EP;
-  cdc_led_io.Tx_Busy           = 0;
   cdc_led_io.Tx_Full           = 0;
   cdc_led_io.Rx_Pending        = 0;
   cdc_led_io.Rx_PendingBuf     = ledIO_Rx_PendingBuf;
@@ -64,7 +63,6 @@ xdata void CDC_Init()
   cdc_card_io.PutCharBuff_First = 0;
   cdc_card_io.PutCharBuff_Len   = sizeof(cardIO_PutCharBuf);
   cdc_card_io.USB_EndPoint      = CDC_CARD_IO_EP;
-  cdc_card_io.Tx_Busy           = 0;
   cdc_card_io.Tx_Full           = 0;
   cdc_card_io.Rx_Pending        = 0;
   cdc_card_io.Rx_PendingBuf     = cardIO_Rx_PendingBuf;
@@ -87,12 +85,11 @@ void CDC_LED_IO_USB_Poll()
 {
   uint8_t usb_tx_len;
   if (bDeviceState == CONFIGURED) {
-    if (!cdc_led_io.Tx_Busy) {
+    // 只有在端点空闲的时候才能发送数据
+    if (GetEPTxStatus(CDC_LED_IO_EP) == EP_TX_NAK) {
       if (cdc_led_io.PutCharBuff_First == cdc_led_io.PutCharBuff_Last) {
         if (cdc_led_io.Tx_Full) {
           // Buffer is full
-
-          cdc_led_io.Tx_Busy = 1;
 
           // length (the first byte to send, the end of the buffer)
           usb_tx_len = CDC_PUTCHARBUF_LEN - cdc_led_io.PutCharBuff_First;
@@ -115,8 +112,6 @@ void CDC_LED_IO_USB_Poll()
         // Otherwise buffer is empty, nothing to send
         // return;
       } else {
-        cdc_led_io.Tx_Busy = 1;
-
         // CDC1_PutChar() is the only way to insert into CDC1_PutCharBuf, it detects buffer overflow and notify the CDC_USB_Poll().
         // So in this condition the buffer can not be full, so we don't have to send a zero-length-packet after this.
 
@@ -152,12 +147,11 @@ void CDC_CARD_IO_USB_Poll()
 {
   uint8_t usb_tx_len;
   if (bDeviceState == CONFIGURED) {
-    if (!cdc_card_io.Tx_Busy) {
+    // 只有在端点空闲的时候才能发送数据
+    if (GetEPTxStatus(CDC_CARD_IO_EP) == EP_TX_NAK) {
       if (cdc_card_io.PutCharBuff_First == cdc_card_io.PutCharBuff_Last) {
         if (cdc_card_io.Tx_Full) {
           // Buffer is full
-
-          cdc_card_io.Tx_Busy = 1;
 
           // length (the first byte to send, the end of the buffer)
           usb_tx_len = CDC_PUTCHARBUF_LEN - cdc_card_io.PutCharBuff_First;
@@ -180,7 +174,6 @@ void CDC_CARD_IO_USB_Poll()
         // Otherwise buffer is empty, nothing to send
         // return;
       } else {
-        cdc_card_io.Tx_Busy = 1;
 
         // CDC1_PutChar() is the only way to insert into CDC1_PutCharBuf, it detects buffer overflow and notify the CDC_USB_Poll().
         // So in this condition the buffer can not be full, so we don't have to send a zero-length-packet after this.
@@ -212,8 +205,6 @@ void CDC_CARD_IO_USB_Poll()
     }
   }
 }
-
-
 
 void CDC_LED_IO_PutChar(uint8_t tdata)
 {

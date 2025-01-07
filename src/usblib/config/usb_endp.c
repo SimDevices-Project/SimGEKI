@@ -72,10 +72,12 @@ void EP2_OUT_Callback(void)
 void EP2_IN_Callback(void)
 {
   if (_GetEPTxCount(CDC_LED_IO_EP) == ENDP2_PACKET_SIZE) {
+    // 发送一个ZLP 0长度包，通知包已发送完毕
     USB_SIL_Write(0x80 | CDC_LED_IO_EP, 0, 0);
+  } else {
+    // 标记NAK状态，停止传输
+    SetEPTxStatus(CDC_LED_IO_EP, EP_TX_NAK);
   }
-  SetEPTxStatus(CDC_LED_IO_EP, EP_TX_NAK);
-  cdc_led_io.Tx_Busy = 0;
 }
 
 /*********************************************************************
@@ -103,11 +105,12 @@ void EP3_OUT_Callback(void)
 void EP3_IN_Callback(void)
 {
   if (_GetEPTxCount(CDC_CARD_IO_EP) == ENDP3_PACKET_SIZE) {
+    // 发送一个ZLP 0长度包，通知包已发送完毕
     USB_SIL_Write(0x80 | CDC_CARD_IO_EP, 0, 0);
+  } else {
+    // 标记NAK状态，停止传输
+    SetEPTxStatus(CDC_CARD_IO_EP, EP_TX_NAK);
   }
-  SetEPTxStatus(CDC_CARD_IO_EP, EP_TX_NAK);
-  cdc_card_io.Tx_Busy = 0;
-  // }
 }
 
 /*********************************************************************

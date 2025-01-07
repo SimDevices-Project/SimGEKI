@@ -18,7 +18,7 @@ typedef struct {
   uint8_t PutCharBuff_First;
   uint8_t PutCharBuff_Len;
   uint8_t USB_EndPoint;
-  uint8_t Tx_Busy;
+  // uint8_t Tx_Busy;
   uint8_t Tx_Full;
   uint8_t Rx_Pending;
   uint8_t *Rx_PendingBuf;
