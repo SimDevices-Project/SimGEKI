@@ -476,15 +476,45 @@ void PN532_felica_through() {
       for (uint8_t i = 0; i < _req.numBlock; i++) {
         blockList[i] = (uint16_t)(_req.blockList[i][0] << 8 | _req.blockList[i][1]);
       }
+      #if PN532_DISABLE_FELICA_CHECK == 0
       PN532_felica_ReadWithoutEncryption(1, &serviceCodeList, _req.numBlock, blockList, res.blockData);
+      #endif
+      #if PN532_DISABLE_FELICA_CHECK == 1
+        if(PN532_Status.PN532_PARAMETER == 1){
+            for(uint8_t j=0; j<16; j++ ) {
+              res.blockData[0][j] = 0;
+            }
+        }else{
+            for(uint8_t j=0; j<16; j++ ) {
+              res.blockData[1][j] = PN532_Status.PN532_felica_idm[j];
+            }
+        }
+          res.RW_status[0] = 0;
+          res.RW_status[1] = 0;
+          res.numBlock = _req.numBlock;
+          res_init(0x0D + _req.numBlock * 16);
+          res.encap_len = 0x0D + _req.numBlock * 16;
+          memcpy(cardIO_ResponseStringBuf,res.buffer,128);
+          CDC_CARD_IO_SendDataReady();
+      #endif
       return;
       }
       break;
     case FelicaWriteWithoutEncryptData:
       {
+        #if PN532_DISABLE_FELICA_CHECK == 0
         uint16_t serviceCodeList = _req.serviceCodeList[1] << 8 | _req.serviceCodeList[0];
         uint16_t blockList = (uint16_t)(_req.blockList_write[0][0] << 8 | _req.blockList_write[0][1]);
         PN532_felica_WriteWithoutEncryption(1, &serviceCodeList, 1, &blockList, &_req.blockData);
+        #endif
+        #if PN532_DISABLE_FELICA_CHECK == 1
+        res_init(0x0C);
+        res.RW_status[0] = 0;
+        res.RW_status[1] = 0;
+        res.encap_len = res.payload_len;
+        memcpy(cardIO_ResponseStringBuf,res.buffer,128);
+        CDC_CARD_IO_SendDataReady();
+        #endif
         return;
       }
       break;
