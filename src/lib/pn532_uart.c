@@ -84,11 +84,16 @@ uint8_t __GetNextRxBuffer(uint8_t **buf, uint8_t *len)
   if (RxBufferCount == 0) {
     return 0;
   }
+  uint8_t next;
   USART_ITConfig(USART1, USART_IT_RXNE, DISABLE);
 #if PN532_UART_DIRECT != 1
   USART_ITConfig(USART1, USART_IT_IDLE, DISABLE);
 #endif
-  uint8_t next = (RxBufferIndex + RX_BUFFER_COUNT - RxBufferCount) % RX_BUFFER_COUNT;
+  if (RxBufferCount > RxBufferIndex) {
+    next = (RX_BUFFER_COUNT - RxBufferCount) + RxBufferIndex;
+  } else {
+    next = RxBufferIndex - RxBufferCount;
+  }
   *buf = RxBuffer[next];
   *len = RxIndex[next];
   RxBufferCount--;
@@ -116,7 +121,7 @@ void PN532_UART_Check(uint8_t *_buffer,uint8_t *_size)
 }
 
 
-xdata void PN532_UART_Init()
+void PN532_UART_Init()
 {
   GPIO_InitTypeDef GPIO_InitStructure   = {0};
   USART_InitTypeDef USART_InitStructure = {0};

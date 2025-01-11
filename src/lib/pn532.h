@@ -135,6 +135,9 @@ struct _PN532_Status{
   uint8_t PN532_CMD_Status;
   uint8_t PN532_PARAMETER;
   uint8_t PN532_Failed_task_key;
+  uint8_t PN532_felica_idm[8]; 
+  uint8_t PN532_felica_pmm[8]; 
+  uint8_t PN532_felica_systemcode[2];//0低位，1高位
 };
 extern struct _PN532_Status PN532_Status;
 
