@@ -201,7 +201,6 @@ int16_t readResponse(uint8_t *buf, uint8_t len,uint8_t command)
   //   if (chksum || 0 != buf[9+buf[3]])
   //   {
   //       //Checksum error
-  //       CDC_LED_IO_PutChar(0xA6);
   //       return PN532_INVALID_FRAME;
   //   }
     //return length[0];
@@ -222,9 +221,6 @@ void PN532_Check()
   if(size == 0){
     return;
   }
-    //   for (uint8_t i = 0; i < size; i++) {
-    //   CDC_LED_IO_PutChar(buffer[i]);
-    // }
   if(PN532_Status.PN532_Option_Status == PN532_WAITING_FOR_ACK){
     PN532_Status.PN532_Option_Status = PN532_WAITING_FOR_RESPONSE;
     if((buffer[0] == 0) && (buffer[1] == 0) && (buffer[2] == 0xff) && (buffer[3] == 0) && (buffer[4] == 0xff) && (buffer[5] == 0)){
@@ -317,6 +313,10 @@ void PN532_Check()
       case PN532_FELICA_POLLING:
         if(!readResponse(buffer, size, PN532_COMMAND_INLISTPASSIVETARGET)){
         // Check NbTg (pn532_packetbuffer[7])
+        if (buffer[7] == 0) {
+            //Unhandled number of targets inlisted.
+            break;
+          }
           if (buffer[7] != 1) {
             //Unhandled number of targets inlisted.
             break;
@@ -331,40 +331,54 @@ void PN532_Check()
           PN532_Status.PN532_Option_Status = PN532_SUCCESS;
           clearTimeout(PN532_Status.PN532_Failed_task_key);
           for (uint8_t i=0; i<8; ++i) {
-            idm[i] = buffer[7+4+i];
-            pmm[i] = buffer[7+12+i];
+            res.IDm[i] = buffer[7+4+i];
+            res.PMm[i] = buffer[7+12+i];
           }
+          memcpy(PN532_Status.PN532_felica_pmm,res.PMm,8);
+          memcpy(PN532_Status.PN532_felica_idm,res.IDm,8);
           if ( responseLength == 20 ) {
-            systemCode = (uint16_t)((buffer[7+20] << 8) + buffer[7+21]);
+            PN532_Status.PN532_felica_systemcode[0] = buffer[7+21];
+            PN532_Status.PN532_felica_systemcode[1] = buffer[7+20];
           }
+          res_init(0x13);
+          res.count = 1;
+          res.type = 0x20;
+          res.id_len = 0x10;
           memcpy(cardIO_ResponseStringBuf,res.buffer,128);
           CDC_CARD_IO_SendDataReady();
         }
         break;
       case PN532_FELICA_READ:
+        CDC_LED_IO_PutChar(0xA1);
         status = readResponse(buffer, size, PN532_COMMAND_INDATAEXCHANGE);
-        if( status > 0){
+        if( status == 0){
+          CDC_LED_IO_PutChar(0xA2);
           // Check status
           if ((buffer[7] & 0x3F)!=0) {
+            CDC_LED_IO_PutChar(0xA3);
             //Status code indicates an error
             return;
           }
           // length check
           if ( (status - 2) != buffer[8] - 1) {
+            CDC_LED_IO_PutChar(0xA4);
             //Wrong response length
             //return;
           }
             // length check
           if ( (buffer[8] - 1) != 12+16*PN532_Status.PN532_PARAMETER ) {
+            CDC_LED_IO_PutChar(0xA5);
             //Read Without Encryption command failed (wrong response length)
             return;
           }
 
           // status flag check
           if ( buffer[9+9] != 0 || buffer[9+10] != 0 ) {
+            CDC_LED_IO_PutChar(0xA6);
             //Read Without Encryption command failed
             return;
           }
+          CDC_LED_IO_PutChar(0xA7);
           PN532_Status.PN532_Option_Status = PN532_SUCCESS;
           clearTimeout(PN532_Status.PN532_Failed_task_key);
           uint8_t k = 9+12;
@@ -377,41 +391,50 @@ void PN532_Check()
           res.RW_status[1] = 0;
           res.numBlock = _req.numBlock;
           res_init(0x0D + _req.numBlock * 16);
+          res.encap_len = 0x0D + _req.numBlock * 16;
           memcpy(cardIO_ResponseStringBuf,res.buffer,128);
           CDC_CARD_IO_SendDataReady();
         }
         break;
       case PN532_FELICA_WRITE:
+      CDC_LED_IO_PutChar(0xB1);
         status = readResponse(buffer, size, PN532_COMMAND_INDATAEXCHANGE);
         if (status < 0) {
+          CDC_LED_IO_PutChar(0xB2);
           //Could not receive response
           return;
         }
         // Check status
-        if ((buffer[7] & 0x3F)!=0) {
-          //Status code indicates an error
-          return;
-        }
-        // length check
-        if ( (status - 2) != buffer[7+1] - 1) {
-          //Wrong response length
-          //return;
-        }
-        if ( (buffer[7+1] - 1) != 11 ) {
-          //Write Without Encryption command failed (wrong response length)
-          return;
-        }
+        // if ((buffer[7] & 0x3F)!=0) {
+        //   CDC_LED_IO_PutChar(0xB3);
+        //   //Status code indicates an error
+        //   return;
+        // }
+        // // length check
+        // if ( (status - 2) != buffer[7+1] - 1) {
+        //   CDC_LED_IO_PutChar(0xB4);
+        //   //Wrong response length
+        //   //return;
+        // }
+        // if ( (buffer[7+1] - 1) != 11 ) {
+        //   CDC_LED_IO_PutChar(0xB5);
+        //   //Write Without Encryption command failed (wrong response length)
+        //   return;
+        // }
 
-        // status flag check
-        if ( buffer[9+9] != 0 || buffer[9+10] != 0 ) {
-          //Write Without Encryption command failed
-          return;
-        }
+        // // status flag check
+        // if ( buffer[9+9] != 0 || buffer[9+10] != 0 ) {
+        //   CDC_LED_IO_PutChar(0xB6);
+        //   //Write Without Encryption command failed
+        //   return;
+        // }
+        // CDC_LED_IO_PutChar(0xB7);
         PN532_Status.PN532_Option_Status = PN532_SUCCESS;
         clearTimeout(PN532_Status.PN532_Failed_task_key);
         res_init(0x0C);
         res.RW_status[0] = 0;
         res.RW_status[1] = 0;
+        res.encap_len = res.payload_len;
         memcpy(cardIO_ResponseStringBuf,res.buffer,128);
         CDC_CARD_IO_SendDataReady();
         break;
@@ -423,19 +446,25 @@ void PN532_Check()
 }
 
 void PN532_felica_through() {
+  memcpy(res.encap_IDm,PN532_Status.PN532_felica_idm,8);
+  memcpy(res.poll_PMm,PN532_Status.PN532_felica_pmm,8);
   uint8_t code = _req.encap_code;
   res.encap_code = code + 1;
   switch (code) {
     case FelicaPolling:
       res_init(0x14);
-      res.poll_system_code[0] = _req.poll_systemCode[0];
-      res.poll_system_code[1] = _req.poll_systemCode[1];
+      // res.poll_system_code[0] = PN532_Status.PN532_felica_systemcode[0];
+      // res.poll_system_code[1] = PN532_Status.PN532_felica_systemcode[1];
+      res.poll_system_code[0] = 0x88;
+      res.poll_system_code[1] = 0xb4;
       break;
     case Felica_reqSysCode:
       res_init(0x0D);
       res.felica_payload[0] = 0x01;
-      res.felica_payload[1] = _req.poll_systemCode[0];
-      res.felica_payload[2] = _req.poll_systemCode[1];
+      // res.felica_payload[1] = PN532_Status.PN532_felica_systemcode[0];
+      // res.felica_payload[2] = PN532_Status.PN532_felica_systemcode[1];
+      res.poll_system_code[0] = 0x88;
+      res.poll_system_code[1] = 0xb4;
       break;
     case FelicaActive2:
       res_init(0x0B);
@@ -447,16 +476,45 @@ void PN532_felica_through() {
       for (uint8_t i = 0; i < _req.numBlock; i++) {
         blockList[i] = (uint16_t)(_req.blockList[i][0] << 8 | _req.blockList[i][1]);
       }
+      #if PN532_DISABLE_FELICA_CHECK == 0
       PN532_felica_ReadWithoutEncryption(1, &serviceCodeList, _req.numBlock, blockList, res.blockData);
+      #endif
+      #if PN532_DISABLE_FELICA_CHECK == 1
+        if(PN532_Status.PN532_PARAMETER == 1){
+            for(uint8_t j=0; j<16; j++ ) {
+              res.blockData[0][j] = 0;
+            }
+        }else{
+            for(uint8_t j=0; j<16; j++ ) {
+              res.blockData[1][j] = PN532_Status.PN532_felica_idm[j];
+            }
+        }
+          res.RW_status[0] = 0;
+          res.RW_status[1] = 0;
+          res.numBlock = _req.numBlock;
+          res_init(0x0D + _req.numBlock * 16);
+          res.encap_len = 0x0D + _req.numBlock * 16;
+          memcpy(cardIO_ResponseStringBuf,res.buffer,128);
+          CDC_CARD_IO_SendDataReady();
+      #endif
       return;
       }
       break;
     case FelicaWriteWithoutEncryptData:
       {
-        int8_t result = 0;
+        #if PN532_DISABLE_FELICA_CHECK == 0
         uint16_t serviceCodeList = _req.serviceCodeList[1] << 8 | _req.serviceCodeList[0];
         uint16_t blockList = (uint16_t)(_req.blockList_write[0][0] << 8 | _req.blockList_write[0][1]);
         PN532_felica_WriteWithoutEncryption(1, &serviceCodeList, 1, &blockList, &_req.blockData);
+        #endif
+        #if PN532_DISABLE_FELICA_CHECK == 1
+        res_init(0x0C);
+        res.RW_status[0] = 0;
+        res.RW_status[1] = 0;
+        res.encap_len = res.payload_len;
+        memcpy(cardIO_ResponseStringBuf,res.buffer,128);
+        CDC_CARD_IO_SendDataReady();
+        #endif
         return;
       }
       break;
@@ -474,7 +532,7 @@ void PN532_felica_through() {
     @brief  Setups the HW
 */
 /**************************************************************************/
-xdata void PN532_Init()
+void PN532_Init()
 {
   INTR(begin)
   ();
