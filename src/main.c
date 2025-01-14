@@ -27,12 +27,6 @@ int main(void)
   Delay_Init();
   Timeout_Init();
 
-  // USART_Printf_Init(115200);
-
-  // RCC_Configuration();
-  // TIM2_Init();
-  // UART2_Init(1, DEF_UARTx_BAUDRATE, DEF_UARTx_STOPBIT, DEF_UARTx_PARITY);
-
   Set_USBConfig();
   USB_Init();
   USB_Interrupts_Config();
@@ -46,8 +40,6 @@ int main(void)
   CDC_Init();
   PN532_Init();
 
-  // 111444222555333666
-
   LED_7C_Set(LED_7C_L1, LED_ON, LED_OFF, LED_OFF);
   LED_7C_Set(LED_7C_L2, LED_OFF, LED_ON, LED_OFF);
   LED_7C_Set(LED_7C_L3, LED_OFF, LED_OFF, LED_ON);
@@ -60,25 +52,12 @@ int main(void)
 
   LED_RGB_Set(LED_RGB_PORT_UART, 0, 0xFF, 0xFF, 0xFF);
 
-  // setRgbColorPort(1, 0xff, 0, 0);
-  // LED_Refresh();
-
-  // setRgbColor(2, 0, 0x00, 0x00, 0xFF);
-
   setInterval(LED_Refresh, 20);
   setInterval(HIDIO_Update, 1);
   setInterval(CDC_Check, 5);
-  setInterval(PN532_Check, 100);
+  setInterval(PN532_Check, 30);
 
   while (1) {
     Timer_Process();
-
-    // Delay_Us(100); // Do Something
-
-    // LED_Refresh();
-    // CH422_Check();
-
-    // UART2_DataRx_Deal();
-    // UART2_DataTx_Deal();
   }
 }
