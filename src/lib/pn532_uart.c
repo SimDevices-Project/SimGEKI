@@ -11,7 +11,7 @@
   (USART_SendData(USART1, dat)); \
   while (USART_GetFlagStatus(USART1, USART_FLAG_TXE) == RESET)
 // void _SendByte(uint8_t dat) {
-//     USART_SendData(USART1, dat); 
+//     USART_SendData(USART1, dat);
 //     CDC_LED_IO_PutChar(dat);
 //     while (USART_GetFlagStatus(USART1, USART_FLAG_TXE) == RESET) {
 //     }
@@ -21,6 +21,8 @@ uint8_t command;
 
 #define RX_BUFFER_SIZE  128
 #define RX_BUFFER_COUNT 4
+
+#define OE              GPIO_Pin_8
 
 uint8_t RxBuffer[RX_BUFFER_COUNT][RX_BUFFER_SIZE];
 uint8_t RxIndex[RX_BUFFER_COUNT] = {0};
@@ -104,7 +106,7 @@ uint8_t __GetNextRxBuffer(uint8_t **buf, uint8_t *len)
   return 1;
 }
 
-void PN532_UART_Check(uint8_t *_buffer,uint8_t *_size)
+void PN532_UART_Check(uint8_t *_buffer, uint8_t *_size)
 {
   uint8_t *buffer;
   uint8_t size;
@@ -114,12 +116,11 @@ void PN532_UART_Check(uint8_t *_buffer,uint8_t *_size)
       CDC_CARD_IO_PutChar(buffer[i]);
     }
 #elif PN532_UART_DIRECT == 0
-    memcpy(_buffer,buffer,size);
+    memcpy(_buffer, buffer, size);
     *_size = size;
 #endif
   }
 }
-
 
 void PN532_UART_Init()
 {
@@ -130,13 +131,18 @@ void PN532_UART_Init()
   RCC_APB2PeriphClockCmd(RCC_APB2Periph_USART1, ENABLE);
   RCC_APB2PeriphClockCmd(RCC_APB2Periph_GPIOA, ENABLE);
 
-  /* USART1 TX-->A.9   RX-->A.10 */
+  /* USART1 TX-->A.9   RX-->A.10  OE-->A.8 */
   GPIO_InitStructure.GPIO_Pin   = GPIO_Pin_9;
   GPIO_InitStructure.GPIO_Speed = GPIO_Speed_50MHz;
   GPIO_InitStructure.GPIO_Mode  = GPIO_Mode_AF_PP;
   GPIO_Init(GPIOA, &GPIO_InitStructure);
   GPIO_InitStructure.GPIO_Pin  = GPIO_Pin_10;
   GPIO_InitStructure.GPIO_Mode = GPIO_Mode_IN_FLOATING;
+  GPIO_Init(GPIOA, &GPIO_InitStructure);
+
+  GPIO_InitStructure.GPIO_Pin   = GPIO_Pin_8;
+  GPIO_InitStructure.GPIO_Mode  = GPIO_Mode_Out_PP;
+  GPIO_InitStructure.GPIO_Speed = GPIO_Speed_50MHz;
   GPIO_Init(GPIOA, &GPIO_InitStructure);
 
   USART_InitStructure.USART_BaudRate            = 115200;
@@ -158,17 +164,17 @@ void PN532_UART_Init()
   NVIC_Init(&NVIC_InitStructure);
 
   USART_Cmd(USART1, ENABLE);
+  GPIO_SetBits(GPIOA, OE); // 使能UART电平转换芯片
 }
 
 void PN532_UART_Wakeup()
 {
   const uint8_t startup532[] = {
-    0x55 , 0x55 , 0x00 , 0x00 , 0x00 , 0x00 , 0x00 , 0x00 , 0x00 , 0x00 , 0x00 , 0x00 , 0x00 , 0x00 , 0x00 , 0x00 , 0xFF , 0x03 , 0xFD , 0xD4 , 0x14 , 0x01 , 0x17 , 0x00,
-    0x00 , 0x00 , 0xff , 0x05 , 0xfb , 0xd4 , 0x14 , 0x01 , 0x14 , 0x01 , 0x02 , 0x00
-  };
+      0x55, 0x55, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0xFF, 0x03, 0xFD, 0xD4, 0x14, 0x01, 0x17, 0x00,
+      0x00, 0x00, 0xff, 0x05, 0xfb, 0xd4, 0x14, 0x01, 0x14, 0x01, 0x02, 0x00};
 
-  for(uint8_t i = 0;i < sizeof(startup532);i++){
-  _SendByte(startup532[i]);
+  for (uint8_t i = 0; i < sizeof(startup532); i++) {
+    _SendByte(startup532[i]);
   }
 }
 
