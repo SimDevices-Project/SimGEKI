@@ -386,7 +386,8 @@ void CDC_CARD_IO_Handler()
 
   static uint8_t AimeKey[6], BanaKey[6];
   uint16_t SystemCode;
-  memset(cardIO_ResponseStringBuf, 0x00, 64); // Clear resPackect
+  memset(cardIO_ResponseStringBuf, 0x00, 128); // Clear resPackect
+  memset(&res, 0x00, 128);                      // Clear resPackect
 
   res.addr        = _req.addr;
   res.seq_no      = _req.seq_no;
@@ -412,38 +413,41 @@ void CDC_CARD_IO_Handler()
       CDC_CARD_IO_SendDataReady();
       break;
     case CMD_GET_FW_VERSION:
-      // #if CARD_READER_RATE == CARD_READER_RATE_HI
-      //       memcpy(res.version, CARD_READER_FW_VERSION_HIRATE, sizeof(CARD_READER_FW_VERSION_HIRATE));
-      //       res.payload_len = sizeof(CARD_READER_FW_VERSION_HIRATE);
-      // #elif CARD_READER_RATE == CARD_READER_RATE_LOW
+#if CARD_READER_RATE == CARD_READER_RATE_HI
+      memcpy(res.version, CARD_READER_FW_VERSION_HIRATE, sizeof(CARD_READER_FW_VERSION_HIRATE) - 1);
+      res.payload_len = sizeof(CARD_READER_FW_VERSION_HIRATE) - 1;
+      res.frame_len   = 6 + res.payload_len;
+#elif CARD_READER_RATE == CARD_READER_RATE_LOW
       memcpy(res.version, CARD_READER_FW_VERSION_LOWRATE, sizeof(CARD_READER_FW_VERSION_LOWRATE) - 1);
       res.payload_len = sizeof(CARD_READER_FW_VERSION_LOWRATE) - 1;
       res.frame_len   = 6 + res.payload_len;
-      // #endif
+#endif
       memcpy(cardIO_ResponseStringBuf, res.buffer, 128);
       CDC_CARD_IO_SendDataReady();
       break;
     case CMD_GET_HW_VERSION:
-      // #if CARD_READER_RATE == CARD_READER_RATE_HI
-      //       memcpy(res.version, CARD_READER_VERSION_HIRATE, 9);
-      //       res.payload_len = 9;
-      // #elif CARD_READER_RATE == CARD_READER_RATE_LOW
+#if CARD_READER_RATE == CARD_READER_RATE_HI
+      memcpy(res.version, CARD_READER_VERSION_HIRATE, sizeof(CARD_READER_VERSION_HIRATE) - 1);
+      res.payload_len = sizeof(CARD_READER_VERSION_HIRATE) - 1;
+      res.frame_len   = 6 + res.payload_len;
+#elif CARD_READER_RATE == CARD_READER_RATE_LOW
       memcpy(res.version, CARD_READER_VERSION_LOWRATE, sizeof(CARD_READER_VERSION_LOWRATE) - 1);
       res.payload_len = sizeof(CARD_READER_VERSION_LOWRATE) - 1;
       res.frame_len   = 6 + res.payload_len;
-      // #endif
+#endif
       memcpy(cardIO_ResponseStringBuf, res.buffer, 128);
       CDC_CARD_IO_SendDataReady();
       break;
     case CMD_EXT_BOARD_INFO:
-      // #if CARD_READER_RATE == CARD_READER_RATE_HI
-      //       memcpy(res.info_payload, CARD_READER_EXTRA_INFO_HIRATE, 12);
-      //       res.payload_len = 12;
-      // #elif CARD_READER_RATE == CARD_READER_RATE_LOW
+#if CARD_READER_RATE == CARD_READER_RATE_HI
+      memcpy(res.info_payload, CARD_READER_VERSION_HIRATE, sizeof(CARD_READER_VERSION_HIRATE) - 1);
+      res.payload_len = sizeof(CARD_READER_VERSION_HIRATE) - 1;
+      res.frame_len   = 6 + res.payload_len;
+#elif CARD_READER_RATE == CARD_READER_RATE_LOW
       memcpy(res.info_payload, CARD_READER_EXTRA_INFO_LOWRATE, sizeof(CARD_READER_EXTRA_INFO_LOWRATE) - 1);
       res.payload_len = sizeof(CARD_READER_EXTRA_INFO_LOWRATE) - 1;
       res.frame_len   = 6 + res.payload_len;
-      // #endif
+#endif
       memcpy(cardIO_ResponseStringBuf, res.buffer, 128);
       CDC_CARD_IO_SendDataReady();
       break;
