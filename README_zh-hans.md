@@ -29,8 +29,6 @@
 
 ## 注意
 
-You must not use any name, including product name and trademark, that is associated to SimPad, SimDevices, SimGEKI, SimGETRO for promotional or other purposes. Please be kindly advised.
-
 请您知晓，您不得将与SimPad、SimDevices、SimGEKI、SimGETRO相关的任何名称（包括产品名称和商标）用于销售或其他目的。
 
 ## 特别感谢
