@@ -19,7 +19,8 @@ You could refer to the following table to find what you're looking for.
 | Folder | Content              |
 | ------ | -------------------- |
 | src    | Firmware source code |
-| sdk    | Windows tool chains  |
+| sdk    | CH32V SDK            |
+| tools  | Windows tool chains  |
 
 ## Editing
 
