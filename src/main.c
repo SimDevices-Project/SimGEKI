@@ -50,7 +50,7 @@ int main(void)
   LED_RGB_Set(LED_RGB_PORT_LEFT, 0, 0xFF, 0x00, 0xFF);
   LED_RGB_Set(LED_RGB_PORT_RIGHT, 0, 0xFF, 0x00, 0xFF);
 
-  LED_RGB_Set(LED_RGB_PORT_UART, 0, 0xFF, 0xFF, 0xFF);
+  LED_RGB_Set(LED_RGB_PORT_UART, 0, 0x00, 0x00, 0x00);
 
   setInterval(LED_Refresh, 20);
   setInterval(HIDIO_Update, 1);
