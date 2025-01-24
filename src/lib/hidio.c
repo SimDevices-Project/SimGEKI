@@ -15,8 +15,8 @@
 uint8_t HID_Buffer_OUT[64] = {0x00};
 uint8_t HID_Buffer_IN[64]  = {0x00};
 
-DataReceive *dataReceive = (DataReceive *)HID_Buffer_OUT;
-DataUpload *dataUpload   = (DataUpload *)HID_Buffer_IN;
+static DataReceive *dataReceive = (DataReceive *)HID_Buffer_OUT;
+static DataUpload *dataUpload   = (DataUpload *)HID_Buffer_IN;
 
 static uint16_t prevKeyStatus    = 0;
 static uint16_t activeKeyStatus  = 0;
@@ -70,18 +70,6 @@ void HIDIO_Receive_Handler()
         }
       }
       break;
-    // Custom HIDIO
-    case 0xAA:
-      switch (dataReceive->command) {
-        case SET_ROLLER_OFFSET: {
-          // Calc roller offset to 0x8000
-          Roller_ResetOffset();
-          break;
-        }
-        default: {
-          break;
-        }
-      }
     default: {
       break;
     }

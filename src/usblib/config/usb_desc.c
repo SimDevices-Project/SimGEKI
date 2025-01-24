@@ -37,7 +37,7 @@ const uint8_t USBD_ConfigDescriptor[USBD_SIZE_CONFIG_DESC] = {
     0x09,                                                     // bLength
     0x02,                                                     // bDescriptorType
     USBD_SIZE_CONFIG_DESC & 0xFF, USBD_SIZE_CONFIG_DESC >> 8, // wTotalLength
-    0x05,                                                     // bNumInterfaces
+    0x06,                                                     // bNumInterfaces
     0x01,                                                     // bConfigurationValue
     0x04,                                                     // iConfiguration
     0x80,                                                     // bmAttributes: Bus Powered; Remote Wakeup
@@ -207,6 +207,42 @@ const uint8_t USBD_ConfigDescriptor[USBD_SIZE_CONFIG_DESC] = {
     ENDP1_PACKET_SIZE, 0x00, // wMaxPacketSize 64
     0x05,                    // bInterval 5 (unit depends on device speed)
 
+    /* interface 5 (HID interface) descriptor */
+    0x09, // bLength
+    0x04, // bDescriptorType (Interface)
+    0x05, // bInterfaceNumber 5
+    0x00, // bAlternateSetting
+    0x02, // bNumEndpoints 2
+    0x03, // bInterfaceClass
+    0x00, // bInterfaceSubClass
+    0x00, // bInterfaceProtocol
+    0x08, // iInterface (String Index)
+
+    /* interface 5 HID descriptor */
+    0x09,                                                                   // bLength
+    0x21,                                                                   // bDescriptorType
+    0x11, 0x01,                                                             // bcdHID
+    0x00,                                                                   // bCountryCode
+    0x01,                                                                   // bNumDescriptors
+    0x22,                                                                   // bDescriptorType
+    USBD_SIZE_CUSTOM_REPORT_DESC & 0xFF, USBD_SIZE_CUSTOM_REPORT_DESC >> 8, // wDescriptorLength
+
+    /* interface 5 endpoint descriptor ep4_IN*/
+    0x07,                    // bLength
+    0x05,                    // bDescriptorType (Endpoint)
+    0x84,                    // bEndpointAddress (IN/D2H)
+    0x03,                    // bmAttributes (Interrupt)
+    ENDP4_PACKET_SIZE, 0x00, // wMaxPacketSize 64
+    0x05,                    // bInterval 5 (unit depends on device speed)
+
+    /* interface 5 endpoint descriptor ep4_OUT*/
+    0x07,                    // bLength
+    0x05,                    // bDescriptorType (Endpoint)
+    0x04,                    // bEndpointAddress (OUT/H2D)
+    0x03,                    // bmAttributes (Interrupt)
+    ENDP4_PACKET_SIZE, 0x00, // wMaxPacketSize 64
+    0x05,                    // bInterval 5 (unit depends on device speed)
+
 };
 
 /* USB String Descriptors */
@@ -232,7 +268,7 @@ const uint8_t USBD_StringProduct[USBD_SIZE_STRING_PRODUCT] = {
 uint8_t USBD_StringSerial[USBD_SIZE_STRING_SERIAL] = {
     USBD_SIZE_STRING_SERIAL,
     USB_STRING_DESCRIPTOR_TYPE,
-    '0', 0, '1', 0, '2', 0, '3', 0, '4', 0, '5', 0, '6', 0, '7', 0, '8', 0, '9', 0};
+    '0', 0, '1', 0, '2', 0, '3', 0, '4', 0, '5', 0, '6', 0, '7', 0, '8', 0, '9', 0, '0', 0, '0', 0};
 
 const uint8_t USBD_StringConfig[USBD_SIZE_STRING_CONFIG] = {
     USBD_SIZE_STRING_CONFIG,
@@ -253,6 +289,11 @@ const uint8_t USBD_StringCardIO[USBD_SIZE_STRING_CARDIO] = {
     USBD_SIZE_STRING_CARDIO,
     USB_STRING_DESCRIPTOR_TYPE,
     'C', 0, 'a', 0, 'r', 0, 'd', 0, ' ', 0, 'R', 0, 'e', 0, 'a', 0, 'd', 0, 'e', 0, 'r', 0, ' ', 0, 'C', 0, 'O', 0, 'M', 0, '1', 0};
+
+const uint8_t USBD_StringCustomHID[USBD_SIZE_STRING_CUSTOM_HID] = {
+    USBD_SIZE_STRING_CUSTOM_HID,
+    USB_STRING_DESCRIPTOR_TYPE,
+    'S', 0, 'i', 0, 'm', 0, 'G', 0, 'E', 0, 'K', 0, 'I', 0, ' ', 0, 'C', 0, 'o', 0, 'n', 0, 'f', 0, 'i', 0, 'g', 0};
 
 /* HID Report Descriptor */
 const uint8_t USBD_HidRepDesc[USBD_SIZE_REPORT_DESC] =
@@ -310,14 +351,47 @@ const uint8_t USBD_HidRepDesc[USBD_SIZE_REPORT_DESC] =
         0x95, 0x3F,                   //     Report Count (63)
         0x91, 0x02,                   //     Output (Data,Var,Abs,No Wrap,Linear,Preferred State,No Null Position,Non-volatile)
         0xC0,                         //   End Collection
-        0x85, 0xAA,                   //   Report ID (170)
-        0xA1, 0x01,                   //   Collection (Application)
-        0x09, 0x00,                   //     Usage (0x00)
-        0x15, 0x00,                   //     Logical Minimum (0)
-        0x26, 0xFF, 0x00,             //     Logical Maximum (255)
-        0x75, 0x08,                   //     Report Size (8)
-        0x95, 0x3F,                   //     Report Count (63)
-        0x91, 0x02,                   //     Output (Data,Var,Abs,No Wrap,Linear,Preferred State,No Null Position,Non-volatile)
-        0xC0,                         //   End Collection
         0xC0,                         // End Collection
 };
+
+const uint8_t USBD_HidCustomDesc[USBD_SIZE_CUSTOM_REPORT_DESC] = {
+    0x06, 0x00, 0xFF, // Usage Page (Vendor Defined 0xFF00)
+    0x09, 0x01,       // Usage (Vendor Usage 1)
+    0xA1, 0x01,       // Collection (Application)
+    0x85, 0xAA,       // Report ID (170 0xAA)
+    0x15, 0x00,       // Logical Minimum (0)
+    0x26, 0xFF, 0x00, // Logical Maximum (255)
+    0x75, 0x08,       // Report Size (8)
+    0x95, 0x3F,       // Report Count (63)
+    0x09, 0x02,       // Usage (Vendor Usage 2)
+    0x81, 0x02,       // Input (Data,Var,Abs)
+    0x09, 0x03,       // Usage (Vendor Usage 3)
+    0x91, 0x02,       // Output (Data,Var,Abs)
+    0xC0              // End Collection
+};
+void _IntToUnicode(uint32_t value, uint8_t *pbuf, uint8_t len)
+{
+  for (uint8_t idx = 0; idx < len; idx++) {
+    if (((value >> 28)) < 0xA) {
+      pbuf[2 * idx] = (value >> 28) + '0';
+    } else {
+      pbuf[2 * idx] = (value >> 28) + 'A' - 10;
+    }
+    value             = value << 4;
+    pbuf[2 * idx + 1] = 0;
+  }
+}
+
+void USBD_SerialNumUpdate()
+{
+  uint32_t Device_Serial0, Device_Serial1, Device_Serial2;
+  Device_Serial0 = *(uint32_t *)0x1FFFF7E8;
+  Device_Serial1 = *(uint32_t *)0x1FFFF7EC;
+  Device_Serial2 = *(uint32_t *)0x1FFFF7F0;
+
+  if (Device_Serial0 != 0) {
+    _IntToUnicode(Device_Serial0, &USBD_StringSerial[2], 4);
+    _IntToUnicode(Device_Serial1, &USBD_StringSerial[10], 4);
+    _IntToUnicode(Device_Serial2, &USBD_StringSerial[18], 4);
+  }
+}

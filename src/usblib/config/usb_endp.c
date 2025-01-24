@@ -20,6 +20,7 @@
 #include "cdc.h"
 
 #include "hidio.h"
+#include "hidconfig.h"
 
 /*********************************************************************
  * @fn      EP1_IN_Callback
@@ -41,12 +42,37 @@ void EP1_IN_Callback(void)
  */
 void EP1_OUT_Callback(void)
 {
-  if (USB_SIL_Read(EP1_OUT, HID_Buffer_OUT) == 64) {
+  if (USB_SIL_Read(EP1_OUT, HID_Buffer_OUT) == ENDP1_PACKET_SIZE) {
     HIDIO_Receive_Handler();
   }
   SetEPRxValid(ENDP1);
 }
 
+/*********************************************************************
+ * @fn      EP4_IN_Callback
+ *
+ * @brief  Endpoint 4 IN.
+ *
+ * @return  none
+ */
+void EP4_IN_Callback(void)
+{
+}
+
+/*********************************************************************
+ * @fn      EP4_OUT_Callback
+ *
+ * @brief  Endpoint 4 OUT.
+ *
+ * @return  none
+ */
+void EP4_OUT_Callback(void)
+{
+  if (USB_SIL_Read(EP4_OUT, HIDCFG_Buffer_OUT) == ENDP4_PACKET_SIZE) {
+    HIDCONFIG_Receive_Handler();
+  }
+  SetEPRxValid(ENDP4);
+}
 /*********************************************************************
  * @fn      EP2_OUT_Callback
  *
@@ -77,6 +103,7 @@ void EP2_IN_Callback(void)
   } else {
     // 标记NAK状态，停止传输
     SetEPTxStatus(CDC_LED_IO_EP, EP_TX_NAK);
+    CDC_Check();
   }
 }
 
@@ -110,6 +137,7 @@ void EP3_IN_Callback(void)
   } else {
     // 标记NAK状态，停止传输
     SetEPTxStatus(CDC_CARD_IO_EP, EP_TX_NAK);
+    CDC_Check();
   }
 }
 

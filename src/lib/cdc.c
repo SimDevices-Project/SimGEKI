@@ -16,7 +16,7 @@
 // 初始化波特率为115200，1停止位，无校验，8数据位。
 uint8_t LineCoding[LINECODING_SIZE] = {0x00, 0xC2, 0x01, 0x00, 0x00, 0x00, 0x08};
 
-#define CDC_PUTCHARBUF_LEN 64
+#define CDC_PUTCHARBUF_LEN 32
 #define CDC_PENDINGBUF_LEN 64
 
 uint8_t ledIO_PutCharBuf[CDC_PUTCHARBUF_LEN];
@@ -338,7 +338,7 @@ void CDC_LED_IO_Handler()
 
 #define CARD_READER_RATE_HI  1
 #define CARD_READER_RATE_LOW 0
-#define CARD_READER_RATE     CARD_READER_RATE_HI
+#define CARD_READER_RATE     CARD_READER_RATE_LOW
 
 const uint8_t CARD_READER_FW_VERSION_HIRATE[2]   = "\x94";
 const uint8_t CARD_READER_FW_VERSION_LOWRATE[24] = "TN32MSEC003S F/W Ver1.2";

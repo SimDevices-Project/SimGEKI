@@ -21,25 +21,24 @@
 /* buffer table base address */
 #define BTABLE_ADDRESS      (0x00)
 
-// 0x50-0x5F 为空
 
 /* EP0  */
 /* rx/tx buffer base address */
-#define ENDP0_RXADDR        (0x60)
-#define ENDP0_TXADDR        (0x70)
+#define ENDP0_RXADDR        (0x50)
+#define ENDP0_TXADDR        (0x60)
 
 /* EP1  */
 #define ENDP1_PACKET_SIZE   (64)
-#define ENDP1_TXADDR        (0x80)               
+#define ENDP1_TXADDR        (0x70)               
 #define ENDP1_RXADDR        (ENDP1_TXADDR + ENDP1_PACKET_SIZE)
 
 /* EP2  */
-#define ENDP2_PACKET_SIZE   (64)
+#define ENDP2_PACKET_SIZE   (32)
 #define ENDP2_TXADDR        (ENDP1_RXADDR + ENDP2_PACKET_SIZE)
 #define ENDP2_RXADDR        (ENDP2_TXADDR + ENDP2_PACKET_SIZE)
 
 /* EP3  */
-#define ENDP3_PACKET_SIZE   (64)
+#define ENDP3_PACKET_SIZE   (32)
 #define ENDP3_TXADDR        (ENDP2_RXADDR + ENDP3_PACKET_SIZE)
 #define ENDP3_RXADDR        (ENDP3_TXADDR + ENDP3_PACKET_SIZE)
 
@@ -71,7 +70,7 @@
 // #define  EP1_IN_Callback   NOP_Process
 // #define  EP2_IN_Callback   NOP_Process
 // #define  EP3_IN_Callback   NOP_Process
-#define  EP4_IN_Callback   NOP_Process
+// #define  EP4_IN_Callback   NOP_Process
 #define  EP5_IN_Callback   NOP_Process
 #define  EP6_IN_Callback   NOP_Process
 #define  EP7_IN_Callback   NOP_Process
@@ -79,7 +78,7 @@
 // #define  EP1_OUT_Callback   NOP_Process
 // #define  EP2_OUT_Callback   NOP_Process
 // #define  EP3_OUT_Callback   NOP_Process
-#define  EP4_OUT_Callback   NOP_Process
+// #define  EP4_OUT_Callback   NOP_Process
 #define  EP5_OUT_Callback   NOP_Process
 #define  EP6_OUT_Callback   NOP_Process
 #define  EP7_OUT_Callback   NOP_Process

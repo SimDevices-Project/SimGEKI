@@ -10,6 +10,8 @@
 * microcontroller manufactured by Nanjing Qinheng Microelectronics.
 *******************************************************************************/ 
 #include "usb_lib.h"
+#include "usb_desc.h"
+
 
 uint8_t	EPindex;
 DEVICE_INFO *pInformation;
@@ -29,6 +31,7 @@ USER_STANDARD_REQUESTS  *pUser_Standard_Requests;
  */
 xdata void USB_Init(void)
 {
+  USBD_SerialNumUpdate();
   pInformation = &Device_Info;
   pInformation->ControlState = 2;
   pProperty = &Device_Property;
