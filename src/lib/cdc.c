@@ -76,74 +76,66 @@ xdata void CDC_Init()
   cdc_card_io.Req_PacketBuf     = cardIO_PacketBuf;
 }
 
-void CDC_IO_USB_Poll(CDC_Struct *IO)
+void CDC_IO_USB_Poll(CDC_Struct IO)
 {
   uint8_t usb_tx_len;
   if (bDeviceState == CONFIGURED) {
     // 只有在端点空闲的时候才能发送数据
-    if (GetEPTxStatus(IO->USB_EndPoint) == EP_TX_NAK) {
+    if (GetEPTxStatus(IO.USB_EndPoint) == EP_TX_NAK) {
 
-      if (IO->PutCharBuff_First != IO->PutCharBuff_Last || IO->Tx_Full) {
+      if (IO.PutCharBuff_First != IO.PutCharBuff_Last || IO.Tx_Full) {
         // 计算可发送数据长度
-        if (IO->PutCharBuff_First <= IO->PutCharBuff_Last) {
-          usb_tx_len = IO->PutCharBuff_Last - IO->PutCharBuff_First;
+        if (IO.PutCharBuff_First <= IO.PutCharBuff_Last) {
+          usb_tx_len = IO.PutCharBuff_Last - IO.PutCharBuff_First;
         } else {
-          usb_tx_len = CDC_PUTCHARBUF_LEN - IO->PutCharBuff_First;
+          usb_tx_len = CDC_PUTCHARBUF_LEN - IO.PutCharBuff_First;
         }
 
         // 限制单次发送长度
-        if (usb_tx_len > IO->USB_PacketSize) {
-          usb_tx_len = IO->USB_PacketSize;
+        if (usb_tx_len > IO.USB_PacketSize) {
+          usb_tx_len = IO.USB_PacketSize;
         }
 
         // 复制数据
-        memcpy(usb_DataUpBuf, &IO->PutCharBuff[IO->PutCharBuff_First], usb_tx_len);
+        memcpy(usb_DataUpBuf, &IO.PutCharBuff[IO.PutCharBuff_First], usb_tx_len);
 
         // 更新指针
-        IO->PutCharBuff_First = (IO->PutCharBuff_First + usb_tx_len) % CDC_PUTCHARBUF_LEN;
+        IO.PutCharBuff_First = (IO.PutCharBuff_First + usb_tx_len) % CDC_PUTCHARBUF_LEN;
 
         // 发送数据
-        USBD_ENDPx_DataUp(IO->USB_EndPoint, usb_DataUpBuf, usb_tx_len);
-        IO->Tx_Full = 0;
+        USBD_ENDPx_DataUp(IO.USB_EndPoint, usb_DataUpBuf, usb_tx_len);
+        IO.Tx_Full = 0;
       }
     }
   }
 }
 
-void CDC_LED_IO_PutChar(uint8_t tdata)
+void CDC_IO_PutChar(CDC_Struct IO, uint8_t tdata)
 {
   // Add new data to LED IO PutCharBuf
-  cdc_led_io.PutCharBuff[cdc_led_io.PutCharBuff_Last++] = tdata;
-  if (cdc_led_io.PutCharBuff_Last >= CDC_PUTCHARBUF_LEN) {
+  IO.PutCharBuff[IO.PutCharBuff_Last++] = tdata;
+  if (IO.PutCharBuff_Last >= CDC_PUTCHARBUF_LEN) {
     // Rotate the tail to the beginning of the buffer
-    cdc_led_io.PutCharBuff_Last = 0;
+    IO.PutCharBuff_Last = 0;
   }
 
-  if (cdc_led_io.PutCharBuff_Last == cdc_led_io.PutCharBuff_First) {
+  if (IO.PutCharBuff_Last == IO.PutCharBuff_First) {
     // Buffer is full
-    cdc_led_io.Tx_Full = 1;
+    IO.Tx_Full = 1;
 
-    while (cdc_led_io.Tx_Full) // Wait until the buffer has vacancy
-      CDC_IO_USB_Poll(&cdc_led_io);
+    while (IO.Tx_Full) // Wait until the buffer has vacancy
+      CDC_IO_USB_Poll(cdc_led_io);
   }
+}
+
+void CDC_LED_IO_PutChar(uint8_t tdata)
+{
+  CDC_IO_PutChar(cdc_led_io, tdata);
 }
 
 void CDC_CARD_IO_PutChar(uint8_t tdata)
 {
-  // Add new data to Card IO PutCharBuf
-  cdc_card_io.PutCharBuff[cdc_card_io.PutCharBuff_Last++] = tdata;
-  if (cdc_card_io.PutCharBuff_Last >= CDC_PUTCHARBUF_LEN) {
-    // Rotate the tail to the beginning of the buffer
-    cdc_card_io.PutCharBuff_Last = 0;
-  }
-
-  if (cdc_card_io.PutCharBuff_Last == cdc_card_io.PutCharBuff_First) {
-    // Buffer is full
-    cdc_card_io.Tx_Full = 1;
-
-    while (cdc_card_io.Tx_Full) // Wait until the buffer has vacancy
-      CDC_IO_USB_Poll(&cdc_card_io);
-  }
+  CDC_IO_PutChar(cdc_card_io, tdata);
 }
 
 void CDC_LED_IO_Handler()
@@ -555,8 +547,8 @@ void CDC_UART_Poll()
 
 void CDC_USB_Poll()
 {
-  CDC_IO_USB_Poll(&cdc_led_io);
-  CDC_IO_USB_Poll(&cdc_card_io);
+  CDC_IO_USB_Poll(cdc_led_io);
+  CDC_IO_USB_Poll(cdc_card_io);
 }
 
 // CDC 数据轮询
