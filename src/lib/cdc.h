@@ -5,7 +5,7 @@
 
 #define LINECODING_SIZE    7
 
-#define CDC_USB_BUFF_SIZE 64
+#define CDC_USB_BUFF_SIZE 32
 
 #define CDC_LED_IO_EP  ENDP2
 #define CDC_CARD_IO_EP ENDP3
@@ -18,6 +18,7 @@ typedef struct {
   uint8_t PutCharBuff_First;
   uint8_t PutCharBuff_Len;
   uint8_t USB_EndPoint;
+  uint8_t USB_PacketSize;
   // uint8_t Tx_Busy;
   uint8_t Tx_Full;
   uint8_t Rx_Pending;

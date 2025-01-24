@@ -98,12 +98,17 @@ void EP2_OUT_Callback(void)
 void EP2_IN_Callback(void)
 {
   if (_GetEPTxCount(CDC_LED_IO_EP) == ENDP2_PACKET_SIZE) {
-    // 发送一个ZLP 0长度包，通知包已发送完毕
-    USB_SIL_Write(0x80 | CDC_LED_IO_EP, 0, 0);
+    // 当还有数据未发送时，继续发送包
+    if (cdc_led_io.Tx_Full || cdc_led_io.PutCharBuff_First != cdc_led_io.PutCharBuff_Last) {
+      SetEPTxStatus(CDC_LED_IO_EP, EP_TX_NAK);
+      CDC_Check();
+    } else {
+      // 发送一个ZLP 0长度包，通知包已发送完毕
+      USB_SIL_Write(0x80 | CDC_LED_IO_EP, 0, 0);
+    }
   } else {
     // 标记NAK状态，停止传输
     SetEPTxStatus(CDC_LED_IO_EP, EP_TX_NAK);
-    CDC_Check();
   }
 }
 
@@ -132,12 +137,17 @@ void EP3_OUT_Callback(void)
 void EP3_IN_Callback(void)
 {
   if (_GetEPTxCount(CDC_CARD_IO_EP) == ENDP3_PACKET_SIZE) {
-    // 发送一个ZLP 0长度包，通知包已发送完毕
-    USB_SIL_Write(0x80 | CDC_CARD_IO_EP, 0, 0);
+    // 当还有数据未发送时，继续发送包
+    if (cdc_card_io.Tx_Full || cdc_card_io.PutCharBuff_First != cdc_card_io.PutCharBuff_Last) {
+      SetEPTxStatus(CDC_CARD_IO_EP, EP_TX_NAK);
+      CDC_Check();
+    } else {
+      // 发送一个ZLP 0长度包，通知包已发送完毕
+      USB_SIL_Write(0x80 | CDC_CARD_IO_EP, 0, 0);
+    }
   } else {
     // 标记NAK状态，停止传输
     SetEPTxStatus(CDC_CARD_IO_EP, EP_TX_NAK);
-    CDC_Check();
   }
 }
 

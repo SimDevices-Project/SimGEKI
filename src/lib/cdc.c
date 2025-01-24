@@ -16,7 +16,10 @@
 // 初始化波特率为115200，1停止位，无校验，8数据位。
 uint8_t LineCoding[LINECODING_SIZE] = {0x00, 0xC2, 0x01, 0x00, 0x00, 0x00, 0x08};
 
-#define CDC_PUTCHARBUF_LEN 32
+#define LEDIO_PACKET_SIZE  ENDP2_PACKET_SIZE
+#define CARDIO_PACKET_SIZE ENDP3_PACKET_SIZE
+
+#define CDC_PUTCHARBUF_LEN 128
 #define CDC_PENDINGBUF_LEN 64
 
 uint8_t ledIO_PutCharBuf[CDC_PUTCHARBUF_LEN];
@@ -51,6 +54,7 @@ xdata void CDC_Init()
   cdc_led_io.PutCharBuff_First = 0;
   cdc_led_io.PutCharBuff_Len   = sizeof(ledIO_PutCharBuf);
   cdc_led_io.USB_EndPoint      = CDC_LED_IO_EP;
+  cdc_led_io.USB_PacketSize    = LEDIO_PACKET_SIZE;
   cdc_led_io.Tx_Full           = 0;
   cdc_led_io.Rx_Pending        = 0;
   cdc_led_io.Rx_PendingBuf     = ledIO_Rx_PendingBuf;
@@ -63,6 +67,7 @@ xdata void CDC_Init()
   cdc_card_io.PutCharBuff_First = 0;
   cdc_card_io.PutCharBuff_Len   = sizeof(cardIO_PutCharBuf);
   cdc_card_io.USB_EndPoint      = CDC_CARD_IO_EP;
+  cdc_card_io.USB_PacketSize    = CARDIO_PACKET_SIZE;
   cdc_card_io.Tx_Full           = 0;
   cdc_card_io.Rx_Pending        = 0;
   cdc_card_io.Rx_PendingBuf     = cardIO_Rx_PendingBuf;
@@ -71,136 +76,35 @@ xdata void CDC_Init()
   cdc_card_io.Req_PacketBuf     = cardIO_PacketBuf;
 }
 
-void CDC_LED_IO_Upload(uint8_t length)
-{
-  USBD_ENDPx_DataUp(CDC_LED_IO_EP, usb_DataUpBuf, length);
-}
-
-void CDC_CARD_IO_Upload(uint8_t length)
-{
-  USBD_ENDPx_DataUp(CDC_CARD_IO_EP, usb_DataUpBuf, length);
-}
-
-void CDC_LED_IO_USB_Poll()
+void CDC_IO_USB_Poll(CDC_Struct *IO)
 {
   uint8_t usb_tx_len;
   if (bDeviceState == CONFIGURED) {
     // 只有在端点空闲的时候才能发送数据
-    if (GetEPTxStatus(CDC_LED_IO_EP) == EP_TX_NAK) {
-      if (cdc_led_io.PutCharBuff_First == cdc_led_io.PutCharBuff_Last) {
-        if (cdc_led_io.Tx_Full) {
-          // Buffer is full
+    if (GetEPTxStatus(IO->USB_EndPoint) == EP_TX_NAK) {
 
-          // length (the first byte to send, the end of the buffer)
-          usb_tx_len = CDC_PUTCHARBUF_LEN - cdc_led_io.PutCharBuff_First;
-          memcpy(usb_DataUpBuf, &cdc_led_io.PutCharBuff[cdc_led_io.PutCharBuff_First], usb_tx_len);
-
-          // length (the first byte in the buffer, the last byte to send), if any
-          if (cdc_led_io.PutCharBuff_Last > 0)
-            memcpy(&usb_DataUpBuf[usb_tx_len], cdc_led_io.PutCharBuff, cdc_led_io.PutCharBuff_Last);
-
-          // Send the entire buffer
-          CDC_LED_IO_Upload(CDC_PUTCHARBUF_LEN);
-
-          cdc_led_io.Tx_Full = 0;
-
-          // A 64-byte packet is going to be sent, according to USB specification, USB uses a less-than-max-length packet to demarcate an end-of-transfer
-          // As a result, we need to send a zero-length-packet.
-          // return;
-        }
-
-        // Otherwise buffer is empty, nothing to send
-        // return;
-      } else {
-        // CDC1_PutChar() is the only way to insert into CDC1_PutCharBuf, it detects buffer overflow and notify the CDC_USB_Poll().
-        // So in this condition the buffer can not be full, so we don't have to send a zero-length-packet after this.
-
-        if (cdc_led_io.PutCharBuff_First > cdc_led_io.PutCharBuff_Last) {
-          // Rollback
-          // length (the first byte to send, the end of the buffer)
-          usb_tx_len = CDC_PUTCHARBUF_LEN - cdc_led_io.PutCharBuff_First;
-          memcpy(usb_DataUpBuf, &cdc_led_io.PutCharBuff[cdc_led_io.PutCharBuff_First], usb_tx_len);
-
-          // length (the first byte in the buffer, the last byte to send), if any
-          if (cdc_led_io.PutCharBuff_Last > 0) {
-            memcpy(&usb_DataUpBuf[usb_tx_len], cdc_led_io.PutCharBuff, cdc_led_io.PutCharBuff_Last);
-            usb_tx_len += cdc_led_io.PutCharBuff_Last;
-          }
-
+      if (IO->PutCharBuff_First != IO->PutCharBuff_Last || IO->Tx_Full) {
+        // 计算可发送数据长度
+        if (IO->PutCharBuff_First <= IO->PutCharBuff_Last) {
+          usb_tx_len = IO->PutCharBuff_Last - IO->PutCharBuff_First;
         } else {
-          usb_tx_len = cdc_led_io.PutCharBuff_Last - cdc_led_io.PutCharBuff_First;
-          memcpy(usb_DataUpBuf, &cdc_led_io.PutCharBuff[cdc_led_io.PutCharBuff_First], usb_tx_len);
+          usb_tx_len = CDC_PUTCHARBUF_LEN - IO->PutCharBuff_First;
         }
 
-        cdc_led_io.PutCharBuff_First += usb_tx_len;
-        if (cdc_led_io.PutCharBuff_First >= CDC_PUTCHARBUF_LEN)
-          cdc_led_io.PutCharBuff_First -= CDC_PUTCHARBUF_LEN;
-
-        // ACK next IN transfer
-        CDC_LED_IO_Upload(usb_tx_len);
-      }
-    }
-  }
-}
-
-void CDC_CARD_IO_USB_Poll()
-{
-  uint8_t usb_tx_len;
-  if (bDeviceState == CONFIGURED) {
-    // 只有在端点空闲的时候才能发送数据
-    if (GetEPTxStatus(CDC_CARD_IO_EP) == EP_TX_NAK) {
-      if (cdc_card_io.PutCharBuff_First == cdc_card_io.PutCharBuff_Last) {
-        if (cdc_card_io.Tx_Full) {
-          // Buffer is full
-
-          // length (the first byte to send, the end of the buffer)
-          usb_tx_len = CDC_PUTCHARBUF_LEN - cdc_card_io.PutCharBuff_First;
-          memcpy(usb_DataUpBuf, &cdc_card_io.PutCharBuff[cdc_card_io.PutCharBuff_First], usb_tx_len);
-
-          // length (the first byte in the buffer, the last byte to send), if any
-          if (cdc_card_io.PutCharBuff_Last > 0)
-            memcpy(&usb_DataUpBuf[usb_tx_len], cdc_card_io.PutCharBuff, cdc_card_io.PutCharBuff_Last);
-
-          // Send the entire buffer
-          CDC_CARD_IO_Upload(CDC_PUTCHARBUF_LEN);
-
-          cdc_card_io.Tx_Full = 0;
-
-          // A 64-byte packet is going to be sent, according to USB specification, USB uses a less-than-max-length packet to demarcate an end-of-transfer
-          // As a result, we need to send a zero-length-packet.
-          // return;
+        // 限制单次发送长度
+        if (usb_tx_len > IO->USB_PacketSize) {
+          usb_tx_len = IO->USB_PacketSize;
         }
 
-        // Otherwise buffer is empty, nothing to send
-        // return;
-      } else {
+        // 复制数据
+        memcpy(usb_DataUpBuf, &IO->PutCharBuff[IO->PutCharBuff_First], usb_tx_len);
 
-        // CDC1_PutChar() is the only way to insert into CDC1_PutCharBuf, it detects buffer overflow and notify the CDC_USB_Poll().
-        // So in this condition the buffer can not be full, so we don't have to send a zero-length-packet after this.
+        // 更新指针
+        IO->PutCharBuff_First = (IO->PutCharBuff_First + usb_tx_len) % CDC_PUTCHARBUF_LEN;
 
-        if (cdc_card_io.PutCharBuff_First > cdc_card_io.PutCharBuff_Last) {
-          // Rollback
-          // length (the first byte to send, the end of the buffer)
-          usb_tx_len = CDC_PUTCHARBUF_LEN - cdc_card_io.PutCharBuff_First;
-          memcpy(usb_DataUpBuf, &cdc_card_io.PutCharBuff[cdc_card_io.PutCharBuff_First], usb_tx_len);
-
-          // length (the first byte in the buffer, the last byte to send), if any
-          if (cdc_card_io.PutCharBuff_Last > 0) {
-            memcpy(&usb_DataUpBuf[usb_tx_len], cdc_card_io.PutCharBuff, cdc_card_io.PutCharBuff_Last);
-            usb_tx_len += cdc_card_io.PutCharBuff_Last;
-          }
-
-        } else {
-          usb_tx_len = cdc_card_io.PutCharBuff_Last - cdc_card_io.PutCharBuff_First;
-          memcpy(usb_DataUpBuf, &cdc_card_io.PutCharBuff[cdc_card_io.PutCharBuff_First], usb_tx_len);
-        }
-
-        cdc_card_io.PutCharBuff_First += usb_tx_len;
-        if (cdc_card_io.PutCharBuff_First >= CDC_PUTCHARBUF_LEN)
-          cdc_card_io.PutCharBuff_First -= CDC_PUTCHARBUF_LEN;
-
-        // ACK next IN transfer
-        CDC_CARD_IO_Upload(usb_tx_len);
+        // 发送数据
+        USBD_ENDPx_DataUp(IO->USB_EndPoint, usb_DataUpBuf, usb_tx_len);
+        IO->Tx_Full = 0;
       }
     }
   }
@@ -220,7 +124,7 @@ void CDC_LED_IO_PutChar(uint8_t tdata)
     cdc_led_io.Tx_Full = 1;
 
     while (cdc_led_io.Tx_Full) // Wait until the buffer has vacancy
-      CDC_LED_IO_USB_Poll();
+      CDC_IO_USB_Poll(&cdc_led_io);
   }
 }
 
@@ -238,7 +142,7 @@ void CDC_CARD_IO_PutChar(uint8_t tdata)
     cdc_card_io.Tx_Full = 1;
 
     while (cdc_card_io.Tx_Full) // Wait until the buffer has vacancy
-      CDC_CARD_IO_USB_Poll();
+      CDC_IO_USB_Poll(&cdc_card_io);
   }
 }
 
@@ -387,7 +291,7 @@ void CDC_CARD_IO_Handler()
   static uint8_t AimeKey[6], BanaKey[6];
   uint16_t SystemCode;
   memset(cardIO_ResponseStringBuf, 0x00, 128); // Clear resPackect
-  memset(&res, 0x00, 128);                      // Clear resPackect
+  memset(&res, 0x00, 128);                     // Clear resPackect
 
   res.addr        = _req.addr;
   res.seq_no      = _req.seq_no;
@@ -651,8 +555,8 @@ void CDC_UART_Poll()
 
 void CDC_USB_Poll()
 {
-  CDC_LED_IO_USB_Poll();
-  CDC_CARD_IO_USB_Poll();
+  CDC_IO_USB_Poll(&cdc_led_io);
+  CDC_IO_USB_Poll(&cdc_card_io);
 }
 
 // CDC 数据轮询
