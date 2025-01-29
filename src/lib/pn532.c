@@ -217,7 +217,7 @@ void PN532_Check()
 #ifdef PN532_INTERFACE_UART
   uint8_t buffer[128];
   uint8_t size = 0;
-  PN532_UART_Check(buffer,&size);
+  INTR(getResponse)(buffer,&size);
   if(size == 0){
     return;
   }
@@ -562,7 +562,7 @@ void PN532_getFirmwareVersion(void)
   PN532_Status.PN532_CMD_Status = PN532_GET_VERSION;
   PN532_Status.PN532_Failed_task_key = setTimeout(PN532_Failed, PN532_TIMEOUT);
 
-  PN532_UART_WriteCommand(packet_buffer,1,0,0);
+  INTR(writeCommand)(packet_buffer,1,0,0);
 }
 
 /**************************************************************************/
@@ -583,7 +583,7 @@ void PN532_SAMConfig()
   PN532_Status.PN532_CMD_Status = PN532_SAMCONFIG;
   PN532_Status.PN532_Failed_task_key = setTimeout(PN532_Failed, 5000);
 
-  PN532_UART_WriteCommand(packet_buffer,4,0,0);
+  INTR(writeCommand)(packet_buffer,4,0,0);
 }
 
 /**************************************************************************/
@@ -610,7 +610,7 @@ void PN532_setPassiveActivationRetries()
   PN532_Status.PN532_CMD_Status = PN532_SET_PASSIVE_ACTIVATION_RETRIES;
   PN532_Status.PN532_Failed_task_key = setTimeout(PN532_Failed, PN532_TIMEOUT);
 
-    PN532_UART_WriteCommand(packet_buffer,5,0,0);
+  INTR(writeCommand)(packet_buffer,5,0,0);
 }
 
 /**************************************************************************/
@@ -642,7 +642,7 @@ void PN532_setRFField(uint8_t autoRFCA, uint8_t rFOnOff)
   PN532_Status.PN532_CMD_Status = PN532_SET_RFFIELD;
   PN532_Status.PN532_Failed_task_key = setTimeout(PN532_Failed, PN532_TIMEOUT);
 
-  PN532_UART_WriteCommand(packet_buffer,3,0,0);
+  INTR(writeCommand)(packet_buffer,3,0,0);
 }
 
 /***** ISO14443A Commands ******/
@@ -674,7 +674,7 @@ void PN532_readPassiveTargetID(uint8_t cardbaudrate, uint16_t timeout)
   PN532_Status.PN532_CMD_Status = PN532_READ_PASSIVE_TARGET_ID;
   PN532_Status.PN532_Failed_task_key = setTimeout(PN532_Failed, timeout);
 
-  PN532_UART_WriteCommand(packet_buffer,3,0,0);
+  INTR(writeCommand)(packet_buffer,3,0,0);
 }
 
 /***** Mifare Classic Functions ******/
@@ -719,7 +719,7 @@ void PN532_mifareclassic_AuthenticateBlock (uint8_t *uid, uint8_t uidLen, uint32
   PN532_Status.PN532_CMD_Status = PN532_MIFARE_AUTHENTICATE_BLOCK;
   PN532_Status.PN532_Failed_task_key = setTimeout(PN532_Failed, PN532_TIMEOUT);
 
-  PN532_UART_WriteCommand(packet_buffer,10 + uidLen,0,0);
+  INTR(writeCommand)(packet_buffer,10 + uidLen,0,0);
 }
 
 /**************************************************************************/
@@ -749,7 +749,7 @@ void PN532_mifareclassic_ReadDataBlock (uint8_t blockNumber, uint8_t *data)
   PN532_Status.PN532_CMD_Status = PN532_MIFARE_READ_BLOCK;
   PN532_Status.PN532_Failed_task_key = setTimeout(PN532_Failed, PN532_TIMEOUT);
 
-  PN532_UART_WriteCommand(packet_buffer,4,0,0);
+  INTR(writeCommand)(packet_buffer,4,0,0);
 }
 
 /***** FeliCa Functions ******/
@@ -788,7 +788,7 @@ void PN532_felica_Polling(uint16_t systemCode, uint8_t _requestCode, uint16_t ti
   PN532_Status.PN532_CMD_Status = PN532_FELICA_POLLING;
   PN532_Status.PN532_Failed_task_key = setTimeout(PN532_Failed, timeout);
 
-  PN532_UART_WriteCommand(packet_buffer,8,0,0);
+  INTR(writeCommand)(packet_buffer,8,0,0);
 }
 
 /**************************************************************************/
@@ -810,7 +810,7 @@ void PN532_felica_SendCommand (const uint8_t *command, uint8_t commandlength)
   packet_buffer[0] = 0x40; // PN532_COMMAND_INDATAEXCHANGE;--
   packet_buffer[1] = inListedTag;
   packet_buffer[2] = commandlength + 1;
-  PN532_UART_WriteCommand(packet_buffer,3,command, commandlength);
+  INTR(writeCommand)(packet_buffer,3,command, commandlength);
 }
 
 /**************************************************************************/

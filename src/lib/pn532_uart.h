@@ -20,9 +20,7 @@
  */
 #define PN532_DISABLE_FELICA_CHECK 1
 
-void PN532_UART_Check(uint8_t *buffer,uint8_t *size);
-void PN532_UART_Init();
-void PN532_UART_WriteCommand(const uint8_t *header, uint8_t hlen, const uint8_t *body, uint8_t blen);
+void PN532_UART_Check(uint8_t *buffer, uint8_t *size);
 
 #include "pn532.h"
 
@@ -31,7 +29,7 @@ typedef struct
   void (*begin)(void);
   void (*wakeup)(void);
   void (*writeCommand)(const uint8_t *header, uint8_t hlen, const uint8_t *body, uint8_t blen);
-  void (*readResponse)(uint8_t *buf, uint8_t len, uint16_t timeout);
+  void (*getResponse)(uint8_t *buf, uint8_t *len);
 } __packed PN532_Interface;
 
 extern PN532_Interface PN532_UART;

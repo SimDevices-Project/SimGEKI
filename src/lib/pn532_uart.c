@@ -34,7 +34,7 @@ uint8_t RxBufferCount = 0;
 void USART1_IRQHandler(void) __attribute__((interrupt("WCH-Interrupt-fast")));
 
 void PN532_UART_WriteCommand(const uint8_t *header, uint8_t hlen, const uint8_t *body, uint8_t blen);
-void PN532_UART_ReadResponse(uint8_t *buf, uint8_t len, uint16_t timeout);
+void PN532_UART_GetResponse(uint8_t *buf, uint8_t *len);
 void PN532_UART_Receive(void (*callback)(uint8_t), uint8_t *buf, uint8_t len, uint16_t timeout);
 void PN532_UART_ReadAckFrame(void (*callback)(uint8_t), uint16_t timeout);
 void PN532_UART_RxDataCheck();
@@ -45,7 +45,7 @@ PN532_Interface PN532_UART = {
     .begin        = PN532_UART_Init,
     .wakeup       = PN532_UART_Wakeup,
     .writeCommand = PN532_UART_WriteCommand,
-    .readResponse = PN532_UART_ReadResponse,
+    .getResponse  = PN532_UART_GetResponse,
 };
 
 /*********************************************************************
@@ -120,6 +120,11 @@ void PN532_UART_Check(uint8_t *_buffer, uint8_t *_size)
     *_size = size;
 #endif
   }
+}
+
+void PN532_UART_GetResponse(uint8_t *buf, uint8_t *len)
+{
+  return PN532_UART_Check(buf, len);
 }
 
 void PN532_UART_Init()
