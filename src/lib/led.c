@@ -3,7 +3,7 @@
 #include "timeout.h"
 
 #define RGB_PORT_COUNT      3
-#define RGB_COUNT_PER_PORT  6
+#define RGB_COUNT_PER_PORT  1
 
 #define RGB_7COLORS_COUNT   6
 
