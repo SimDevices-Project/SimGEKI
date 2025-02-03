@@ -387,7 +387,7 @@ void CDC_CARD_IO_Handler()
       PN532_Polling();
       break;
     case CMD_MIFARE_READ:
-      CDC_LED_IO_PutChar(0Xe1);
+      // CDC_LED_IO_PutChar(0Xe1);
       PN532_mifareclassic_ReadDataBlock(_req.block_no, res.block);
       break;
     case CMD_FELICA_THROUGH:
