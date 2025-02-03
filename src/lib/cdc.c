@@ -549,6 +549,8 @@ void CDC_CARD_IO_UART_Poll()
         memcpy(_req.buffer, req->buffer, 64);
         CDC_CARD_IO_Handler();
       } else {
+        memcpy(_req.buffer, req->buffer, 64);
+        CDC_CARD_IO_Handler();
         // checksum error
       }
 

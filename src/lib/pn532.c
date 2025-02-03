@@ -446,8 +446,9 @@ void PN532_Check()
 }
 
 void PN532_felica_through() {
-  memcpy(res.encap_IDm,PN532_Status.PN532_felica_idm,8);
-  memcpy(res.poll_PMm,PN532_Status.PN532_felica_pmm,8);
+  memcpy(_req.encap_IDm,PN532_Status.PN532_felica_idm,8);
+  //memcpy(res.poll_PMm,PN532_Status.PN532_felica_pmm,8);
+
   uint8_t code = _req.encap_code;
   res.encap_code = code + 1;
   switch (code) {
@@ -472,8 +473,7 @@ void PN532_felica_through() {
       res.felica_payload[0] = 0x00;
       break;
       }
-    case FelicaReadWithoutEncryptData:
-    {
+    case FelicaReadWithoutEncryptData:{
       uint16_t serviceCodeList = _req.serviceCodeList[1] << 8 | _req.serviceCodeList[0];
       uint16_t blockList[4];
       for (uint8_t i = 0; i < _req.numBlock; i++) {
@@ -483,14 +483,21 @@ void PN532_felica_through() {
       PN532_felica_ReadWithoutEncryption(1, &serviceCodeList, _req.numBlock, blockList, res.blockData);
       #endif
       #if PN532_DISABLE_FELICA_CHECK == 1
+      PN532_Status.PN532_PARAMETER = _req.numBlock;
         if(PN532_Status.PN532_PARAMETER == 1){
+          for(uint8_t j=0; j<16; j++ ) {
+            res.blockData[0][j] = PN532_Status.PN532_felica_idm[j];
+          }
+        }else{
+          for(uint8_t j=0; j<16; j++ ) {
+            res.blockData[0][j] = PN532_Status.PN532_felica_idm[j];
+          }
+          for(uint8_t i = 1;i<4;i++){
             for(uint8_t j=0; j<16; j++ ) {
-              res.blockData[0][j] = 0;
+              res.blockData[i][j] = 0;
             }
-        } else {
-            for(uint8_t j=0; j<16; j++ ) {
-              res.blockData[1][j] = PN532_Status.PN532_felica_idm[j];
-            }
+          }
+          res.blockData[1][1] = 1;
         }
           res.RW_status[0] = 0;
           res.RW_status[1] = 0;
@@ -511,6 +518,7 @@ void PN532_felica_through() {
         PN532_felica_WriteWithoutEncryption(1, &serviceCodeList, 1, &blockList, &_req.blockData);
         #endif
         #if PN532_DISABLE_FELICA_CHECK == 1
+        PN532_Status.PN532_PARAMETER = _req.numBlock;
         res_init(0x0C);
         res.RW_status[0] = 0;
         res.RW_status[1] = 0;
