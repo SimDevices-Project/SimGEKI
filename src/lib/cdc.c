@@ -9,6 +9,7 @@
 
 #include "string.h"
 
+#include "pn532.h"
 #include "pn532_uart.h"
 
 #include <string.h>
@@ -20,7 +21,7 @@ uint8_t LineCoding[LINECODING_SIZE] = {0x00, 0xC2, 0x01, 0x00, 0x00, 0x00, 0x08}
 #define CARDIO_PACKET_SIZE ENDP3_PACKET_SIZE
 
 #define CDC_PUTCHARBUF_LEN 128
-#define CDC_PENDINGBUF_LEN 64
+#define CDC_PENDINGBUF_LEN 32
 
 uint8_t ledIO_PutCharBuf[CDC_PUTCHARBUF_LEN];
 uint8_t cardIO_PutCharBuf[CDC_PUTCHARBUF_LEN];
@@ -405,6 +406,7 @@ void CDC_CARD_IO_Handler()
   }
 }
 
+// LED IO CDC 数据读取
 void CDC_LED_IO_UART_Poll()
 {
   uint8_t cur_byte;
@@ -459,10 +461,15 @@ void CDC_LED_IO_UART_Poll()
 
     cdc_led_io.Rx_Pending--;
     cdc_led_io.Rx_CurPos++;
+
+    prev_byte = cur_byte;
+    if (prev_byte == 0xD0) {
+      prev_byte = 0;
+    }
+
     if (cdc_led_io.Rx_Pending == 0) {
       SetEPRxValid(CDC_LED_IO_EP);
     }
-    prev_byte = cur_byte;
   }
 }
 
@@ -485,57 +492,144 @@ void CDC_CARD_IO_UART_Poll()
   uint8_t cur_byte;
   static uint8_t checksum  = 0;
   static uint8_t prev_byte = 0;
-  uint8_t len              = 0;
-  cdc_card_io.Rx_CurPos    = 0;
-  uint8_t ret              = cdc_card_io.Rx_Pending;
-  for (uint8_t i = 0; i < ret; i++) {
-    cur_byte = cdc_card_io.Rx_PendingBuf[i];
-    if (cur_byte == 0xE0) {
-      _req.frame_len = 0xFF;
-      continue;
-    }
-    if (_req.frame_len == 0xFF) {
-      _req.frame_len = cur_byte;
-      checksum       = cur_byte;
-      len            = 0;
-      continue;
-    }
-    if (cur_byte == 0xD0) {
-      prev_byte = 0xD0;
+  AIME_Request *req        = (AIME_Request *)cdc_card_io.Req_PacketBuf;
 
-      // if (cdc_card_io.Rx_Pending == 0) {
-      //   SetEPRxValid(CDC_CARD_IO_EP);
-      // }
+  while (cdc_card_io.Rx_Pending) {
+    cur_byte = cdc_card_io.Rx_PendingBuf[cdc_card_io.Rx_CurPos];
+    if (cur_byte == 0xE0 && prev_byte != 0xD0) {
+      checksum                  = 0x00;
+      cdc_card_io.Req_PacketPos = 0;
+      req->frame_len            = 0xFF;
+
+      prev_byte = cur_byte;
+      cdc_card_io.Rx_Pending--;
+      cdc_card_io.Rx_CurPos++;
+      if (cdc_card_io.Rx_Pending == 0) {
+        SetEPRxValid(CDC_CARD_IO_EP);
+      }
+      continue;
+    } else if (prev_byte == 0xD0) {
+      cur_byte++;
+    } else if (cur_byte == 0xD0) {
+      cdc_card_io.Rx_Pending--;
+      cdc_card_io.Rx_CurPos++;
+      if (cdc_card_io.Rx_Pending == 0) {
+        SetEPRxValid(CDC_CARD_IO_EP);
+      }
       continue;
     }
-    if (prev_byte == 0xD0) {
-      cur_byte++;
-      prev_byte = 0;
-    }
-    len += 1;
-    _req.buffer[len] = cur_byte;
-    if (len == _req.frame_len) {
+
+    cdc_card_io.Req_PacketBuf[cdc_card_io.Req_PacketPos] = cur_byte;
+    cdc_card_io.Req_PacketPos++;
+
+    // CDC_CARD_IO_PutChar(checksum);
+    // CDC_CARD_IO_PutChar(cur_byte);
+
+    // CDC_CARD_IO_PutChar(0xFF);
+    // CDC_CARD_IO_PutChar(0xFF);
+    // CDC_CARD_IO_PutChar(0xFF);
+
+    // CDC_CARD_IO_PutChar(req->frame_len);
+    // CDC_CARD_IO_PutChar(checksum);
+    // CDC_CARD_IO_PutChar(prev_byte);
+    // CDC_CARD_IO_PutChar(cur_byte);
+    // CDC_CARD_IO_PutChar(cdc_card_io.Rx_CurPos);
+
+    if (cdc_card_io.Req_PacketPos > 5 && cdc_card_io.Req_PacketPos - 1 == req->frame_len) {
+
+      // CDC_CARD_IO_PutChar(0xFF);
+      // CDC_CARD_IO_PutChar(0xFF);
+      // CDC_CARD_IO_PutChar(0xFF);
+
+      // CDC_CARD_IO_PutChar(checksum);
+      // CDC_CARD_IO_PutChar(cur_byte);
+
       if (checksum == cur_byte) {
+        // cdc_card_io_PutChar(0xAA);
+        memcpy(_req.buffer, req->buffer, 64);
         CDC_CARD_IO_Handler();
       } else {
-        // cdc_card_io.Req_PacketBuf[3] = 0x05; //STATUS_SUM_ERROR
-        CDC_CARD_IO_Handler();
+        // checksum error
       }
 
-      // cdc_card_io.Req_PacketPos = 0;
-      // checksum                  = 0;
-      // prev_byte                 = 0;
-      // if (cdc_card_io.Rx_Pending == 0) {
-      //   SetEPRxValid(CDC_CARD_IO_EP);
-      // }
-      // return;
-      break;
+      cdc_card_io.Req_PacketPos = 0;
+      checksum                  = 0;
+      prev_byte                 = 0;
+      cdc_card_io.Rx_Pending--;
+      cdc_card_io.Rx_CurPos++;
+      if (cdc_card_io.Rx_Pending == 0) {
+        SetEPRxValid(CDC_CARD_IO_EP);
+      }
+      continue;
     }
 
     checksum += cur_byte;
+
     cdc_card_io.Rx_Pending--;
+    cdc_card_io.Rx_CurPos++;
+
+    prev_byte = cur_byte;
+    if (prev_byte == 0xD0) {
+      prev_byte = 0;
+    }
+    if (cdc_card_io.Rx_Pending == 0) {
+      SetEPRxValid(CDC_CARD_IO_EP);
+    }
   }
-  SetEPRxValid(CDC_CARD_IO_EP);
+
+  return;
+
+  // uint8_t len           = 0;
+  // cdc_card_io.Rx_CurPos = 0;
+  // uint8_t ret           = cdc_card_io.Rx_Pending;
+  // for (uint8_t i = 0; i < ret; i++) {
+  //   cur_byte = cdc_card_io.Rx_PendingBuf[i];
+  //   if (cur_byte == 0xE0) {
+  //     _req.frame_len = 0xFF;
+  //     continue;
+  //   }
+  //   if (_req.frame_len == 0xFF) {
+  //     _req.frame_len = cur_byte;
+  //     checksum       = cur_byte;
+  //     len            = 0;
+  //     continue;
+  //   }
+  //   if (cur_byte == 0xD0) {
+  //     prev_byte = 0xD0;
+
+  //     // if (cdc_card_io.Rx_Pending == 0) {
+  //     //   SetEPRxValid(CDC_CARD_IO_EP);
+  //     // }
+  //     continue;
+  //   }
+  //   if (prev_byte == 0xD0) {
+  //     cur_byte++;
+  //     prev_byte = 0;
+  //   }
+  //   len += 1;
+  //   _req.buffer[len] = cur_byte;
+  //   if (len == _req.frame_len) {
+  //     if (checksum == cur_byte) {
+  //       CDC_CARD_IO_Handler();
+  //     } else {
+  //       // cdc_card_io.Req_PacketBuf[3] = 0x05; //STATUS_SUM_ERROR
+  //       CDC_CARD_IO_Handler();
+  //     }
+
+  //     // cdc_card_io.Req_PacketPos = 0;
+  //     // checksum                  = 0;
+  //     // prev_byte                 = 0;
+  //     // if (cdc_card_io.Rx_Pending == 0) {
+  //     //   SetEPRxValid(CDC_CARD_IO_EP);
+  //     // }
+  //     // return;
+  //     break;
+  //   }
+
+  //   checksum += cur_byte;
+  //   cdc_card_io.Rx_Pending--;
+  // }
+  // SetEPRxValid(CDC_CARD_IO_EP);
 #endif
 }
 

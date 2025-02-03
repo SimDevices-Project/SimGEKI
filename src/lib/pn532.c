@@ -349,36 +349,36 @@ void PN532_Check()
         }
         break;
       case PN532_FELICA_READ:
-        CDC_LED_IO_PutChar(0xA1);
+        // CDC_LED_IO_PutChar(0xA1);
         status = readResponse(buffer, size, PN532_COMMAND_INDATAEXCHANGE);
         if( status == 0){
-          CDC_LED_IO_PutChar(0xA2);
+          // CDC_LED_IO_PutChar(0xA2);
           // Check status
           if ((buffer[7] & 0x3F)!=0) {
-            CDC_LED_IO_PutChar(0xA3);
+            // CDC_LED_IO_PutChar(0xA3);
             //Status code indicates an error
             return;
           }
           // length check
           if ( (status - 2) != buffer[8] - 1) {
-            CDC_LED_IO_PutChar(0xA4);
+            // CDC_LED_IO_PutChar(0xA4);
             //Wrong response length
             //return;
           }
             // length check
           if ( (buffer[8] - 1) != 12+16*PN532_Status.PN532_PARAMETER ) {
-            CDC_LED_IO_PutChar(0xA5);
+            // CDC_LED_IO_PutChar(0xA5);
             //Read Without Encryption command failed (wrong response length)
             return;
           }
 
           // status flag check
           if ( buffer[9+9] != 0 || buffer[9+10] != 0 ) {
-            CDC_LED_IO_PutChar(0xA6);
+            // CDC_LED_IO_PutChar(0xA6);
             //Read Without Encryption command failed
             return;
           }
-          CDC_LED_IO_PutChar(0xA7);
+          // CDC_LED_IO_PutChar(0xA7);
           PN532_Status.PN532_Option_Status = PN532_SUCCESS;
           clearTimeout(PN532_Status.PN532_Failed_task_key);
           uint8_t k = 9+12;
@@ -397,10 +397,10 @@ void PN532_Check()
         }
         break;
       case PN532_FELICA_WRITE:
-      CDC_LED_IO_PutChar(0xB1);
+      // CDC_LED_IO_PutChar(0xB1);
         status = readResponse(buffer, size, PN532_COMMAND_INDATAEXCHANGE);
         if (status < 0) {
-          CDC_LED_IO_PutChar(0xB2);
+          // CDC_LED_IO_PutChar(0xB2);
           //Could not receive response
           return;
         }
@@ -467,10 +467,13 @@ void PN532_felica_through() {
       res.poll_system_code[1] = 0xb4;
       break;
     case FelicaActive2:
+    {
       res_init(0x0B);
       res.felica_payload[0] = 0x00;
       break;
-    case FelicaReadWithoutEncryptData:{
+      }
+    case FelicaReadWithoutEncryptData:
+    {
       uint16_t serviceCodeList = _req.serviceCodeList[1] << 8 | _req.serviceCodeList[0];
       uint16_t blockList[4];
       for (uint8_t i = 0; i < _req.numBlock; i++) {
@@ -484,7 +487,7 @@ void PN532_felica_through() {
             for(uint8_t j=0; j<16; j++ ) {
               res.blockData[0][j] = 0;
             }
-        }else{
+        } else {
             for(uint8_t j=0; j<16; j++ ) {
               res.blockData[1][j] = PN532_Status.PN532_felica_idm[j];
             }

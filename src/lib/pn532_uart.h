@@ -22,8 +22,6 @@
 
 void PN532_UART_Check(uint8_t *buffer, uint8_t *size);
 
-#include "pn532.h"
-
 typedef struct
 {
   void (*begin)(void);
