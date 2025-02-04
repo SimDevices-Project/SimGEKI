@@ -189,6 +189,14 @@ uint8_t USBD_ENDPx_DataUp(uint8_t endp, uint8_t *pbuf, uint16_t len)
       SetEPTxStatus(ENDP3, EP_TX_VALID);
       break;
     }
+    case ENDP4: {
+      if (GetEPTxStatus(ENDP4) == EP_TX_VALID) {
+        return USB_ERROR;
+      }
+      USB_SIL_Write(EP4_IN, pbuf, len);
+      SetEPTxStatus(ENDP4, EP_TX_VALID);
+      break;
+    }
     default:
       return USB_ERROR;
   }
