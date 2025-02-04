@@ -171,8 +171,19 @@ void CDC_LED_IO_Handler()
       resPackect->length           = 1;
       break;
     case CMD_EXT_BOARD_SET_LED_RGB_DIRECT:
-      LED_RGB_SetPort(LED_RGB_PORT_RIGHT, reqPacket->request.data[3], reqPacket->request.data[4], reqPacket->request.data[5]);      // Right
-      LED_RGB_SetPort(LED_RGB_PORT_LEFT, reqPacket->request.data[180], reqPacket->request.data[181], reqPacket->request.data[182]); // Left
+      LED_RGB_Set(LED_RGB_PORT_LEFT, 0, reqPacket->request.data[0], reqPacket->request.data[1], reqPacket->request.data[2]); // Left
+      LED_RGB_Set(LED_RGB_PORT_LEFT, 1, reqPacket->request.data[0], reqPacket->request.data[1], reqPacket->request.data[2]);
+      LED_RGB_Set(LED_RGB_PORT_LEFT, 2, reqPacket->request.data[0], reqPacket->request.data[1], reqPacket->request.data[2]);
+      LED_RGB_Set(LED_RGB_PORT_LEFT, 3, reqPacket->request.data[3], reqPacket->request.data[4], reqPacket->request.data[5]);
+      LED_RGB_Set(LED_RGB_PORT_LEFT, 4, reqPacket->request.data[3], reqPacket->request.data[4], reqPacket->request.data[5]);
+      LED_RGB_Set(LED_RGB_PORT_LEFT, 5, reqPacket->request.data[3], reqPacket->request.data[4], reqPacket->request.data[5]);
+
+      LED_RGB_Set(LED_RGB_PORT_RIGHT, 0, reqPacket->request.data[180], reqPacket->request.data[181], reqPacket->request.data[182]); // Right
+      LED_RGB_Set(LED_RGB_PORT_RIGHT, 1, reqPacket->request.data[180], reqPacket->request.data[181], reqPacket->request.data[182]);
+      LED_RGB_Set(LED_RGB_PORT_RIGHT, 2, reqPacket->request.data[180], reqPacket->request.data[181], reqPacket->request.data[182]);
+      LED_RGB_Set(LED_RGB_PORT_RIGHT, 3, reqPacket->request.data[177], reqPacket->request.data[178], reqPacket->request.data[179]);
+      LED_RGB_Set(LED_RGB_PORT_RIGHT, 4, reqPacket->request.data[177], reqPacket->request.data[178], reqPacket->request.data[179]);
+      LED_RGB_Set(LED_RGB_PORT_RIGHT, 5, reqPacket->request.data[177], reqPacket->request.data[178], reqPacket->request.data[179]);
       return;
       break;
     case CMD_EXT_BOARD_INFO:
