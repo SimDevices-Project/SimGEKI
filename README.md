@@ -1,6 +1,6 @@
 # Firmware for SimGETRO (CH32V203 based)
 
-![License AGPL-3.0](https://img.shields.io/github/license/SimDevices-Project/SimGEKI.svg)
+![License](https://img.shields.io/github/license/SimDevices-Project/SimGEKI.svg)
 
 [简体中文](./README_zh-hans.md)
 
