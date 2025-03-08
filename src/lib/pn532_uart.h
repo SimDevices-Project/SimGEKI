@@ -13,13 +13,6 @@
  */
 #define PN532_UART_DIRECT 0
 
-/**
- * @brief 是否跳过FELICA读写
- * 0 - 否
- * 1 - 是
- */
-#define PN532_DISABLE_FELICA_CHECK 1
-
 void PN532_UART_Check(uint8_t *buffer, uint8_t *size);
 
 typedef struct

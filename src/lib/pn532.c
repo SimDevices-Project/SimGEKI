@@ -13,10 +13,8 @@ uint8_t _key[6];       // Mifare Classic key
 uint8_t inListedTag;   // Tg number of inlisted tag.
 uint8_t _felicaIDm[8]; // FeliCa IDm (NFCID2)
 uint8_t _felicaPMm[8]; // FeliCa PMm (PAD)
+
 extern uint8_t cardIO_ResponseStringBuf[128];
-extern RxBuffer[];
-uint8_t key_A[6];
-uint8_t key_B[6];
 
 AIME_Request _req;
 AIME_Response res;
@@ -72,7 +70,8 @@ void PN532_Polling(){
 
 /**************************************************************************/
 /*!
-    @brief  Process UART timeout error
+    @brief  Process timeout error
+    处理通信超时错误
 */
 /**************************************************************************/
 
@@ -474,22 +473,24 @@ void PN532_felica_through() {
       break;
       }
     case FelicaReadWithoutEncryptData:{
+      #if PN532_DISABLE_FELICA_CHECK == 0
       uint16_t serviceCodeList = _req.serviceCodeList[1] << 8 | _req.serviceCodeList[0];
       uint16_t blockList[4];
       for (uint8_t i = 0; i < _req.numBlock; i++) {
         blockList[i] = (uint16_t)(_req.blockList[i][0] << 8 | _req.blockList[i][1]);
       }
+      #endif
       #if PN532_DISABLE_FELICA_CHECK == 0
       PN532_felica_ReadWithoutEncryption(1, &serviceCodeList, _req.numBlock, blockList, res.blockData);
       #endif
       #if PN532_DISABLE_FELICA_CHECK == 1
       PN532_Status.PN532_PARAMETER = _req.numBlock;
         if(PN532_Status.PN532_PARAMETER == 1){
-          for(uint8_t j=0; j<16; j++ ) {
+          for(uint8_t j=0; j<8; j++ ) {
             res.blockData[0][j] = PN532_Status.PN532_felica_idm[j];
           }
         }else{
-          for(uint8_t j=0; j<16; j++ ) {
+          for(uint8_t j=0; j<8; j++ ) {
             res.blockData[0][j] = PN532_Status.PN532_felica_idm[j];
           }
           for(uint8_t i = 1;i<4;i++){
@@ -565,7 +566,6 @@ void PN532_Init()
 /**************************************************************************/
 void PN532_getFirmwareVersion(void)
 {
-  memset(RxBuffer,0,4*128);
   uint8_t packet_buffer[64];
   packet_buffer[0]= (PN532_COMMAND_GETFIRMWAREVERSION);
 
@@ -583,7 +583,6 @@ void PN532_getFirmwareVersion(void)
 /**************************************************************************/
 void PN532_SAMConfig()
 {
-  memset(RxBuffer,0,4*128);
   uint8_t packet_buffer[64];
   packet_buffer[0]= PN532_COMMAND_SAMCONFIGURATION;
   packet_buffer[1]= (0x01); // normal mode;
@@ -609,7 +608,6 @@ void PN532_SAMConfig()
 /**************************************************************************/
 void PN532_setPassiveActivationRetries()
 {
-  memset(RxBuffer,0,4*128);
   uint8_t packet_buffer[64];
   packet_buffer[0]= (PN532_COMMAND_RFCONFIGURATION);
   packet_buffer[1]=(5);    // Config item 5 (MaxRetries)
@@ -643,7 +641,6 @@ void PN532_setPassiveActivationRetries()
 
 void PN532_setRFField(uint8_t autoRFCA, uint8_t rFOnOff)
 {
-  memset(RxBuffer,0,4*128);
   uint8_t packet_buffer[64];
   packet_buffer[0]=(PN532_COMMAND_RFCONFIGURATION);
   packet_buffer[1]=(1);
@@ -675,7 +672,6 @@ void PN532_setRFField(uint8_t autoRFCA, uint8_t rFOnOff)
 /**************************************************************************/
 void PN532_readPassiveTargetID(uint8_t cardbaudrate, uint16_t timeout)
 {
-  memset(RxBuffer,0,4*128);
   uint8_t packet_buffer[64];
   packet_buffer[0]=(PN532_COMMAND_INLISTPASSIVETARGET);
   packet_buffer[1]=(1);  // max 1 cards at once (we can set this to 2 later)
@@ -711,8 +707,7 @@ void PN532_readPassiveTargetID(uint8_t cardbaudrate, uint16_t timeout)
 /**************************************************************************/
 void PN532_mifareclassic_AuthenticateBlock (uint8_t *uid, uint8_t uidLen, uint32_t blockNumber, uint8_t keyNumber, uint8_t *keyData)
 {
-  memset(RxBuffer,0,4*128);
-    // Prepare the authentication command //
+  // Prepare the authentication command //
   uint8_t packet_buffer[64];
   packet_buffer[0]=(PN532_COMMAND_INDATAEXCHANGE);   /* Data Exchange Header */
   packet_buffer[1]=1;                              /* Max card numbers */
@@ -748,7 +743,6 @@ void PN532_mifareclassic_AuthenticateBlock (uint8_t *uid, uint8_t uidLen, uint32
 /**************************************************************************/
 void PN532_mifareclassic_ReadDataBlock (uint8_t blockNumber, uint8_t *data)
 {
-  memset(RxBuffer,0,4*128);
   uint8_t packet_buffer[64];
     /* Prepare the command */
   packet_buffer[0]=(PN532_COMMAND_INDATAEXCHANGE);
@@ -784,7 +778,6 @@ void PN532_mifareclassic_ReadDataBlock (uint8_t blockNumber, uint8_t *data)
 /**************************************************************************/
 void PN532_felica_Polling(uint16_t systemCode, uint8_t _requestCode, uint16_t timeout)
 {
-  memset(RxBuffer,0,4*128);
   uint8_t packet_buffer[64];
   packet_buffer[0]=(PN532_COMMAND_INLISTPASSIVETARGET);
   packet_buffer[1]=(1);
@@ -816,7 +809,6 @@ void PN532_felica_Polling(uint16_t systemCode, uint8_t _requestCode, uint16_t ti
 /**************************************************************************/
 void PN532_felica_SendCommand (const uint8_t *command, uint8_t commandlength)
 {
-  memset(RxBuffer,0,4*128);
   uint8_t packet_buffer[64];
   packet_buffer[0] = 0x40; // PN532_COMMAND_INDATAEXCHANGE;--
   packet_buffer[1] = inListedTag;
@@ -839,7 +831,6 @@ void PN532_felica_SendCommand (const uint8_t *command, uint8_t commandlength)
 /**************************************************************************/
 void PN532_felica_ReadWithoutEncryption (uint8_t numService, const uint16_t *serviceCodeList, uint8_t numBlock, const uint16_t *blockList, uint8_t blockData[][16])
 {
-  memset(RxBuffer,0,4*128);
   if (numService > FELICA_READ_MAX_SERVICE_NUM) {
     PN532_Status.PN532_Option_Status = PN532_ERROR;
     PN532_Status.PN532_CMD_Status = PN532_FELICA_READ;
@@ -853,7 +844,7 @@ void PN532_felica_ReadWithoutEncryption (uint8_t numService, const uint16_t *ser
     return;
   }
   PN532_Status.PN532_PARAMETER = numBlock;
-  uint8_t i, j=0, k;
+  uint8_t i, j=0;
   uint8_t cmdLen = 1 + 8 + 1 + 2*numService + 1 + 2*numBlock;
   uint8_t cmd[cmdLen];
   cmd[j++] = FELICA_CMD_READ_WITHOUT_ENCRYPTION;
@@ -893,7 +884,6 @@ void PN532_felica_ReadWithoutEncryption (uint8_t numService, const uint16_t *ser
 /**************************************************************************/
 void PN532_felica_WriteWithoutEncryption (uint8_t numService, const uint16_t *serviceCodeList, uint8_t numBlock, const uint16_t *blockList, uint8_t blockData[][16])
 {
-  memset(RxBuffer,0,4*128);
   if (numService > FELICA_WRITE_MAX_SERVICE_NUM) {
     PN532_Status.PN532_Option_Status = PN532_ERROR;
     PN532_Status.PN532_CMD_Status = PN532_FELICA_WRITE;

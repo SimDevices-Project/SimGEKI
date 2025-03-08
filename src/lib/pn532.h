@@ -208,4 +208,11 @@ int8_t PN532_felica_WriteWithoutEncryption_callback(void);
 void res_init(uint8_t payload_len);
 void PN532_felica_through();
 
+/**
+ * @brief 是否跳过FELICA读写
+ * 0 - 否
+ * 1 - 是
+ */
+#define PN532_DISABLE_FELICA_CHECK 1
+
 #endif
