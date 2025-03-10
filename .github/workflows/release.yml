@@ -1,0 +1,51 @@
+name: Auto-Build-Firmware
+run-name: Building Firmware...
+on:
+  push:
+  release:
+    types: [published]
+jobs:
+  c-make-progress:
+    name: C Make to build firmware
+    runs-on: windows-2022
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+      - name: C Make Clean
+        run: |
+          make clean
+      - name: C make prebuild
+        run: |
+          make prebuild
+      - name: C make all
+        run: |
+          make all -j4
+      - name: Copy firmware file to new folder
+        run: |
+          mkdir "output"
+          Copy-Item "./build/SimGEREO_Public/SimGEKI.bin" -Destination "./output/" -Force
+          Copy-Item "./build/SimGEREO_Public/SimGEKI.hex" -Destination "./output/" -Force
+        shell: pwsh
+      - name: Upload files to release
+        uses: softprops/action-gh-release@v1
+        if: startsWith(github.ref, 'refs/tags/')
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          files: |
+            ./output/SimGEKI.bin
+            ./output/SimGEKI.hex
+      - name: Upload firmware to artifact(bin)
+        uses: actions/upload-artifact@v4
+        if: ${{ !startsWith(github.ref, 'refs/tags/') }}
+        with:
+          name: SimGEKI_firmware_bin
+          path: ./output/SimGEKI.bin
+          retention-days: 90
+      - name: Upload firmware to artifact(hex)
+        uses: actions/upload-artifact@v4
+        if: ${{ !startsWith(github.ref, 'refs/tags/') }}
+        with:
+          name: SimGEKI_firmware_hex
+          path: ./output/SimGEKI.hex
+          retention-days: 90
