@@ -23,8 +23,8 @@ jobs:
       - name: Copy firmware file to new folder
         run: |
           mkdir "output"
-          Copy-Item "./build/SimGEREO_Public/SimGEKI.bin" -Destination "./output/" -Force
-          Copy-Item "./build/SimGEREO_Public/SimGEKI.hex" -Destination "./output/" -Force
+          Copy-Item "./build/SimGETRO_Public/SimGEKI.bin" -Destination "./output/" -Force
+          Copy-Item "./build/SimGETRO_Public/SimGEKI.hex" -Destination "./output/" -Force
         shell: pwsh
       - name: Upload files to release
         uses: softprops/action-gh-release@v1
