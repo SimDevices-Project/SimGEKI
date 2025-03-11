@@ -13,7 +13,7 @@
 #define WS2812_TIME_0BIT    45
 #define WS2812_TIME_1BIT    115
 
-#define BUFF_FRONT_OFFSET   1
+#define BUFF_FRONT_OFFSET   5
 #define BUFF_END_OFFSET     80
 
 #define TIMER_PER_BUFF_SIZE (BUFF_FRONT_OFFSET + RGB_COUNT_PER_PORT * 24 + BUFF_END_OFFSET)
@@ -35,6 +35,9 @@ void setRgbColor32(uint8_t port, uint8_t index, uint32_t color)
 
 void setRgbColor(uint8_t port, uint8_t index, uint8_t r, uint8_t g, uint8_t b)
 {
+  if(index >= RGB_COUNT_PER_PORT) {
+    return;
+  }
   setRgbColor32(port, index, ((uint32_t)g << 16) | ((uint32_t)r << 8) | (uint32_t)b);
 }
 
