@@ -48,9 +48,9 @@ extern "C" {
 
 #define USBD_NUMOF_STRING_DESC            9
 
-#define USBD_SIZE_STRING_LANGID           4
+#define USBD_SIZE_STRING_LANGID           14
 #define USBD_SIZE_STRING_VENDOR           10
-#define USBD_SIZE_STRING_PRODUCT          16
+#define USBD_SIZE_STRING_PRODUCT          38
 #define USBD_SIZE_STRING_SERIAL           26
 #define USBD_SIZE_STRING_CONFIG           22
 #define USBD_SIZE_STRING_HIDIO            188
@@ -58,21 +58,38 @@ extern "C" {
 #define USBD_SIZE_STRING_CARDIO           34
 #define USBD_SIZE_STRING_CUSTOM_HID       30
 
+#define USBD_SIZE_STRING_PRODUCT_zh_hans  30
+#define USBD_SIZE_STRING_LEDIO_zh_hans    20
+#define USBD_SIZE_STRING_CARDIO_zh_hans   24
+#define USBD_SIZE_STRING_CUSTOM_HID_zh_hans 20
+
 extern const uint8_t USBD_DeviceDescriptor[USBD_SIZE_DEVICE_DESC];
 extern const uint8_t USBD_ConfigDescriptor[USBD_SIZE_CONFIG_DESC];
 
 extern const uint8_t USBD_HidRepDesc[USBD_SIZE_REPORT_DESC];
 extern const uint8_t USBD_HidCustomDesc[USBD_SIZE_CUSTOM_REPORT_DESC];
 
+// Not for muti-language
 extern const uint8_t USBD_StringLangID[USBD_SIZE_STRING_LANGID];
 extern const uint8_t USBD_StringVendor[USBD_SIZE_STRING_VENDOR];
-extern const uint8_t USBD_StringProduct[USBD_SIZE_STRING_PRODUCT];
 extern uint8_t USBD_StringSerial[USBD_SIZE_STRING_SERIAL];
+
+// For muti-language
+extern const uint8_t USBD_StringProduct[USBD_SIZE_STRING_PRODUCT];
+extern const uint8_t USBD_StringProduct_zh_hans[USBD_SIZE_STRING_PRODUCT_zh_hans];
+
 extern const uint8_t USBD_StringConfig[USBD_SIZE_STRING_CONFIG];
+
 extern const uint8_t USBD_StringHIDIO[USBD_SIZE_STRING_HIDIO];
+
 extern const uint8_t USBD_StringLEDIO[USBD_SIZE_STRING_LEDIO];
+extern const uint8_t USBD_StringLEDIO_zh_hans[USBD_SIZE_STRING_LEDIO_zh_hans];
+
 extern const uint8_t USBD_StringCardIO[USBD_SIZE_STRING_CARDIO];
+extern const uint8_t USBD_StringCardIO_zh_hans[USBD_SIZE_STRING_CARDIO_zh_hans];
+
 extern const uint8_t USBD_StringCustomHID[USBD_SIZE_STRING_CUSTOM_HID];
+extern const uint8_t USBD_StringCustomHID_zh_hans[USBD_SIZE_STRING_CUSTOM_HID_zh_hans];
 
 void USBD_SerialNumUpdate();
 

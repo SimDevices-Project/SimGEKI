@@ -61,6 +61,7 @@ RESULT USBD_Get_Interface_Setting(uint8_t Interface, uint8_t AlternateSetting);
 uint8_t *USBD_GetDeviceDescriptor(uint16_t );
 uint8_t *USBD_GetConfigDescriptor(uint16_t);
 uint8_t *USBD_GetStringDescriptor(uint16_t);
+uint8_t *USBD_GetStringDescriptor_MutiLang(uint16_t);
 uint8_t USBD_ENDPx_DataUp( uint8_t endp, uint8_t *pbuf, uint16_t len );
 #ifdef __cplusplus
 }

@@ -41,6 +41,15 @@ typedef struct OneDescriptor
 }
 ONE_DESCRIPTOR, *PONE_DESCRIPTOR;
 
+typedef struct MutiLanguagesDescriptor
+{
+  ONE_DESCRIPTOR __en_us; // English (United States)
+  ONE_DESCRIPTOR __zh_hans; // Chinese (Simplified)
+  ONE_DESCRIPTOR __zh_hant; // Chinese (Traditional)
+  ONE_DESCRIPTOR __ja_jp; // Japanese (Japan)
+}
+MUTI_LANG_DESCRIPTOR;
+
 typedef enum _RESULT
 {
   USB_SUCCESS = 0,    /* Process successfully */

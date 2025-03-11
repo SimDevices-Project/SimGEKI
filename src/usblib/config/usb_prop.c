@@ -39,7 +39,7 @@ DEVICE_PROP Device_Property =
         USBD_Get_Interface_Setting,
         USBD_GetDeviceDescriptor,
         USBD_GetConfigDescriptor,
-        USBD_GetStringDescriptor,
+        USBD_GetStringDescriptor_MutiLang,
         0,
         DEF_USBD_UEP0_SIZE};
 
@@ -76,6 +76,64 @@ ONE_DESCRIPTOR String_Descriptor[USBD_NUMOF_STRING_DESC] =
         {(uint8_t *)USBD_StringLEDIO, USBD_SIZE_STRING_LEDIO},
         {(uint8_t *)USBD_StringCardIO, USBD_SIZE_STRING_CARDIO},
         {(uint8_t *)USBD_StringCustomHID, USBD_SIZE_STRING_CUSTOM_HID},
+};
+
+MUTI_LANG_DESCRIPTOR Muti_Lang_String_Descriptor[USBD_NUMOF_STRING_DESC] =
+    {
+        {
+            {(uint8_t *)USBD_StringLangID, USBD_SIZE_STRING_LANGID},
+            {(uint8_t *)USBD_StringLangID, USBD_SIZE_STRING_LANGID},
+            {(uint8_t *)USBD_StringLangID, USBD_SIZE_STRING_LANGID},
+            {(uint8_t *)USBD_StringLangID, USBD_SIZE_STRING_LANGID},
+        },
+        {
+            {(uint8_t *)USBD_StringVendor, USBD_SIZE_STRING_VENDOR},
+            {NULL, 0},
+            {NULL, 0},
+            {NULL, 0},
+        },
+        {
+            {(uint8_t *)USBD_StringProduct, USBD_SIZE_STRING_PRODUCT},
+            {(uint8_t *)USBD_StringProduct_zh_hans, USBD_SIZE_STRING_PRODUCT_zh_hans},
+            {NULL, 0},
+            {NULL, 0},
+        },
+        {
+            {(uint8_t *)USBD_StringSerial, USBD_SIZE_STRING_SERIAL},
+            {NULL, 0},
+            {NULL, 0},
+            {NULL, 0},
+        },
+        {
+            {(uint8_t *)USBD_StringConfig, USBD_SIZE_STRING_CONFIG},
+            {NULL, 0},
+            {NULL, 0},
+            {NULL, 0},
+        },
+        {
+            {(uint8_t *)USBD_StringHIDIO, USBD_SIZE_STRING_HIDIO},
+            {NULL, 0},
+            {NULL, 0},
+            {NULL, 0},
+        },
+        {
+            {(uint8_t *)USBD_StringLEDIO, USBD_SIZE_STRING_LEDIO},
+            {(uint8_t *)USBD_StringLEDIO_zh_hans, USBD_SIZE_STRING_LEDIO_zh_hans},
+            {NULL, 0},
+            {NULL, 0},
+        },
+        {
+            {(uint8_t *)USBD_StringCardIO, USBD_SIZE_STRING_CARDIO},
+            {(uint8_t *)USBD_StringCardIO_zh_hans, USBD_SIZE_STRING_CARDIO_zh_hans},
+            {NULL, 0},
+            {NULL, 0},
+        },
+        {
+            {(uint8_t *)USBD_StringCustomHID, USBD_SIZE_STRING_CUSTOM_HID},
+            {(uint8_t *)USBD_StringCustomHID_zh_hans, USBD_SIZE_STRING_CUSTOM_HID_zh_hans},
+            {NULL, 0},
+            {NULL, 0},
+        },
 };
 
 ONE_DESCRIPTOR Report_Descriptor[2] =
@@ -295,12 +353,63 @@ uint8_t *USBD_GetConfigDescriptor(uint16_t Length)
  */
 uint8_t *USBD_GetStringDescriptor(uint16_t Length)
 {
-  uint8_t wValue0 = pInformation->USBwValue0;
+  uint8_t stringIndex = pInformation->USBwValue0;
 
-  if (wValue0 >= USBD_NUMOF_STRING_DESC) {
+  if (stringIndex >= USBD_NUMOF_STRING_DESC) {
     return NULL;
   } else {
-    return Standard_GetDescriptorData(Length, &String_Descriptor[wValue0]);
+    return Standard_GetDescriptorData(Length, &String_Descriptor[stringIndex]);
+  }
+}
+
+/*********************************************************************
+ * @fn      USBD_GetStringDescriptor_MutiLang
+ *
+ * @brief   Gets the string descriptors according to the needed index & lang id
+ *
+ * @param   Length.
+ *
+ * @return    The address of the string descriptors.
+ */
+uint8_t *USBD_GetStringDescriptor_MutiLang(uint16_t Length)
+{
+  uint8_t stringIndex = pInformation->USBwValue0;
+  uint16_t stringID   = pInformation->USBwIndex;
+
+  if (stringIndex >= USBD_NUMOF_STRING_DESC) {
+    return NULL;
+  } else {
+    switch (stringID) {
+      case 0x0408:
+      case 0x0410:
+        // Chinese Simplified
+        if (Muti_Lang_String_Descriptor[stringIndex].__zh_hans.Descriptor_Size == 0) {
+          return Standard_GetDescriptorData(Length, &Muti_Lang_String_Descriptor[stringIndex].__en_us);
+        }
+        return Standard_GetDescriptorData(Length, &Muti_Lang_String_Descriptor[stringIndex].__zh_hans);
+        break;
+      case 0x0404:
+      case 0x040c:
+      case 0x0414:
+        // Chinese Traditional
+        if (Muti_Lang_String_Descriptor[stringIndex].__zh_hant.Descriptor_Size == 0) {
+          return Standard_GetDescriptorData(Length, &Muti_Lang_String_Descriptor[stringIndex].__en_us);
+        }
+        return Standard_GetDescriptorData(Length, &Muti_Lang_String_Descriptor[stringIndex].__zh_hant);
+        break;
+      case 0x1104:
+        // Japanese
+        if (Muti_Lang_String_Descriptor[stringIndex].__ja_jp.Descriptor_Size == 0) {
+          return Standard_GetDescriptorData(Length, &Muti_Lang_String_Descriptor[stringIndex].__en_us);
+        }
+        return Standard_GetDescriptorData(Length, &Muti_Lang_String_Descriptor[stringIndex].__ja_jp);
+        break;
+      case 0x0904:
+        return Standard_GetDescriptorData(Length, &(Muti_Lang_String_Descriptor[stringIndex].__en_us));
+        break;
+      default:
+        return Standard_GetDescriptorData(Length, &(Muti_Lang_String_Descriptor[stringIndex].__en_us));
+    }
   }
 }
 
