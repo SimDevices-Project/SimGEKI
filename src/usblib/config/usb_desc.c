@@ -14,7 +14,7 @@
 #include "usb_conf.h"
 
 /* USB Device Descriptors */
-const uint8_t USBD_DeviceDescriptor[] = {
+xdata const uint8_t USBD_DeviceDescriptor[] = {
     USBD_SIZE_DEVICE_DESC,        // bLength
     0x01,                         // bDescriptorType
     0x10, 0x01,                   // bcdUSB
@@ -32,7 +32,7 @@ const uint8_t USBD_DeviceDescriptor[] = {
 };
 
 /* USB Configration Descriptors */
-const uint8_t USBD_ConfigDescriptor[USBD_SIZE_CONFIG_DESC] = {
+xdata const uint8_t USBD_ConfigDescriptor[USBD_SIZE_CONFIG_DESC] = {
     /* Configuration Descriptor */
     0x09,                                                     // bLength
     0x02,                                                     // bDescriptorType
@@ -246,7 +246,7 @@ const uint8_t USBD_ConfigDescriptor[USBD_SIZE_CONFIG_DESC] = {
 };
 
 /* USB String Descriptors */
-const uint8_t USBD_StringLangID[USBD_SIZE_STRING_LANGID] = {
+xdata const uint8_t USBD_StringLangID[USBD_SIZE_STRING_LANGID] = {
     USBD_SIZE_STRING_LANGID,
     USB_STRING_DESCRIPTOR_TYPE,
     0x04, 0x08, // LangID = 0x0804: Chinese (Simplified, China Mainland)
@@ -259,18 +259,18 @@ const uint8_t USBD_StringLangID[USBD_SIZE_STRING_LANGID] = {
 };
 
 /* USB Device String Vendor */
-const uint8_t USBD_StringVendor[USBD_SIZE_STRING_VENDOR] = {
+xdata const uint8_t USBD_StringVendor[USBD_SIZE_STRING_VENDOR] = {
     USBD_SIZE_STRING_VENDOR,
     USB_STRING_DESCRIPTOR_TYPE,
     'S', 0, 'E', 0, 'G', 0, 'A', 0};
 
 /* USB Device String Product */
-const uint8_t USBD_StringProduct[USBD_SIZE_STRING_PRODUCT] = {
+xdata const uint8_t USBD_StringProduct[USBD_SIZE_STRING_PRODUCT] = {
     USBD_SIZE_STRING_PRODUCT,
     USB_STRING_DESCRIPTOR_TYPE,
     0x53, 0x00, 0x69, 0x00, 0x6d, 0x00, 0x47, 0x00, 0x45, 0x00, 0x4b, 0x00, 0x49, 0x00, 0x20, 0x00, 0x43, 0x00, 0x6f, 0x00, 0x6e, 0x00, 0x74, 0x00, 0x72, 0x00, 0x6f, 0x00, 0x6c, 0x00, 0x6c, 0x00, 0x65, 0x00, 0x72, 0x00};
 
-const uint8_t USBD_StringProduct_zh_hans[USBD_SIZE_STRING_PRODUCT_zh_hans] = {
+xdata const uint8_t USBD_StringProduct_zh_hans[USBD_SIZE_STRING_PRODUCT_zh_hans] = {
     USBD_SIZE_STRING_PRODUCT_zh_hans,
     USB_STRING_DESCRIPTOR_TYPE,
     0x53, 0x00, 0x69, 0x00, 0x6d, 0x00, 0x47, 0x00, 0x45, 0x00, 0x4b, 0x00, 0x49, 0x00, 0x57, 0x88, 0x3a, 0x67, 0xce, 0x98, 0x3c, 0x68, 0xa7, 0x63, 0x36, 0x52, 0x68, 0x56};
@@ -281,48 +281,48 @@ uint8_t USBD_StringSerial[USBD_SIZE_STRING_SERIAL] = {
     USB_STRING_DESCRIPTOR_TYPE,
     '0', 0, '0', 0, '0', 0, '0', 0, '0', 0, '0', 0, '0', 0, '0', 0, '0', 0, '0', 0, '0', 0, '0', 0};
 
-const uint8_t USBD_StringConfig[USBD_SIZE_STRING_CONFIG] = {
+xdata const uint8_t USBD_StringConfig[USBD_SIZE_STRING_CONFIG] = {
     USBD_SIZE_STRING_CONFIG,
     USB_STRING_DESCRIPTOR_TYPE,
     'S', 0, 'i', 0, 'm', 0, 'D', 0, 'e', 0, 'v', 0, 'i', 0, 'c', 0, 'e', 0, 's', 0};
 
-const uint8_t USBD_StringHIDIO[USBD_SIZE_STRING_HIDIO] = {
+xdata const uint8_t USBD_StringHIDIO[USBD_SIZE_STRING_HIDIO] = {
     USBD_SIZE_STRING_HIDIO,
     USB_STRING_DESCRIPTOR_TYPE,
     'I', 0, '/', 0, 'O', 0, ' ', 0, 'C', 0, 'O', 0, 'N', 0, 'T', 0, 'R', 0, 'O', 0, 'L', 0, ' ', 0, 'B', 0, 'D', 0, ';', 0, '1', 0, '5', 0, '2', 0, '5', 0, '7', 0, ';', 0, '0', 0, '1', 0, ';', 0, '9', 0, '0', 0, ';', 0, '1', 0, '8', 0, '3', 0, '1', 0, ';', 0, '6', 0, '6', 0, '7', 0, '9', 0, 'A', 0, ';', 0, '0', 0, '0', 0, ';', 0, 'G', 0, 'O', 0, 'U', 0, 'T', 0, '=', 0, '1', 0, '4', 0, '_', 0, 'A', 0, 'D', 0, 'I', 0, 'N', 0, '=', 0, '8', 0, ',', 0, 'E', 0, '_', 0, 'R', 0, 'O', 0, 'T', 0, 'I', 0, 'N', 0, '=', 0, '4', 0, '_', 0, 'C', 0, 'O', 0, 'I', 0, 'N', 0, 'I', 0, 'N', 0, '=', 0, '2', 0, '_', 0, 'S', 0, 'W', 0, 'I', 0, 'N', 0, '=', 0, '2', 0, ',', 0, 'E', 0, '_', 0, 'U', 0, 'Q', 0, '1', 0, '=', 0, '4', 0, '1', 0, ',', 0, '6', 0, ';', 0};
 
-const uint8_t USBD_StringLEDIO[USBD_SIZE_STRING_LEDIO] = {
+xdata const uint8_t USBD_StringLEDIO[USBD_SIZE_STRING_LEDIO] = {
     USBD_SIZE_STRING_LEDIO,
     USB_STRING_DESCRIPTOR_TYPE,
     'L', 0, 'E', 0, 'D', 0, ' ', 0, 'B', 0, 'o', 0, 'a', 0, 'r', 0, 'd', 0, ' ', 0, 'C', 0, 'O', 0, 'M', 0, '3', 0};
 
-const uint8_t USBD_StringLEDIO_zh_hans[USBD_SIZE_STRING_LEDIO_zh_hans] = {
+xdata const uint8_t USBD_StringLEDIO_zh_hans[USBD_SIZE_STRING_LEDIO_zh_hans] = {
     USBD_SIZE_STRING_LEDIO_zh_hans,
     USB_STRING_DESCRIPTOR_TYPE,
     0xbe, 0x8b, 0x07, 0x59, 0x6f, 0x70, 0x49, 0x51, 0x20, 0x00, 0x43, 0x00, 0x4f, 0x00, 0x4d, 0x00, 0x33, 0x00};
 
-const uint8_t USBD_StringCardIO[USBD_SIZE_STRING_CARDIO] = {
+xdata const uint8_t USBD_StringCardIO[USBD_SIZE_STRING_CARDIO] = {
     USBD_SIZE_STRING_CARDIO,
     USB_STRING_DESCRIPTOR_TYPE,
     'C', 0, 'a', 0, 'r', 0, 'd', 0, ' ', 0, 'R', 0, 'e', 0, 'a', 0, 'd', 0, 'e', 0, 'r', 0, ' ', 0, 'C', 0, 'O', 0, 'M', 0, '1', 0};
 
-const uint8_t USBD_StringCardIO_zh_hans[USBD_SIZE_STRING_CARDIO_zh_hans] = {
+xdata const uint8_t USBD_StringCardIO_zh_hans[USBD_SIZE_STRING_CARDIO_zh_hans] = {
     USBD_SIZE_STRING_CARDIO_zh_hans,
     USB_STRING_DESCRIPTOR_TYPE,
     0x4e, 0x00, 0x46, 0x00, 0x43, 0x00, 0xfb, 0x8b, 0x61, 0x53, 0x68, 0x56, 0x20, 0x00, 0x43, 0x00, 0x4f, 0x00, 0x4d, 0x00, 0x31, 0x00};
 
-const uint8_t USBD_StringCustomHID[USBD_SIZE_STRING_CUSTOM_HID] = {
+xdata const uint8_t USBD_StringCustomHID[USBD_SIZE_STRING_CUSTOM_HID] = {
     USBD_SIZE_STRING_CUSTOM_HID,
     USB_STRING_DESCRIPTOR_TYPE,
     'S', 0, 'i', 0, 'm', 0, 'G', 0, 'E', 0, 'K', 0, 'I', 0, ' ', 0, 'C', 0, 'o', 0, 'n', 0, 'f', 0, 'i', 0, 'g', 0};
 
-const uint8_t USBD_StringCustomHID_zh_hans[USBD_SIZE_STRING_CUSTOM_HID_zh_hans] = {
+xdata const uint8_t USBD_StringCustomHID_zh_hans[USBD_SIZE_STRING_CUSTOM_HID_zh_hans] = {
     USBD_SIZE_STRING_CUSTOM_HID_zh_hans,
     USB_STRING_DESCRIPTOR_TYPE,
     0x53, 0x00, 0x69, 0x00, 0x6d, 0x00, 0x47, 0x00, 0x45, 0x00, 0x4b, 0x00, 0x49, 0x00, 0xbe, 0x8b, 0x6e, 0x7f};
 
 /* HID Report Descriptor */
-const uint8_t USBD_HidRepDesc[USBD_SIZE_REPORT_DESC] =
+xdata const uint8_t USBD_HidRepDesc[USBD_SIZE_REPORT_DESC] =
     {
         0x05, 0x01,                   // Usage Page (Generic Desktop Ctrls)
         0x09, 0x04,                   // Usage (Joystick)
@@ -380,7 +380,7 @@ const uint8_t USBD_HidRepDesc[USBD_SIZE_REPORT_DESC] =
         0xC0,                         // End Collection
 };
 
-const uint8_t USBD_HidCustomDesc[USBD_SIZE_CUSTOM_REPORT_DESC] = {
+xdata const uint8_t USBD_HidCustomDesc[USBD_SIZE_CUSTOM_REPORT_DESC] = {
     0x06, 0x00, 0xFF, // Usage Page (Vendor Defined 0xFF00)
     0x09, 0x01,       // Usage (Vendor Usage 1)
     0xA1, 0x01,       // Collection (Application)
