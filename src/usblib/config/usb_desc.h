@@ -48,7 +48,7 @@ extern "C" {
 
 #define USBD_NUMOF_STRING_DESC            9
 
-#define USBD_SIZE_STRING_LANGID           14
+#define USBD_SIZE_STRING_LANGID           16
 #define USBD_SIZE_STRING_VENDOR           10
 #define USBD_SIZE_STRING_PRODUCT          38
 #define USBD_SIZE_STRING_SERIAL           26

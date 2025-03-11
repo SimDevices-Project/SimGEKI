@@ -255,7 +255,7 @@ const uint8_t USBD_StringLangID[USBD_SIZE_STRING_LANGID] = {
     0x04, 0x04, // LangID = 0x0404: Chinese (Traditional, Taiwan)
     0x04, 0x14, // LangID = 0x1404: Chinese (Traditional, Macau)
     0x11, 0x04, // LangID = 0x0411: Japanese (Japan)
-                // 0x09, 0x04, // LangID = 0x0409: English (United States)
+    0x09, 0x04, // LangID = 0x0409: English (United States)
 };
 
 /* USB Device String Vendor */
