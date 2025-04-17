@@ -17,7 +17,7 @@ uint8_t command;
 #define RX_BUFFER_SIZE  128
 #define RX_BUFFER_COUNT 4
 
-#define OE              GPIO_Pin_8
+#define UARTOE              GPIO_Pin_8
 
 uint8_t RxBuffer[RX_BUFFER_COUNT][RX_BUFFER_SIZE];
 uint8_t RxIndex[RX_BUFFER_COUNT] = {0};
@@ -128,7 +128,7 @@ void PN532_UART_Init()
   RCC_APB2PeriphClockCmd(RCC_APB2Periph_USART1, ENABLE);
   RCC_APB2PeriphClockCmd(RCC_APB2Periph_GPIOA, ENABLE);
 
-  /* USART1 TX-->A.9   RX-->A.10  OE-->A.8 */
+  /* USART1 TX-->A.9   RX-->A.10  UARTOE-->A.8 */
   GPIO_InitStructure.GPIO_Pin   = GPIO_Pin_9;
   GPIO_InitStructure.GPIO_Speed = GPIO_Speed_50MHz;
   GPIO_InitStructure.GPIO_Mode  = GPIO_Mode_AF_PP;
@@ -137,7 +137,7 @@ void PN532_UART_Init()
   GPIO_InitStructure.GPIO_Mode = GPIO_Mode_IN_FLOATING;
   GPIO_Init(GPIOA, &GPIO_InitStructure);
 
-  GPIO_InitStructure.GPIO_Pin   = GPIO_Pin_8;
+  GPIO_InitStructure.GPIO_Pin   = UARTOE;
   GPIO_InitStructure.GPIO_Mode  = GPIO_Mode_Out_PP;
   GPIO_InitStructure.GPIO_Speed = GPIO_Speed_50MHz;
   GPIO_Init(GPIOA, &GPIO_InitStructure);
@@ -161,7 +161,7 @@ void PN532_UART_Init()
   NVIC_Init(&NVIC_InitStructure);
 
   USART_Cmd(USART1, ENABLE);
-  GPIO_SetBits(GPIOA, OE); // 使能UART电平转换芯片
+  GPIO_SetBits(GPIOA, UARTOE); // 使能UART电平转换芯片
 }
 
 void PN532_UART_Wakeup()
