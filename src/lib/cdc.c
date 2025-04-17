@@ -258,7 +258,9 @@ const uint8_t CARD_READER_EXTRA_INFO_LOWRATE[10] = "15084\xFF\x10\x00\x12";
 // 通知 Card IO 数据已准备好
 void CDC_CARD_IO_SendDataReady()
 {
+#if PN532_UART_DIRECT == 0
   cardIO_SendDataReady_Flag = 1;
+#endif
 }
 
 // 发送准备好的 Card IO 数据
