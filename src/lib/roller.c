@@ -1,14 +1,32 @@
+#include "bsp.h"
 #include "roller.h"
 #include "data.h"
+
+#include "led.h"
 
 /* Global define */
 
 // Actully 5 bytes, extra 1 byte for data safety
-#define DATA_LEN          6
-#define VALUE_OFFSET_MASK 0xFFFF
+#define DATA_LEN               6
+#define VALUE_OFFSET_MASK      0xFFFF
 
-#define _offset           GlobalData->RollerOffset
-#define VALUE_DEFAULT     0x8000
+#define ROLLER_MODE_TEST_LIMIT 8
+
+#define _offset                GlobalData->RollerOffset
+#define VALUE_DEFAULT          0x8000
+
+typedef enum {
+  ROLLER_MODE_TEST = 0,
+  ROLLER_MODE_SPI,
+  ROLLER_MODE_ADC,
+} RollerMode;
+
+RollerMode rollerMode       = ROLLER_MODE_TEST;
+uint8_t rollerModeTestCount = ROLLER_MODE_TEST_LIMIT;
+
+int16_t Calibrattion_Val = 0;
+
+uint16_t ADCValue[72] = {0}; // ADC采样值，前8次采样会被丢弃
 
 const uint8_t TxData[DATA_LEN] = {0x05, 0x00};
 struct rxdata_t {
@@ -154,6 +172,39 @@ void DMA_Tx_Init(DMA_Channel_TypeDef *DMA_CHx, u32 ppadr, u32 memadr, u16 bufsiz
 }
 
 /*********************************************************************
+ * @fn      DMA_Tx_Init_ADC
+ *
+ * @brief   Initializes the DMAy Channelx configuration.
+ *
+ * @param   DMA_CHx - x can be 1 to 7.
+ *          ppadr - Peripheral base address.
+ *          memadr - Memory base address.
+ *          bufsize - DMA channel buffer size.
+ *
+ * @return  none
+ */
+void DMA_Tx_Init_ADC(DMA_Channel_TypeDef *DMA_CHx, u32 ppadr, u32 memadr, u16 bufsize)
+{
+  DMA_InitTypeDef DMA_InitStructure = {0};
+
+  RCC_AHBPeriphClockCmd(RCC_AHBPeriph_DMA1, ENABLE);
+
+  DMA_DeInit(DMA_CHx);
+  DMA_InitStructure.DMA_PeripheralBaseAddr = ppadr;
+  DMA_InitStructure.DMA_MemoryBaseAddr     = memadr;
+  DMA_InitStructure.DMA_DIR                = DMA_DIR_PeripheralSRC;
+  DMA_InitStructure.DMA_BufferSize         = bufsize;
+  DMA_InitStructure.DMA_PeripheralInc      = DMA_PeripheralInc_Disable;
+  DMA_InitStructure.DMA_MemoryInc          = DMA_MemoryInc_Enable;
+  DMA_InitStructure.DMA_PeripheralDataSize = DMA_PeripheralDataSize_HalfWord;
+  DMA_InitStructure.DMA_MemoryDataSize     = DMA_MemoryDataSize_HalfWord;
+  DMA_InitStructure.DMA_Mode               = DMA_Mode_Normal;
+  DMA_InitStructure.DMA_Priority           = DMA_Priority_Medium;
+  DMA_InitStructure.DMA_M2M                = DMA_M2M_Disable;
+  DMA_Init(DMA_CHx, &DMA_InitStructure);
+}
+
+/*********************************************************************
  * @fn      DMA_Rx_Init
  *
  * @brief   Initializes the DMAy Channelx configuration.
@@ -187,6 +238,24 @@ void DMA_Rx_Init(DMA_Channel_TypeDef *DMA_CHx, u32 ppadr, u32 memadr, u16 bufsiz
   DMA_Init(DMA_CHx, &DMA_InitStructure);
 }
 
+/*********************************************************************
+ * @fn      Get_ADC_ConversionVal
+ *
+ * @brief   Get Conversion Value.
+ *
+ * @param   val - Sampling value
+ *
+ * @return  val+Calibrattion_Val - Conversion Value.
+ */
+uint16_t Get_ADC_ConversionVal(int16_t val)
+{
+  if ((val + Calibrattion_Val) < 0 || val == 0)
+    return 0;
+  if ((Calibrattion_Val + val) > 4095 || val == 4095)
+    return 4095;
+  return (val + Calibrattion_Val);
+}
+
 xdata void Roller_Init()
 {
   SPI_FullDuplex_Init();
@@ -199,32 +268,126 @@ xdata void Roller_Init()
   DMA_Cmd(DMA1_Channel4, ENABLE);
 }
 
+xdata void Roller_ADC_Init()
+{
+  ADC_InitTypeDef ADC_InitStructure   = {0};
+  GPIO_InitTypeDef GPIO_InitStructure = {0};
+
+  // 使能GPIOA和ADC1外设时钟
+  RCC_APB2PeriphClockCmd(RCC_APB2Periph_GPIOA, ENABLE);
+  RCC_APB2PeriphClockCmd(RCC_APB2Periph_ADC1, ENABLE);
+  RCC_ADCCLKConfig(RCC_PCLK2_Div8);
+
+  // 将PA5配置为模拟输入，供ADC采集使用
+  GPIO_InitStructure.GPIO_Pin  = GPIO_Pin_5;
+  GPIO_InitStructure.GPIO_Mode = GPIO_Mode_AIN;
+  GPIO_Init(GPIOA, &GPIO_InitStructure);
+
+  // ADC1初始化配置：独立模式、单通道连续转换，软件触发转换，数据右对齐
+  ADC_InitStructure.ADC_Mode               = ADC_Mode_Independent;
+  ADC_InitStructure.ADC_ScanConvMode       = DISABLE;                   // 单通道模式
+  ADC_InitStructure.ADC_ContinuousConvMode = ENABLE;                    // 连续转换模式
+  ADC_InitStructure.ADC_ExternalTrigConv   = ADC_ExternalTrigConv_None; // 软件触发
+  ADC_InitStructure.ADC_DataAlign          = ADC_DataAlign_Right;
+  ADC_InitStructure.ADC_NbrOfChannel       = 1;
+  ADC_Init(ADC1, &ADC_InitStructure);
+
+  // 配置ADC1规则组通道5（对应PA5）
+  ADC_RegularChannelConfig(ADC1, ADC_Channel_5, 1, ADC_SampleTime_55Cycles5);
+
+  // 使能ADC1
+  ADC_DMACmd(ADC1, ENABLE);
+  ADC_Cmd(ADC1, ENABLE);
+
+  ADC_BufferCmd(ADC1, DISABLE); // 禁用缓冲区
+  ADC_ResetCalibration(ADC1);   // 复位校准
+  while (ADC_GetResetCalibrationStatus(ADC1));
+  ADC_StartCalibration(ADC1); // 启动校准
+  while (ADC_GetCalibrationStatus(ADC1));
+  Calibrattion_Val = Get_CalibrationValue(ADC1); // 获取校准值
+
+  DMA_Tx_Init_ADC(DMA1_Channel1, (u32)&ADC1->RDATAR, (u32)&ADCValue, 64);
+  ADC_SoftwareStartConvCmd(ADC1, ENABLE);
+
+  DMA_Cmd(DMA1_Channel1, ENABLE);
+}
+
 // 重新读取编码器值
 void Roller_Update()
 {
-  // SPI_I2S_SendData(SPI2, 0x05);
-  if ((!DMA_GetFlagStatus(DMA1_FLAG_TC5)) && (!DMA_GetFlagStatus(DMA1_FLAG_TC4))) {
-    return;
+  switch (rollerMode) {
+    case ROLLER_MODE_TEST: { // 测试是否有SPI合法输入数据
+      if (EncoderData.angle_h == 0 && EncoderData.angle_l == 0 && EncoderData.status == 0 && EncoderData.crc == 0) {
+        // 输入不合法
+        rollerModeTestCount++;
+      } else {
+        // 输入合法
+        rollerModeTestCount--;
+      }
+      if (rollerModeTestCount == 0) {
+        // 如果合法次数超过阈值，说明接入了SPI编码器，则切换到SPI模式
+        rollerMode          = ROLLER_MODE_SPI;
+        rollerModeTestCount = 0;
+      } else if (rollerModeTestCount > 2 * ROLLER_MODE_TEST_LIMIT) {
+        // 如果不合法次数超过阈值，说明接入了ADC编码器，则切换到ADC模式
+        rollerMode          = ROLLER_MODE_ADC;
+        rollerModeTestCount = 0;
+        // 关闭SPI和对应DMA通道
+        SPI_Cmd(SPI2, DISABLE);
+        DMA_Cmd(DMA1_Channel5, DISABLE);
+        DMA_Cmd(DMA1_Channel4, DISABLE);
+        Roller_ADC_Init();
+      }
+    }
+    case ROLLER_MODE_SPI: {
+      if ((!DMA_GetFlagStatus(DMA1_FLAG_TC5)) && (!DMA_GetFlagStatus(DMA1_FLAG_TC4))) {
+        return;
+      }
+
+      DMA_ClearFlag(DMA1_FLAG_TC5); // 清除传输完成标志
+      DMA_ClearFlag(DMA1_FLAG_TC4); // 清除传输完成标志
+
+      SPI_Cmd(SPI2, DISABLE);
+
+      if (EncoderData.crc == calcCRC8((uint8_t *)&(EncoderData.angle_h), 3, tableCRC)) {
+        EncoderValue = ((uint16_t)EncoderData.angle_h << 8 | (uint16_t)EncoderData.angle_l);
+      }
+
+      DMA_Cmd(DMA1_Channel5, DISABLE);
+      DMA_SetCurrDataCounter(DMA1_Channel5, DATA_LEN);
+      DMA_Cmd(DMA1_Channel5, ENABLE);
+
+      DMA_Cmd(DMA1_Channel4, DISABLE);
+      DMA_SetCurrDataCounter(DMA1_Channel4, DATA_LEN);
+      DMA_Cmd(DMA1_Channel4, ENABLE);
+
+      SPI_Cmd(SPI2, ENABLE);
+      break;
+    }
+    case ROLLER_MODE_ADC: {
+      if ((!DMA_GetFlagStatus(DMA1_FLAG_TC1))) {
+        return;
+      }
+      DMA_ClearFlag(DMA1_FLAG_TC1); // 清除传输完成标志
+
+      uint8_t i;
+      uint32_t sum = 0;
+      for (i = 8; i < 72; i++) {
+        sum += ADCValue[i];
+      }
+
+      // 读取ADC值
+      EncoderValue = Get_ADC_ConversionVal(sum >> 6) << 4;
+
+      // 重新开始ADC转换
+      DMA_Cmd(DMA1_Channel1, DISABLE);
+      DMA_SetCurrDataCounter(DMA1_Channel1, 72);
+      DMA_Cmd(DMA1_Channel1, ENABLE);
+      break;
+    }
+    default:
+      break;
   }
-
-  DMA_ClearFlag(DMA1_FLAG_TC5); // 清除传输完成标志
-  DMA_ClearFlag(DMA1_FLAG_TC4); // 清除传输完成标志
-
-  SPI_Cmd(SPI2, DISABLE);
-
-  if (EncoderData.crc == calcCRC8((uint8_t *)&(EncoderData.angle_h), 3, tableCRC)) {
-    EncoderValue = ((uint16_t)EncoderData.angle_h << 8 | (uint16_t)EncoderData.angle_l);
-  }
-
-  DMA_Cmd(DMA1_Channel5, DISABLE);
-  DMA_SetCurrDataCounter(DMA1_Channel5, DATA_LEN);
-  DMA_Cmd(DMA1_Channel5, ENABLE);
-
-  DMA_Cmd(DMA1_Channel4, DISABLE);
-  DMA_SetCurrDataCounter(DMA1_Channel4, DATA_LEN);
-  DMA_Cmd(DMA1_Channel4, ENABLE);
-
-  SPI_Cmd(SPI2, ENABLE);
 }
 
 // 获取原始编码器值
@@ -233,14 +396,14 @@ uint16_t Roller_GetRawValue()
   return EncoderValue;
 }
 
-#define DEBOUNCE_LENGTH 8
-#define DEBOUNCE_LIMIT_A  32
-#define DEBOUNCE_LIMIT_B  8
-uint16_t debounceBuffer[DEBOUNCE_LENGTH] = {0};
-uint32_t debounceSumValue                = 0;
-uint16_t debounceAvgValue                = 0;
-uint16_t outputValue                     = 0;
-uint8_t debounceIndex                    = 0;
+#define DEBOUNCE_LENGTH  8                      // 滑动窗口大小
+#define DEBOUNCE_LIMIT_A 64                     // 去抖阈值
+#define DEBOUNCE_LIMIT_B 16                      // 滤波后的去抖阈值
+uint16_t debounceBuffer[DEBOUNCE_LENGTH] = {0}; // 滑动窗口
+uint32_t debounceSumValue                = 0;   // 滑动窗口和
+uint16_t debounceAvgValue                = 0;   // 滑动窗口平均值
+uint16_t outputValue                     = 0;   // 滤波后的去抖值
+uint8_t debounceIndex                    = 0;   // 滑动窗口索引
 
 // 获取经过OFFSET处理并去抖后的编码器值
 uint16_t Roller_GetValue()

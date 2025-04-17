@@ -22,6 +22,8 @@ int main(void)
   SystemInit();
   SystemCoreClockUpdate();
 
+  RCC_PCLK2Config(RCC_HCLK_Div2); // RCC2 时钟 2 分频
+
   NVIC_PriorityGroupConfig(NVIC_PriorityGroup_1);
 
   Delay_Init();
