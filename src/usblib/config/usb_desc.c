@@ -46,7 +46,7 @@ xdata const uint8_t USBD_ConfigDescriptor[USBD_SIZE_CONFIG_DESC] = {
     /* IAD Descriptor(interface 0/1)*/
     8,                       // Length of the descriptor 描述符长度
     USB_IAD_DESCRIPTOR_TYPE, // Type: Interface Association Descriptor (IAD) 描述符类型：接口关联描述符
-    0x00,                    // First interface: 2 in this case, see following 第一个要关联的接口ID
+    0x00,                    // First interface: 0 in this case, see following 第一个要关联的接口ID
     0x02,                    // Total number of grouped interfaces 总共要关联的接口数量
     0x02,                    // bFunctionClass
     0x02,                    // bFunctionSubClass
@@ -70,7 +70,12 @@ xdata const uint8_t USBD_ConfigDescriptor[USBD_SIZE_CONFIG_DESC] = {
     /* Length/management descriptor (data class interface 1) */
     0x05, 0x24, 0x01, 0x00, 0x01,
     0x04, 0x24, 0x02, 0x02,
-    0x05, 0x24, 0x06, 0x00, 0x01,
+
+    0x05, //bFuncitonLength
+    0x24, //bDescriptorType (CS_INTERFACE)
+    0x06, //bDescriptorSubType (Union Functional Descriptor)
+    0x00, //bMasterInterface
+    0x01, //bSlaveInterface0
 
     /* Interrupt upload endpoint descriptor */
     0x07,       // bLength
@@ -134,7 +139,12 @@ xdata const uint8_t USBD_ConfigDescriptor[USBD_SIZE_CONFIG_DESC] = {
     /* Length/management descriptor (data class interface 3) */
     0x05, 0x24, 0x01, 0x00, 0x03,
     0x04, 0x24, 0x02, 0x02,
-    0x05, 0x24, 0x06, 0x02, 0x03,
+
+    0x05, //bFuncitonLength
+    0x24, //bDescriptorType (CS_INTERFACE)
+    0x06, //bDescriptorSubType (Union Functional Descriptor)
+    0x00, //bMasterInterface
+    0x01, //bSlaveInterface0
 
     /* Interrupt upload endpoint descriptor */
     0x07,       // bLength
