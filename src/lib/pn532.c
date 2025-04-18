@@ -43,7 +43,7 @@ enum {
 };
 
 struct _PN532_Status PN532_Status;
-#define PN532_TIMEOUT 1000
+#define PN532_TIMEOUT_VAL 1000
 
 #ifdef PN532_INTERFACE_UART
 #define INTR(fun) (PN532_UART.fun)
@@ -60,11 +60,11 @@ void res_init(uint8_t payload_len) {
 
 void PN532_Polling(){
   if(bet){
-    PN532_readPassiveTargetID(PN532_MIFARE_ISO14443A,PN532_TIMEOUT);
+    PN532_readPassiveTargetID(PN532_MIFARE_ISO14443A,PN532_TIMEOUT_VAL);
     bet = 0;
   }else{
     bet = 1;
-    PN532_felica_Polling(0xFFFF, 0x00,PN532_TIMEOUT);
+    PN532_felica_Polling(0xFFFF, 0x00,PN532_TIMEOUT_VAL);
   }
 }
 
@@ -571,7 +571,7 @@ void PN532_getFirmwareVersion(void)
 
   PN532_Status.PN532_Option_Status = PN532_WAITING_FOR_ACK;
   PN532_Status.PN532_CMD_Status = PN532_GET_VERSION;
-  PN532_Status.PN532_Failed_task_key = setTimeout(PN532_Failed, PN532_TIMEOUT);
+  PN532_Status.PN532_Failed_task_key = setTimeout(PN532_Failed, PN532_TIMEOUT_VAL);
 
   INTR(writeCommand)(packet_buffer,1,0,0);
 }
@@ -617,7 +617,7 @@ void PN532_setPassiveActivationRetries()
 
   PN532_Status.PN532_Option_Status = PN532_WAITING_FOR_ACK;
   PN532_Status.PN532_CMD_Status = PN532_SET_PASSIVE_ACTIVATION_RETRIES;
-  PN532_Status.PN532_Failed_task_key = setTimeout(PN532_Failed, PN532_TIMEOUT);
+  PN532_Status.PN532_Failed_task_key = setTimeout(PN532_Failed, PN532_TIMEOUT_VAL);
 
   INTR(writeCommand)(packet_buffer,5,0,0);
 }
@@ -648,7 +648,7 @@ void PN532_setRFField(uint8_t autoRFCA, uint8_t rFOnOff)
 
   PN532_Status.PN532_Option_Status = PN532_WAITING_FOR_ACK;
   PN532_Status.PN532_CMD_Status = PN532_SET_RFFIELD;
-  PN532_Status.PN532_Failed_task_key = setTimeout(PN532_Failed, PN532_TIMEOUT);
+  PN532_Status.PN532_Failed_task_key = setTimeout(PN532_Failed, PN532_TIMEOUT_VAL);
 
   INTR(writeCommand)(packet_buffer,3,0,0);
 }
@@ -723,7 +723,7 @@ void PN532_mifareclassic_AuthenticateBlock (uint8_t *uid, uint8_t uidLen, uint32
 
   PN532_Status.PN532_Option_Status = PN532_WAITING_FOR_ACK;
   PN532_Status.PN532_CMD_Status = PN532_MIFARE_AUTHENTICATE_BLOCK;
-  PN532_Status.PN532_Failed_task_key = setTimeout(PN532_Failed, PN532_TIMEOUT);
+  PN532_Status.PN532_Failed_task_key = setTimeout(PN532_Failed, PN532_TIMEOUT_VAL);
 
   INTR(writeCommand)(packet_buffer,10 + uidLen,0,0);
 }
@@ -752,7 +752,7 @@ void PN532_mifareclassic_ReadDataBlock (uint8_t blockNumber, uint8_t *data)
 
   PN532_Status.PN532_Option_Status = PN532_WAITING_FOR_ACK;
   PN532_Status.PN532_CMD_Status = PN532_MIFARE_READ_BLOCK;
-  PN532_Status.PN532_Failed_task_key = setTimeout(PN532_Failed, PN532_TIMEOUT);
+  PN532_Status.PN532_Failed_task_key = setTimeout(PN532_Failed, PN532_TIMEOUT_VAL);
 
   INTR(writeCommand)(packet_buffer,4,0,0);
 }
@@ -864,7 +864,7 @@ void PN532_felica_ReadWithoutEncryption (uint8_t numService, const uint16_t *ser
 
   PN532_Status.PN532_Option_Status = PN532_WAITING_FOR_ACK;
   PN532_Status.PN532_CMD_Status = PN532_FELICA_READ;
-  PN532_Status.PN532_Failed_task_key = setTimeout(PN532_Failed, PN532_TIMEOUT);
+  PN532_Status.PN532_Failed_task_key = setTimeout(PN532_Failed, PN532_TIMEOUT_VAL);
   PN532_felica_SendCommand(cmd, cmdLen);
 }
 
@@ -922,6 +922,6 @@ void PN532_felica_WriteWithoutEncryption (uint8_t numService, const uint16_t *se
   
   PN532_Status.PN532_Option_Status = PN532_WAITING_FOR_ACK;
   PN532_Status.PN532_CMD_Status = PN532_FELICA_WRITE;
-  PN532_Status.PN532_Failed_task_key = setTimeout(PN532_Failed, PN532_TIMEOUT);
+  PN532_Status.PN532_Failed_task_key = setTimeout(PN532_Failed, PN532_TIMEOUT_VAL);
   PN532_felica_SendCommand(cmd, cmdLen);
 }
