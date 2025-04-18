@@ -49,13 +49,17 @@ struct _PN532_Status PN532_Status;
 #define INTR(fun) (PN532_UART.fun)
 #endif
 
+void res_init_s(uint8_t payload_len, AIME_Request* req, AIME_Response *res) {
+  res->frame_len = 6 + payload_len;
+  res->addr = req->addr;
+  res->seq_no = req->seq_no;
+  res->cmd = req->cmd;
+  res->status = STATUS_OK;
+  res->payload_len = payload_len;
+}
+
 void res_init(uint8_t payload_len) {
-  res.frame_len = 6 + payload_len;
-  res.addr = _req.addr;
-  res.seq_no = _req.seq_no;
-  res.cmd = _req.cmd;
-  res.status = STATUS_OK;
-  res.payload_len = payload_len;
+  return res_init_s(payload_len, &_req, &res);
 }
 
 void PN532_Polling(){
@@ -228,12 +232,6 @@ void PN532_Check()
     
   }
   if(PN532_Status.PN532_Option_Status == PN532_WAITING_FOR_RESPONSE){
-    uint8_t uidLength;
-    uint8_t uid[4];
-    uint8_t mifare_data[16];
-    uint8_t idm[8];
-    uint8_t pmm[8];
-    uint16_t systemCode;
     uint8_t status;
     
     switch(PN532_Status.PN532_CMD_Status){
