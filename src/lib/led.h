@@ -30,6 +30,9 @@ typedef enum {
 // 初始化RGB灯光
 void LED_Init(void);
 
+// 灯光效果_上电
+void LED_Animation_PowerOn();
+
 // 设置单个LED的RGB颜色
 void LED_RGB_Set(LED_RGB_Port port, uint8_t index, uint8_t r, uint8_t g, uint8_t b);
 
@@ -42,6 +45,7 @@ void LED_RGB_SetPort(LED_RGB_Port port, uint8_t r, uint8_t g, uint8_t b);
 // 显示RGB颜色
 void LED_Refresh(void);
 
+// 设置7C灯光的颜色
 void LED_7C_Set(LED_7C_Tag index, LED_State r, LED_State g, LED_State b);
 
 #ifdef __cplusplus

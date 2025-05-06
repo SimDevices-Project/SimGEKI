@@ -35,7 +35,7 @@ void setRgbColor32(uint8_t port, uint8_t index, uint32_t color)
 
 void setRgbColor(uint8_t port, uint8_t index, uint8_t r, uint8_t g, uint8_t b)
 {
-  if(index >= RGB_COUNT_PER_PORT) {
+  if (index >= RGB_COUNT_PER_PORT) {
     return;
   }
   setRgbColor32(port, index, ((uint32_t)g << 16) | ((uint32_t)r << 8) | (uint32_t)b);
@@ -126,19 +126,19 @@ xdata void Timer3_Config(void)
   DMA_InitStructure.DMA_M2M                = DMA_M2M_Disable;
 
   // RGB 0, PB1 Tim3, Channel4, DMA1, Channel3
-  DMA_InitStructure.DMA_PeripheralBaseAddr = (uint32_t) & (TIM3->CH4CVR);
+  DMA_InitStructure.DMA_PeripheralBaseAddr = (uint32_t)&(TIM3->CH4CVR);
   DMA_InitStructure.DMA_MemoryBaseAddr     = (uint32_t)colorPWM[0];
   DMA_Init(DMA1_Channel3, &DMA_InitStructure);
   DMA_Cmd(DMA1_Channel3, ENABLE);
 
   // RGB 1, PB0 Channel3, DMA1, Channel2
-  DMA_InitStructure.DMA_PeripheralBaseAddr = (uint32_t) & (TIM3->CH3CVR);
+  DMA_InitStructure.DMA_PeripheralBaseAddr = (uint32_t)&(TIM3->CH3CVR);
   DMA_InitStructure.DMA_MemoryBaseAddr     = (uint32_t)colorPWM[1];
   DMA_Init(DMA1_Channel2, &DMA_InitStructure);
   DMA_Cmd(DMA1_Channel2, ENABLE);
 
   // RGB EX, PA6 Channel1, DMA1, Channel6
-  DMA_InitStructure.DMA_PeripheralBaseAddr = (uint32_t) & (TIM3->CH1CVR);
+  DMA_InitStructure.DMA_PeripheralBaseAddr = (uint32_t)&(TIM3->CH1CVR);
   DMA_InitStructure.DMA_MemoryBaseAddr     = (uint32_t)colorPWM[2];
   DMA_Init(DMA1_Channel6, &DMA_InitStructure);
   DMA_Cmd(DMA1_Channel6, ENABLE);
@@ -205,6 +205,90 @@ xdata void LED_Init()
   CH422_Init();
 }
 
+xdata void LED_Effect_Red()
+{
+  LED_7C_Set(LED_7C_L1, LED_ON, LED_OFF, LED_OFF);
+  LED_7C_Set(LED_7C_L2, LED_ON, LED_OFF, LED_OFF);
+  LED_7C_Set(LED_7C_L3, LED_ON, LED_OFF, LED_OFF);
+  LED_7C_Set(LED_7C_R1, LED_ON, LED_OFF, LED_OFF);
+  LED_7C_Set(LED_7C_R2, LED_ON, LED_OFF, LED_OFF);
+  LED_7C_Set(LED_7C_R3, LED_ON, LED_OFF, LED_OFF);
+
+  LED_RGB_SetPort(LED_RGB_PORT_LEFT, 0xFF, 0x00, 0x00);
+  LED_RGB_SetPort(LED_RGB_PORT_RIGHT, 0xFF, 0x00, 0x00);
+
+  LED_RGB_SetPort(LED_RGB_PORT_UART, 0xFF, 0x00, 0x00);
+}
+
+xdata void LED_Effect_Green()
+{
+  LED_7C_Set(LED_7C_L1, LED_OFF, LED_ON, LED_OFF);
+  LED_7C_Set(LED_7C_L2, LED_OFF, LED_ON, LED_OFF);
+  LED_7C_Set(LED_7C_L3, LED_OFF, LED_ON, LED_OFF);
+  LED_7C_Set(LED_7C_R1, LED_OFF, LED_ON, LED_OFF);
+  LED_7C_Set(LED_7C_R2, LED_OFF, LED_ON, LED_OFF);
+  LED_7C_Set(LED_7C_R3, LED_OFF, LED_ON, LED_OFF);
+
+  LED_RGB_SetPort(LED_RGB_PORT_LEFT, 0xFF, 0xFF, 0x00);
+  LED_RGB_SetPort(LED_RGB_PORT_RIGHT, 0xFF, 0xFF, 0x00);
+
+  LED_RGB_SetPort(LED_RGB_PORT_UART, 0x00, 0xFF, 0x00);
+}
+
+xdata void LED_Effect_Blue()
+{
+  LED_7C_Set(LED_7C_L1, LED_OFF, LED_OFF, LED_ON);
+  LED_7C_Set(LED_7C_L2, LED_OFF, LED_OFF, LED_ON);
+  LED_7C_Set(LED_7C_L3, LED_OFF, LED_OFF, LED_ON);
+  LED_7C_Set(LED_7C_R1, LED_OFF, LED_OFF, LED_ON);
+  LED_7C_Set(LED_7C_R2, LED_OFF, LED_OFF, LED_ON);
+  LED_7C_Set(LED_7C_R3, LED_OFF, LED_OFF, LED_ON);
+
+  LED_RGB_SetPort(LED_RGB_PORT_LEFT, 0x00, 0x00, 0xFF);
+  LED_RGB_SetPort(LED_RGB_PORT_RIGHT, 0x00, 0x00, 0xFF);
+
+  LED_RGB_SetPort(LED_RGB_PORT_UART, 0x00, 0x00, 0xFF);
+}
+
+xdata void LED_Effect_White()
+{
+  LED_7C_Set(LED_7C_L1, LED_ON, LED_ON, LED_ON);
+  LED_7C_Set(LED_7C_L2, LED_ON, LED_ON, LED_ON);
+  LED_7C_Set(LED_7C_L3, LED_ON, LED_ON, LED_ON);
+  LED_7C_Set(LED_7C_R1, LED_ON, LED_ON, LED_ON);
+  LED_7C_Set(LED_7C_R2, LED_ON, LED_ON, LED_ON);
+  LED_7C_Set(LED_7C_R3, LED_ON, LED_ON, LED_ON);
+
+  LED_RGB_SetPort(LED_RGB_PORT_LEFT, 0xFF, 0xFF, 0xFF);
+  LED_RGB_SetPort(LED_RGB_PORT_RIGHT, 0xFF, 0xFF, 0xFF);
+
+  LED_RGB_SetPort(LED_RGB_PORT_UART, 0xFF, 0xFF, 0xFF);
+}
+
+xdata void LED_Effect_Normal()
+{
+  LED_7C_Set(LED_7C_L1, LED_ON, LED_OFF, LED_OFF);
+  LED_7C_Set(LED_7C_L2, LED_OFF, LED_ON, LED_OFF);
+  LED_7C_Set(LED_7C_L3, LED_OFF, LED_OFF, LED_ON);
+  LED_7C_Set(LED_7C_R1, LED_ON, LED_OFF, LED_OFF);
+  LED_7C_Set(LED_7C_R2, LED_OFF, LED_ON, LED_OFF);
+  LED_7C_Set(LED_7C_R3, LED_OFF, LED_OFF, LED_ON);
+
+  LED_RGB_SetPort(LED_RGB_PORT_LEFT, 0xFF, 0x00, 0xFF);
+  LED_RGB_SetPort(LED_RGB_PORT_RIGHT, 0xFF, 0x00, 0xFF);
+
+  LED_RGB_SetPort(LED_RGB_PORT_UART, 0x00, 0x00, 0x00);
+}
+
+xdata void LED_Animation_PowerOn()
+{
+  setTimeout(LED_Effect_Red, 500);
+  setTimeout(LED_Effect_Green, 1000);
+  setTimeout(LED_Effect_Blue, 1500);
+  setTimeout(LED_Effect_White, 2000);
+  setTimeout(LED_Effect_Normal, 3000);
+}
+
 void LED_Refresh()
 {
   WS2812_Refresh();
@@ -238,7 +322,7 @@ void updateColorRawCh422()
   CH422_Set(colorRawCh422);
 }
 
-void LED_7C_Set(uint8_t index, LED_State r, LED_State g, LED_State b)
+void LED_7C_Set(LED_7C_Tag index, LED_State r, LED_State g, LED_State b)
 {
   uint8_t color = 0;
   color |= r << 2;
