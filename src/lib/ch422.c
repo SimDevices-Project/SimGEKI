@@ -23,7 +23,7 @@
 #define CH422_DAT_LEN      5
 #define CH422_COLORDAT_LEN 3
 uint8_t Colors[CH422_DAT_LEN]    = {0xFF, 0xFF, 0xFF, 0xFF, 0x05};
-uint8_t Addresses[CH422_DAT_LEN] = {0x72, 0x74, 0x70, 0x76, 0x48};
+const uint8_t Addresses[CH422_DAT_LEN] = {0x72, 0x74, 0x70, 0x76, 0x48};
 
 uint8_t data_len    = CH422_DAT_LEN;
 uint8_t master_sate = 0xFF;
@@ -108,7 +108,7 @@ void CH422_Check()
           data_index  = 0;
           master_sate = 0xFF;
           if (data_len == CH422_DAT_LEN) {
-            data_len = CH422_COLORDAT_LEN;
+            data_len = CH422_COLORDAT_LEN; // 减少数据长度，不再重复初始化CH422
           }
         } else {
           master_sate = 0;
