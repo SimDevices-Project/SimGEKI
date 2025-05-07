@@ -363,19 +363,19 @@ void CDC_CARD_IO_Handler()
       break;
     // 设置Mifrare卡密钥B
     case CMD_MIFARE_KEY_SET_B:
-      memcpy(mifare_key_B, _req.key, 6);
+      memcpy(mifare_key_B, req->key, 6);
       memcpy(cardIO_ResponseStringBuf, res.buffer, 128);
       CDC_CARD_IO_SendDataReady();
       break;
     // 设置Mifrare卡密钥A
     case CMD_MIFARE_KEY_SET_A:
-      memcpy(mifare_key_A, _req.key, 6);
+      memcpy(mifare_key_A, req->key, 6);
       memcpy(cardIO_ResponseStringBuf, res.buffer, 128);
       CDC_CARD_IO_SendDataReady();
       break;
     // 设置设备RGB灯
     case CMD_EXT_BOARD_SET_LED_RGB:
-      LED_RGB_SetPort(LED_RGB_PORT_UART, _req.color_payload[0], _req.color_payload[1], _req.color_payload[2]);
+      LED_RGB_SetPort(LED_RGB_PORT_UART, req->color_payload[0], req->color_payload[1], req->color_payload[2]);
       memcpy(cardIO_ResponseStringBuf, res.buffer, 128);
       CDC_CARD_IO_SendDataReady();
       break;
