@@ -34,18 +34,27 @@ void HIDCONFIG_Receive_Handler()
 {
   switch (dataReceive->reportID) {
     // Custom HIDConfigs
-    case 0xAA: {
+    case HIDCONFIG_REPORT_ID: {
       memset(HIDCFG_Buffer_IN, 0, 64); // Clear buffer
 
-      dataUpload->reportID = 0xAA;
+      dataUpload->reportID = dataReceive->reportID;
       dataUpload->symbol   = dataReceive->symbol;
 
       switch (dataReceive->command) {
-        case GET_ROLLER_DATA: {
+        /**
+         * @brief Get roller data : 0xA1
+         * This command is used to get the current roller value and raw value.
+         * The roller value is the processed value after applying the offset and debouncing.
+         * The raw value is the direct reading from the encoder without any processing.
+         * The response will contain:
+         * - 2 bytes: Roller value (processed value)
+         * - 2 bytes: Roller raw value (raw reading)
+         */
+        case ROLLER_GET_DATA: {
           uint16_t rollerValue    = Roller_GetValue();
           uint16_t rollerRawValue = Roller_GetRawValue();
           // Upload roller data
-          dataUpload->command    = GET_ROLLER_DATA;
+          dataUpload->command    = ROLLER_GET_DATA;
           dataUpload->state      = STATE_OK;
           dataUpload->payload[0] = (uint8_t)(rollerValue >> 8);
           dataUpload->payload[1] = (uint8_t)(rollerValue & 0xFF);
@@ -53,12 +62,71 @@ void HIDCONFIG_Receive_Handler()
           dataUpload->payload[3] = (uint8_t)(rollerRawValue & 0xFF);
           break;
         }
-        case SET_ROLLER_OFFSET: {
+        /**
+         * @brief Set roller offset : 0xA0
+         * This command is used to reset the roller offset to 0x8000.
+         * After this command, the roller value will be adjusted so that
+         * the value at the moment of this command is considered as 0x8000.
+         */
+        case ROLLER_SET_OFFSET: {
           // Calc roller offset to 0x8000
           Roller_ResetOffset();
 
-          dataUpload->command = SET_ROLLER_OFFSET;
+          dataUpload->command = ROLLER_SET_OFFSET;
           dataUpload->state   = STATE_OK;
+          break;
+        }
+        /**
+         * @brief Set LED mode : 0xB0
+         * This command is used to set the color of the LEDs.
+         * 1 byte: LED tag, 0xF0 for 7C RGB LED, 0x00-0x02 for RGB ports, 0xFF for all LEDs
+         * 1 byte: LED index, 0x00-0x05 for 6 LEDs, 0xff for all LEDs
+         * 1 byte: Mode, Always 0x01 for now
+         * 1 byte: Brightness, Always 0xFF for now
+         * 1 byte: Red color value, 0x00-0xFF
+         * 1 byte: Green color value, 0x00-0xFF
+         * 1 byte: Blue color value, 0x00-0xFF
+         * * The LED tag can be one of the following:
+         * - LEDTAG_RGB_PORT_LEFT: Left RGB port
+         * - LEDTAG_RGB_PORT_RIGHT: Right RGB port
+         * - LEDTAG_RGB_PORT_UART: UART RGB port
+         * - LEDTAG_RGB_7C: 7C RGB LED
+         * - LEDTAG_ALL: All LEDs
+         * * The LED index is used to specify which LED to set the color for.
+         * If the LED tag is LEDTAG_RGB_7C, the led_index should be one of the following:
+         * - 0x00: LED_7C_L1 - Left 1st LED
+         * - 0x02: LED_7C_L2 - Left 2nd LED
+         * - 0x04: LED_7C_L3 - Left 3rd LED
+         * - 0x01: LED_7C_R1 - Right 1st LED
+         * - 0x03: LED_7C_R2 - Right 2nd LED
+         * - 0x05: LED_7C_R3 - Right 3rd LED
+         * If the LED tag is not LEDTAG_RGB_7C, the led_index should be one of the following:
+         * - 0x00: LEDTAG_RGB_PORT_RIGHT - Right RGB port
+         * - 0x01: LEDTAG_RGB_PORT_LEFT - Left RGB port
+         * - 0x02: LEDTAG_RGB_PORT_UART - UART RGB port
+         */
+        case LED_SET_MODE: {
+          if (dataReceive->led_tag == LEDTAG_ALL) {
+            LED_RGB_SetAll(dataReceive->r, dataReceive->g, dataReceive->b);
+            LED_7C_Set(LED_7C_L1, dataReceive->r, dataReceive->g, dataReceive->b);
+            LED_7C_Set(LED_7C_L2, dataReceive->r, dataReceive->g, dataReceive->b);
+            LED_7C_Set(LED_7C_L3, dataReceive->r, dataReceive->g, dataReceive->b);
+            LED_7C_Set(LED_7C_R1, dataReceive->r, dataReceive->g, dataReceive->b);
+            LED_7C_Set(LED_7C_R2, dataReceive->r, dataReceive->g, dataReceive->b);
+            LED_7C_Set(LED_7C_R3, dataReceive->r, dataReceive->g, dataReceive->b);
+          } else if (dataReceive->led_tag == LEDTAG_RGB_7C) {
+            LED_7C_Set(dataReceive->led_7c_tag, dataReceive->r, dataReceive->g, dataReceive->b);
+          } else {
+            if (dataReceive->led_index == 0xff) {
+              LED_RGB_SetPort(dataReceive->led_tag, dataReceive->r, dataReceive->g, dataReceive->b);
+            } else {
+              LED_RGB_Set(dataReceive->led_tag, dataReceive->led_index, dataReceive->r, dataReceive->g, dataReceive->b);
+            }
+          }
+
+          dataUpload->command = LED_SET_MODE;
+          dataUpload->state   = STATE_OK;
+
           break;
         }
         default: {

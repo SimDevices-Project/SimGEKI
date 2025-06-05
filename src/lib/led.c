@@ -325,9 +325,9 @@ void updateColorRawCh422()
 void LED_7C_Set(LED_7C_Tag index, LED_State r, LED_State g, LED_State b)
 {
   uint8_t color = 0;
-  color |= r << 2;
-  color |= g << 1;
-  color |= b;
+  color |= !!r << 2;
+  color |= !!g << 1;
+  color |= !!b;
   colorListCh422[index] = color;
   updateColorRawCh422();
 }
