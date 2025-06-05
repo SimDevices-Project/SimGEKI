@@ -26,7 +26,7 @@ uint8_t rollerModeTestCount = ROLLER_MODE_TEST_LIMIT;
 
 int16_t Calibrattion_Val = 0;
 
-uint16_t ADCValue[72] = {0}; // ADC采样值，前8次采样会被丢弃
+uint16_t ADCValue[72] = {0}; // ADC采样值，前8次采样会被丢弃，只保留64次有效采样值
 
 const uint8_t TxData[DATA_LEN] = {0x05, 0x00};
 struct rxdata_t {
@@ -378,6 +378,7 @@ void Roller_Update()
 
       // 读取ADC值
       EncoderValue = Get_ADC_ConversionVal(sum >> 6) << 4;
+      EncoderValue = ~EncoderValue; // 取反以符合编码器方向
 
       // 重新开始ADC转换
       DMA_Cmd(DMA1_Channel1, DISABLE);
