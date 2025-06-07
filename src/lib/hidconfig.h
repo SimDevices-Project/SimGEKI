@@ -25,6 +25,9 @@ typedef enum {
 
   LED_SET_MODE = 0xB0,
 
+  SP_LED_SET = 0xE0, // Special LED set command, for pc dll
+  SP_INPUT_GET = 0xE1, // Special input get command, for pc dll
+
   UPDATE_FIRMWARE = 0xF1,
   CMD_NOT_SUPPORT = 0xFF,
 } __packed HidconfigCommand;
@@ -35,6 +38,10 @@ typedef struct {
   uint8_t state;
   union {
     uint8_t payload[60];
+    struct {
+      uint16_t roller_value;     // Roller value, 0x0000-0xFFFF
+      uint16_t roller_raw_value; // Roller raw value, 0x0000-0xFFFF
+    };
     struct
     {
       HidconfigLedTag led_tag; // LED tag, 0xF0 for 7C RGB LED, 0x00-0x02 for RGB ports, 0xFF for all LEDs
@@ -48,6 +55,18 @@ typedef struct {
       uint8_t g;           // Green color value, 0x00-0xFF
       uint8_t b;           // Blue color value, 0x00-0xFF
       uint8_t _dammy_[53]; // Padding to 60 bytes
+    };
+    struct
+    {
+      uint8_t led_7c[6];           // 7C LED color values, bit0-2: R, G, B values
+      uint8_t led_rgb_left[6][3];  // RGB port colors, 6 LEDs per port, each with R, G, B values
+      uint8_t led_rgb_right[6][3]; // RGB port colors, 6 LEDs per port, each with R, G, B values
+      uint8_t led_rgb_uart[4][3];  // RGB port colors, 4 LEDs per port, each with R, G, B values
+    };
+    struct
+    {
+      uint16_t roller_value_sp;     // Roller value, 0x0000-0xFFFF
+      uint16_t input_status; // Input status, each bit represents a button state
     };
   };
 } __packed HidconfigData;
