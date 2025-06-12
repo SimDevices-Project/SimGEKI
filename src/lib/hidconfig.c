@@ -143,7 +143,7 @@ void HIDCONFIG_Receive_Handler()
          */
         case SP_LED_SET: {
           dataUpload->state   = STATE_OK;
-          dataUpload->command = LED_SET_MODE;
+          dataUpload->command = SP_LED_SET;
           switch (dataReceive->board_id) {
             case 0x00: // RGB ports
               LED_RGB_SetPort(LED_RGB_PORT_LEFT, dataReceive->led_rgb_left[0][0], dataReceive->led_rgb_left[0][1], dataReceive->led_rgb_left[0][2]);
@@ -201,7 +201,7 @@ void HIDCONFIG_Receive_Handler()
          * - Bit 0: Coin
          */
         case SP_INPUT_GET: {
-          dataUpload->command         = LED_SET_MODE;
+          dataUpload->command         = SP_INPUT_GET;
           dataUpload->state           = STATE_OK;
           dataUpload->roller_value_sp = Roller_GetValue();
           dataUpload->input_status    = KeyScan_GetAllKeyDebouncedStatus();
