@@ -25,7 +25,7 @@ typedef enum {
 
   LED_SET_MODE = 0xB0,
 
-  SP_LED_SET = 0xE0, // Special LED set command, for pc dll
+  SP_LED_SET   = 0xE0, // Special LED set command, for pc dll
   SP_INPUT_GET = 0xE1, // Special input get command, for pc dll
 
   UPDATE_FIRMWARE = 0xF1,
@@ -58,15 +58,23 @@ typedef struct {
     };
     struct
     {
-      uint8_t led_7c[6];           // 7C LED color values, bit0-2: R, G, B values
-      uint8_t led_rgb_left[6][3];  // RGB port colors, 6 LEDs per port, each with R, G, B values
-      uint8_t led_rgb_right[6][3]; // RGB port colors, 6 LEDs per port, each with R, G, B values
-      uint8_t led_rgb_uart[4][3];  // RGB port colors, 4 LEDs per port, each with R, G, B values
+      uint8_t board_id; // Board ID, 0x00 for RGB ports, 0x01 for 7C RGB LED
+      union {
+        struct {
+          uint8_t led_7c[6]; // 7C LED color values, bit0-2: R, G, B values
+        };
+        struct
+        {
+          uint8_t led_rgb_left[6][3];  // RGB port colors, 6 LEDs per port, each with R, G, B values
+          uint8_t led_rgb_right[6][3]; // RGB port colors, 6 LEDs per port, each with R, G, B values
+          // uint8_t led_rgb_uart[4][3];  // RGB port colors, 4 LEDs per port, each with R, G, B values
+        };
+      };
     };
     struct
     {
-      uint16_t roller_value_sp;     // Roller value, 0x0000-0xFFFF
-      uint16_t input_status; // Input status, each bit represents a button state
+      uint16_t roller_value_sp; // Roller value, 0x0000-0xFFFF
+      uint16_t input_status;    // Input status, each bit represents a button state
     };
   };
 } __packed HidconfigData;

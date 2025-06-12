@@ -101,7 +101,7 @@ xdata const uint8_t USBD_ConfigDescriptor[USBD_SIZE_CONFIG_DESC] = {
     0x05,                    // bDescriptorType (Endpoint)
     0x02,                    // bEndpointAddress (OUT/H2D)
     0x02,                    // bmAttributes (Bulk)
-    ENDP2_PACKET_SIZE, 0x00, // wMaxPacketSize 64
+    ENDP2_PACKET_SIZE, 0x00, // wMaxPacketSize 32
     0x00,                    // bInterval 0 (unit depends on device speed)
 
     /* Endpoint descriptor */
@@ -109,7 +109,7 @@ xdata const uint8_t USBD_ConfigDescriptor[USBD_SIZE_CONFIG_DESC] = {
     0x05,                    // bDescriptorType (Endpoint)
     0x82,                    // bEndpointAddress (IN/D2H)
     0x02,                    // bmAttributes (Bulk)
-    ENDP2_PACKET_SIZE, 0x00, // wMaxPacketSize 64
+    ENDP2_PACKET_SIZE, 0x00, // wMaxPacketSize 32
     0x00,                    // bInterval 0 (unit depends on device speed)
 
     /* IAD Descriptor(interface 2/3)*/
@@ -170,7 +170,7 @@ xdata const uint8_t USBD_ConfigDescriptor[USBD_SIZE_CONFIG_DESC] = {
     0x05,                    // bDescriptorType (Endpoint)
     0x03,                    // bEndpointAddress (OUT/H2D)
     0x02,                    // bmAttributes (Bulk)
-    ENDP3_PACKET_SIZE, 0x00, // wMaxPacketSize 64
+    ENDP3_PACKET_SIZE, 0x00, // wMaxPacketSize 32
     0x00,                    // bInterval 0 (unit depends on device speed)
 
     /* Endpoint descriptor */
@@ -178,7 +178,7 @@ xdata const uint8_t USBD_ConfigDescriptor[USBD_SIZE_CONFIG_DESC] = {
     0x05,                    // bDescriptorType (Endpoint)
     0x83,                    // bEndpointAddress (IN/D2H)
     0x02,                    // bmAttributes (Bulk)
-    ENDP3_PACKET_SIZE, 0x00, // wMaxPacketSize 64
+    ENDP3_PACKET_SIZE, 0x00, // wMaxPacketSize 32
     0x00,                    // bInterval 0 (unit depends on device speed)
 
     /* interface 4 (HID interface) descriptor */

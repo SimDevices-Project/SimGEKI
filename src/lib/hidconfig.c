@@ -133,38 +133,48 @@ void HIDCONFIG_Receive_Handler()
          * This command is used to set the color of the LEDs in a special way.
          * It is used by the PC DLL to set the colors of the LEDs.
          * The data structure is as follows:
-         * - 6 bytes: 7C LED color values, bit0-2: R, G, B values
+         * - 1 byte: Board ID, 0x00 for RGB ports, 0x01 for 7C RGB LED
          * - 6x3 bytes: Left side RGB port colors, 6 LEDs per port, each with R, G, B values
          * - 6x3 bytes: Right side RGB port colors, 6 LEDs per port, each with R, G, B values
-         * - 4x3 bytes: UART RGB port colors, 4 LEDs per port, each with R, G, B values
+         * - Unused: 4x3 bytes: UART RGB port colors, 4 LEDs per port, each with R, G, B values
+         * Or:
+         * - 1 byte: Board ID, 0x00 for RGB ports, 0x01 for 7C RGB LED
+         * - 6 bytes: 7C LED color values, bit0-2: R, G, B values
          */
         case SP_LED_SET: {
-          LED_7C_Set(LED_7C_L1, dataReceive->led_7c[0] & 0x01, dataReceive->led_7c[0] >> 1 & 0x01, dataReceive->led_7c[0] >> 2 & 0x01);
-          LED_7C_Set(LED_7C_L2, dataReceive->led_7c[1] & 0x01, dataReceive->led_7c[1] >> 1 & 0x01, dataReceive->led_7c[1] >> 2 & 0x01);
-          LED_7C_Set(LED_7C_L3, dataReceive->led_7c[2] & 0x01, dataReceive->led_7c[2] >> 1 & 0x01, dataReceive->led_7c[2] >> 2 & 0x01);
-          LED_7C_Set(LED_7C_R1, dataReceive->led_7c[3] & 0x01, dataReceive->led_7c[3] >> 1 & 0x01, dataReceive->led_7c[3] >> 2 & 0x01);
-          LED_7C_Set(LED_7C_R2, dataReceive->led_7c[4] & 0x01, dataReceive->led_7c[4] >> 1 & 0x01, dataReceive->led_7c[4] >> 2 & 0x01);
-          LED_7C_Set(LED_7C_R3, dataReceive->led_7c[5] & 0x01, dataReceive->led_7c[5] >> 1 & 0x01, dataReceive->led_7c[5] >> 2 & 0x01);
-
-          LED_RGB_SetPort(LED_RGB_PORT_LEFT, dataReceive->led_rgb_left[0][0], dataReceive->led_rgb_left[0][1], dataReceive->led_rgb_left[0][2]);
-          LED_RGB_SetPort(LED_RGB_PORT_LEFT, dataReceive->led_rgb_left[1][0], dataReceive->led_rgb_left[1][1], dataReceive->led_rgb_left[1][2]);
-          LED_RGB_SetPort(LED_RGB_PORT_LEFT, dataReceive->led_rgb_left[2][0], dataReceive->led_rgb_left[2][1], dataReceive->led_rgb_left[2][2]);
-          LED_RGB_SetPort(LED_RGB_PORT_LEFT, dataReceive->led_rgb_left[3][0], dataReceive->led_rgb_left[3][1], dataReceive->led_rgb_left[3][2]);
-          LED_RGB_SetPort(LED_RGB_PORT_LEFT, dataReceive->led_rgb_left[4][0], dataReceive->led_rgb_left[4][1], dataReceive->led_rgb_left[4][2]);
-          LED_RGB_SetPort(LED_RGB_PORT_LEFT, dataReceive->led_rgb_left[5][0], dataReceive->led_rgb_left[5][1], dataReceive->led_rgb_left[5][2]);
-          LED_RGB_SetPort(LED_RGB_PORT_RIGHT, dataReceive->led_rgb_right[0][0], dataReceive->led_rgb_right[0][1], dataReceive->led_rgb_right[0][2]);
-          LED_RGB_SetPort(LED_RGB_PORT_RIGHT, dataReceive->led_rgb_right[1][0], dataReceive->led_rgb_right[1][1], dataReceive->led_rgb_right[1][2]);
-          LED_RGB_SetPort(LED_RGB_PORT_RIGHT, dataReceive->led_rgb_right[2][0], dataReceive->led_rgb_right[2][1], dataReceive->led_rgb_right[2][2]);
-          LED_RGB_SetPort(LED_RGB_PORT_RIGHT, dataReceive->led_rgb_right[3][0], dataReceive->led_rgb_right[3][1], dataReceive->led_rgb_right[3][2]);
-          LED_RGB_SetPort(LED_RGB_PORT_RIGHT, dataReceive->led_rgb_right[4][0], dataReceive->led_rgb_right[4][1], dataReceive->led_rgb_right[4][2]);
-          LED_RGB_SetPort(LED_RGB_PORT_RIGHT, dataReceive->led_rgb_right[5][0], dataReceive->led_rgb_right[5][1], dataReceive->led_rgb_right[5][2]);
-          LED_RGB_SetPort(LED_RGB_PORT_UART, dataReceive->led_rgb_uart[0][0], dataReceive->led_rgb_uart[0][1], dataReceive->led_rgb_uart[0][2]);
-          LED_RGB_SetPort(LED_RGB_PORT_UART, dataReceive->led_rgb_uart[1][0], dataReceive->led_rgb_uart[1][1], dataReceive->led_rgb_uart[1][2]);
-          LED_RGB_SetPort(LED_RGB_PORT_UART, dataReceive->led_rgb_uart[2][0], dataReceive->led_rgb_uart[2][1], dataReceive->led_rgb_uart[2][2]);
-          LED_RGB_SetPort(LED_RGB_PORT_UART, dataReceive->led_rgb_uart[3][0], dataReceive->led_rgb_uart[3][1], dataReceive->led_rgb_uart[3][2]);
-
-          dataUpload->command = LED_SET_MODE;
           dataUpload->state   = STATE_OK;
+          dataUpload->command = LED_SET_MODE;
+          switch (dataReceive->board_id) {
+            case 0x00: // RGB ports
+              LED_RGB_SetPort(LED_RGB_PORT_LEFT, dataReceive->led_rgb_left[0][0], dataReceive->led_rgb_left[0][1], dataReceive->led_rgb_left[0][2]);
+              LED_RGB_SetPort(LED_RGB_PORT_LEFT, dataReceive->led_rgb_left[1][0], dataReceive->led_rgb_left[1][1], dataReceive->led_rgb_left[1][2]);
+              LED_RGB_SetPort(LED_RGB_PORT_LEFT, dataReceive->led_rgb_left[2][0], dataReceive->led_rgb_left[2][1], dataReceive->led_rgb_left[2][2]);
+              LED_RGB_SetPort(LED_RGB_PORT_LEFT, dataReceive->led_rgb_left[3][0], dataReceive->led_rgb_left[3][1], dataReceive->led_rgb_left[3][2]);
+              LED_RGB_SetPort(LED_RGB_PORT_LEFT, dataReceive->led_rgb_left[4][0], dataReceive->led_rgb_left[4][1], dataReceive->led_rgb_left[4][2]);
+              LED_RGB_SetPort(LED_RGB_PORT_LEFT, dataReceive->led_rgb_left[5][0], dataReceive->led_rgb_left[5][1], dataReceive->led_rgb_left[5][2]);
+              LED_RGB_SetPort(LED_RGB_PORT_RIGHT, dataReceive->led_rgb_right[0][0], dataReceive->led_rgb_right[0][1], dataReceive->led_rgb_right[0][2]);
+              LED_RGB_SetPort(LED_RGB_PORT_RIGHT, dataReceive->led_rgb_right[1][0], dataReceive->led_rgb_right[1][1], dataReceive->led_rgb_right[1][2]);
+              LED_RGB_SetPort(LED_RGB_PORT_RIGHT, dataReceive->led_rgb_right[2][0], dataReceive->led_rgb_right[2][1], dataReceive->led_rgb_right[2][2]);
+              LED_RGB_SetPort(LED_RGB_PORT_RIGHT, dataReceive->led_rgb_right[3][0], dataReceive->led_rgb_right[3][1], dataReceive->led_rgb_right[3][2]);
+              LED_RGB_SetPort(LED_RGB_PORT_RIGHT, dataReceive->led_rgb_right[4][0], dataReceive->led_rgb_right[4][1], dataReceive->led_rgb_right[4][2]);
+              LED_RGB_SetPort(LED_RGB_PORT_RIGHT, dataReceive->led_rgb_right[5][0], dataReceive->led_rgb_right[5][1], dataReceive->led_rgb_right[5][2]);
+              // LED_RGB_SetPort(LED_RGB_PORT_UART, dataReceive->led_rgb_uart[0][0], dataReceive->led_rgb_uart[0][1], dataReceive->led_rgb_uart[0][2]);
+              // LED_RGB_SetPort(LED_RGB_PORT_UART, dataReceive->led_rgb_uart[1][0], dataReceive->led_rgb_uart[1][1], dataReceive->led_rgb_uart[1][2]);
+              // LED_RGB_SetPort(LED_RGB_PORT_UART, dataReceive->led_rgb_uart[2][0], dataReceive->led_rgb_uart[2][1], dataReceive->led_rgb_uart[2][2]);
+              // LED_RGB_SetPort(LED_RGB_PORT_UART, dataReceive->led_rgb_uart[3][0], dataReceive->led_rgb_uart[3][1], dataReceive->led_rgb_uart[3][2]);
+              break;
+            case 0x01: // 7C RGB LED
+              LED_7C_Set(LED_7C_L1, dataReceive->led_7c[0] & 0x01, dataReceive->led_7c[0] >> 1 & 0x01, dataReceive->led_7c[0] >> 2 & 0x01);
+              LED_7C_Set(LED_7C_L2, dataReceive->led_7c[1] & 0x01, dataReceive->led_7c[1] >> 1 & 0x01, dataReceive->led_7c[1] >> 2 & 0x01);
+              LED_7C_Set(LED_7C_L3, dataReceive->led_7c[2] & 0x01, dataReceive->led_7c[2] >> 1 & 0x01, dataReceive->led_7c[2] >> 2 & 0x01);
+              LED_7C_Set(LED_7C_R1, dataReceive->led_7c[3] & 0x01, dataReceive->led_7c[3] >> 1 & 0x01, dataReceive->led_7c[3] >> 2 & 0x01);
+              LED_7C_Set(LED_7C_R2, dataReceive->led_7c[4] & 0x01, dataReceive->led_7c[4] >> 1 & 0x01, dataReceive->led_7c[4] >> 2 & 0x01);
+              LED_7C_Set(LED_7C_R3, dataReceive->led_7c[5] & 0x01, dataReceive->led_7c[5] >> 1 & 0x01, dataReceive->led_7c[5] >> 2 & 0x01);
+              break;
+            default:
+              dataUpload->state = STATE_ERROR;
+              break;
+          }
         }
         /**
          * @brief Special input get command : 0xE1
@@ -195,6 +205,7 @@ void HIDCONFIG_Receive_Handler()
           dataUpload->state           = STATE_OK;
           dataUpload->roller_value_sp = Roller_GetValue();
           dataUpload->input_status    = KeyScan_GetAllKeyDebouncedStatus();
+          break;
         }
         default: {
           dataUpload->command = CMD_NOT_SUPPORT;
