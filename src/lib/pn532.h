@@ -213,6 +213,6 @@ void PN532_felica_through();
  * 0 - 否
  * 1 - 是
  */
-#define PN532_DISABLE_FELICA_CHECK 1
+#define PN532_DISABLE_FELICA_CHECK 0
 
 #endif
