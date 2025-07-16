@@ -317,6 +317,7 @@ void CDC_CARD_IO_Handler()
       res.seq_no      = 0;
       res.payload_len = 0;
       memcpy(cardIO_ResponseStringBuf, res.buffer, 128);
+      LED_RGB_SetPort(LED_RGB_PORT_UART, 0xFF, 0xFF, 0xFF);
       CDC_CARD_IO_SendDataReady();
       break;
     // 获取固件版本信息
