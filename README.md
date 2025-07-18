@@ -22,11 +22,10 @@ You could refer to the following table to find what you're looking for.
 | sdk    | CH32V SDK            |
 | tools  | Windows tool chains  |
 
-## Editing
+## Build Yourself
 
-You could find the schematic information from files under the directory `Schematic Design`. Please add new features to SimGEKI as you prefer! In addition, what you write will have a chance to be pushed to SimGEKI around the world.
-
-> Will upload later
+![SimDevices Wiki Page](https://sim.bysb.net/#/simgetro/diy/core_and_firmware/)
+Check this page to get your own SimGEKI, Sch files, Pcb files even Cad files all included!
 
 ## Attention
 

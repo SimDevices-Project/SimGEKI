@@ -22,11 +22,11 @@
 | sdk    | CH32V SDK     |
 | tools  | Windows工具链 |
 
-## 编辑
+## 自己造一台！
 
-您可以在`Schematic Design`文件夹中找到原理图设计。请随意根据您的兴趣和需要为SimGETRO添加功能！您所写下的代码会有机会被推送给来自不同地区玩家的SimGETRO中运行。
-
-> 以后会补充
+![SimDevices Wiki 页面](https://sim.bysb.net/#/simgetro/diy/core_and_firmware/)
+查看该页面来了解如果拥有一台属于你自己的SimGEKi，内容包含但不限于原理图、PCB设计甚至还包含CAD设计图！
+Check this page to get your own SimGEKI, Sch files, Pcb files even Cad files all included!
 
 ## 注意
 
