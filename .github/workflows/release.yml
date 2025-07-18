@@ -88,23 +88,10 @@ jobs:
           git config --local user.email "action@github.com"
           git config --local user.name "GitHub Action"
           
-          # Check if gh-pages branch exists remotely
-          Write-Host "Setting up gh-pages branch..."
-          $branchExists = git ls-remote --heads origin gh-pages
-          
-          if ($branchExists) {
-            Write-Host "gh-pages branch exists remotely, checking out..."
-            git fetch origin gh-pages
-            git checkout -b gh-pages origin/gh-pages
-          } else {
-            Write-Host "Creating new gh-pages branch..."
-            git checkout --orphan gh-pages
-            git rm -rf . -ErrorAction SilentlyContinue
-            echo "# SimGEKI Firmware Files" > README.md
-            git add README.md
-            git commit -m "Initial gh-pages commit"
-            git push origin gh-pages
-          }
+          # Checkout existing gh-pages branch
+          Write-Host "Checking out gh-pages branch..."
+          git fetch origin gh-pages
+          git checkout gh-pages
         shell: pwsh
       
       - name: Prepare standard release files
@@ -160,15 +147,19 @@ jobs:
           
           $indexContent | Out-File -FilePath "./standard/README.md" -Encoding UTF8
           
-          # Now clean up any source code files, keep only firmware files and READMEs
-          Write-Host "Cleaning up source code files from gh-pages..."
+          # Clean up ALL files except firmware files and READMEs
+          Write-Host "Cleaning up all non-firmware files from gh-pages..."
           Get-ChildItem -Path "." -Recurse | Where-Object { 
-            $_.Name -notmatch "\.(bin|hex|md)$" -and 
-            $_.Name -ne "standard" -and 
-            $_.Name -ne "nightly" -and 
-            $_.Name -ne "release-artifacts" -and
-            -not $_.PSIsContainer 
+            -not $_.PSIsContainer -and
+            $_.Name -notmatch "\.(bin|hex|md)$"
           } | Remove-Item -Force -ErrorAction SilentlyContinue
+          
+          # Also remove empty directories except standard and nightly
+          Get-ChildItem -Path "." -Recurse -Directory | Where-Object {
+            $_.Name -ne "standard" -and 
+            $_.Name -ne "nightly" -and
+            (Get-ChildItem $_.FullName -Force | Measure-Object).Count -eq 0
+          } | Remove-Item -Force -Recurse -ErrorAction SilentlyContinue
         shell: pwsh
       
       - name: Commit and push to gh-pages
@@ -371,22 +362,9 @@ jobs:
           }
           
           # Check if gh-pages branch exists remotely
-          Write-Host "Setting up gh-pages branch for nightly upload..."
-          $branchExists = git ls-remote --heads origin gh-pages
-          
-          if ($branchExists) {
-            Write-Host "gh-pages branch exists remotely, checking out..."
-            git fetch origin gh-pages
-            git checkout gh-pages
-          } else {
-            Write-Host "Creating new gh-pages branch..."
-            git checkout --orphan gh-pages
-            git rm -rf . -ErrorAction SilentlyContinue
-            echo "# SimGEKI Firmware Files" > README.md
-            git add README.md
-            git commit -m "Initial gh-pages commit"
-            git push origin gh-pages
-          }
+          Write-Host "Checking out gh-pages branch for nightly upload..."
+          git fetch origin gh-pages
+          git checkout gh-pages
           
           # Create nightly directory if it doesn't exist
           Write-Host "Creating nightly directory..."
@@ -445,15 +423,19 @@ jobs:
           $indexContent | Out-File -FilePath "./nightly/README.md" -Encoding UTF8
           Write-Host "Created README.md in nightly directory"
           
-          # Now clean up any source code files from gh-pages, keep only firmware files and READMEs
-          Write-Host "Cleaning up source code files from gh-pages..."
+          # Clean up ALL files except firmware files and READMEs
+          Write-Host "Cleaning up all non-firmware files from gh-pages..."
           Get-ChildItem -Path "." -Recurse | Where-Object { 
-            $_.Name -notmatch "\.(bin|hex|md)$" -and 
-            $_.Name -ne "standard" -and 
-            $_.Name -ne "nightly" -and 
-            $_.Name -ne "nightly-release" -and
-            -not $_.PSIsContainer 
+            -not $_.PSIsContainer -and
+            $_.Name -notmatch "\.(bin|hex|md)$"
           } | Remove-Item -Force -ErrorAction SilentlyContinue
+          
+          # Also remove empty directories except standard and nightly
+          Get-ChildItem -Path "." -Recurse -Directory | Where-Object {
+            $_.Name -ne "standard" -and 
+            $_.Name -ne "nightly" -and
+            (Get-ChildItem $_.FullName -Force | Measure-Object).Count -eq 0
+          } | Remove-Item -Force -Recurse -ErrorAction SilentlyContinue
           
           # Add and commit changes
           Write-Host "Adding files to git..."
