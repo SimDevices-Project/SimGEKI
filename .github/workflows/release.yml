@@ -5,27 +5,47 @@ on:
   release:
     types: [published]
 jobs:
-  c-make-progress:
-    name: C Make to build firmware
+  build-firmware:
+    name: Build Multi-Target Firmware
     runs-on: windows-2022
+    strategy:
+      matrix:
+        target: [SimGETRO_Public, SimGETRO_EarlyHardware]
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v4
-      - name: C Make Clean
+      
+      - name: Clean build artifacts
         run: |
-          make clean
-      - name: C make prebuild
+          make clean_all
+      
+      - name: Build firmware for ${{ matrix.target }}
         run: |
-          make prebuild
-      - name: C make all
+          make TARGET=${{ matrix.target }} all -j4
+      
+      - name: Create output directory and copy firmware files
         run: |
-          make all -j4
-      - name: Copy firmware file to new folder
-        run: |
-          mkdir "output"
-          Copy-Item "./build/SimGETRO_Public/SimGEKI.bin" -Destination "./output/" -Force
-          Copy-Item "./build/SimGETRO_Public/SimGEKI.hex" -Destination "./output/" -Force
+          mkdir "output-${{ matrix.target }}"
+          Copy-Item "./build/${{ matrix.target }}/SimGEKI.bin" -Destination "./output-${{ matrix.target }}/SimGEKI-${{ matrix.target }}.bin" -Force
+          Copy-Item "./build/${{ matrix.target }}/SimGEKI.hex" -Destination "./output-${{ matrix.target }}/SimGEKI-${{ matrix.target }}.hex" -Force
         shell: pwsh
+      
+      - name: Upload firmware to artifacts (bin)
+        uses: actions/upload-artifact@v4
+        if: ${{ !startsWith(github.ref, 'refs/tags/') }}
+        with:
+          name: SimGEKI-${{ matrix.target }}_firmware_bin
+          path: ./output-${{ matrix.target }}/SimGEKI-${{ matrix.target }}.bin
+          retention-days: 90
+      
+      - name: Upload firmware to artifacts (hex)
+        uses: actions/upload-artifact@v4
+        if: ${{ !startsWith(github.ref, 'refs/tags/') }}
+        with:
+          name: SimGEKI-${{ matrix.target }}_firmware_hex
+          path: ./output-${{ matrix.target }}/SimGEKI-${{ matrix.target }}.hex
+          retention-days: 90
+      
       - name: Upload files to release
         uses: softprops/action-gh-release@v1
         if: startsWith(github.ref, 'refs/tags/')
@@ -33,19 +53,5 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           files: |
-            ./output/SimGEKI.bin
-            ./output/SimGEKI.hex
-      - name: Upload firmware to artifact(bin)
-        uses: actions/upload-artifact@v4
-        if: ${{ !startsWith(github.ref, 'refs/tags/') }}
-        with:
-          name: SimGEKI_firmware_bin
-          path: ./output/SimGEKI.bin
-          retention-days: 90
-      - name: Upload firmware to artifact(hex)
-        uses: actions/upload-artifact@v4
-        if: ${{ !startsWith(github.ref, 'refs/tags/') }}
-        with:
-          name: SimGEKI_firmware_hex
-          path: ./output/SimGEKI.hex
-          retention-days: 90
+            ./output-${{ matrix.target }}/SimGEKI-${{ matrix.target }}.bin
+            ./output-${{ matrix.target }}/SimGEKI-${{ matrix.target }}.hex
