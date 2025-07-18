@@ -346,25 +346,42 @@ jobs:
           git config --local user.email "action@github.com"
           git config --local user.name "GitHub Action"
           
-          # Save current working directory and files
-          $currentDir = Get-Location
-          $nightlyFiles = Get-ChildItem -Path "./nightly-release" -Recurse -Include "*.bin", "*.hex"
-          
-          Write-Host "Current directory: $currentDir"
-          Write-Host "Nightly files found:"
-          $nightlyFiles | ForEach-Object { Write-Host "  - $($_.Name)" }
-          
-          # Check if we have files to upload
-          if ($nightlyFiles.Count -eq 0) {
-            Write-Host "No firmware files found in nightly-release directory!"
-            Get-ChildItem -Path "./nightly-release" -Recurse | ForEach-Object { Write-Host "Found: $($_.FullName)" }
-            exit 1
-          }
-          
           # Check if gh-pages branch exists remotely
           Write-Host "Checking out gh-pages branch for nightly upload..."
           git fetch origin gh-pages
           git checkout gh-pages
+          
+          Write-Host "Current working directory after checkout: $(Get-Location)"
+        shell: pwsh
+      
+      - name: Download artifacts for gh-pages upload
+        uses: actions/download-artifact@v4
+        with:
+          path: ./nightly-artifacts-ghpages
+      
+      - name: Prepare and upload nightly files to gh-pages
+        run: |
+          # Prepare nightly files from artifacts
+          Write-Host "Preparing nightly files from artifacts..."
+          if (-not (Test-Path "./nightly-release-ghpages")) {
+            New-Item -ItemType Directory -Path "./nightly-release-ghpages" -Force
+          }
+          
+          # Copy all 'bin' & 'hex' files from artifacts
+          $artifactFiles = Get-ChildItem -Path "./nightly-artifacts-ghpages" -Recurse -Include "*.bin", "*.hex"
+          Write-Host "Artifact files found:"
+          $artifactFiles | ForEach-Object { Write-Host "  - $($_.Name)" }
+          
+          if ($artifactFiles.Count -eq 0) {
+            Write-Host "No firmware files found in artifacts!"
+            Get-ChildItem -Path "./nightly-artifacts-ghpages" -Recurse | ForEach-Object { Write-Host "Found: $($_.FullName)" }
+            exit 1
+          }
+          
+          $artifactFiles | ForEach-Object {
+            Copy-Item $_.FullName -Destination "./nightly-release-ghpages/" -Force
+            Write-Host "Copied $($_.Name) to nightly-release-ghpages/"
+          }
           
           # Create nightly directory if it doesn't exist
           Write-Host "Creating nightly directory..."
@@ -377,6 +394,7 @@ jobs:
           
           # Copy all firmware files to nightly directory with detailed logging
           Write-Host "Copying firmware files to nightly directory..."
+          $nightlyFiles = Get-ChildItem -Path "./nightly-release-ghpages" -Include "*.bin", "*.hex"
           $nightlyFiles | ForEach-Object {
             $destPath = "./nightly/$($_.Name)"
             Write-Host "Copying $($_.FullName) to $destPath"
@@ -390,7 +408,7 @@ jobs:
           
           # Verify files were copied
           Write-Host "Verifying files in nightly directory:"
-          $copiedFiles = Get-ChildItem -Path "./nightly" -Recurse -Include "*.bin", "*.hex"
+          $copiedFiles = Get-ChildItem -Path "./nightly" -Include "*.bin", "*.hex"
           if ($copiedFiles.Count -eq 0) {
             Write-Host "ERROR: No files found in nightly directory after copy!"
             Write-Host "Directory contents:"
