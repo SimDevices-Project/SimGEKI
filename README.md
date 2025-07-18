@@ -16,11 +16,12 @@ Use WCHISPtool to burn firmware to your device.
 
 You could refer to the following table to find what you're looking for.
 
-| Folder | Content              |
-| ------ | -------------------- |
-| src    | Firmware source code |
-| sdk    | CH32V SDK            |
-| tools  | Windows tool chains  |
+| Folder | Content                                 |
+| ------ | --------------------------------------- |
+| src    | Firmware source code                    |
+| sdk    | CH32V SDK                               |
+| ref    | Reference, such as src files for JLCEDA |
+| tools  | Windows tool chains                     |
 
 ## Build Yourself
 
