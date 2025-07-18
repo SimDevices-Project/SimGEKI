@@ -175,10 +175,10 @@ jobs:
 
             ## 📋 Latest Build Information
 
-            � **Build Time**: ${{ github.event.head_commit.timestamp }}  
+            📅 **Build Time**: ${{ github.event.head_commit.timestamp }}  
             🔨 **Source Commit**: [`${{ github.sha }}`](https://github.com/${{ github.repository }}/commit/${{ github.sha }})  
             👤 **Author**: ${{ github.event.head_commit.author.name }}  
-            � **Commit Message**: 
+            💬 **Commit Message**: 
             ```
             ${{ github.event.head_commit.message }}
             ```
