@@ -61,9 +61,9 @@ jobs:
             ./output-${{ matrix.target }}/SimGEKI-${{ matrix.target }}.bin
             ./output-${{ matrix.target }}/SimGEKI-${{ matrix.target }}.hex
 
-  # Nightly builds job - collect all artifacts and update nightly-builds release
+  # Nightly builds job - collect all artifacts and update nightly branch
   update-nightly-builds:
-    name: Update Nightly Builds
+    name: Update Nightly Branch
     runs-on: windows-2022
     permissions:
       contents: write
@@ -94,49 +94,59 @@ jobs:
           Get-ChildItem -Path "./nightly-release/"
         shell: pwsh
       
-      - name: Delete existing nightly-builds tag and release
-        continue-on-error: true
-        run: |
-          # Set error action preference to continue on errors
-          $ErrorActionPreference = "Continue"
-          
-          # Try to delete local tag first
-          Write-Host "Attempting to delete local tag..."
-          git tag -d nightly-builds
-          if ($LASTEXITCODE -ne 0) { Write-Host "Local tag not found or already deleted" }
-          
-          # Delete remote tag if it exists
-          Write-Host "Attempting to delete remote tag..."
-          git push origin --delete nightly-builds
-          if ($LASTEXITCODE -ne 0) { Write-Host "Remote tag not found or already deleted" }
-        shell: pwsh
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      
-      - name: Create/Update nightly-builds tag
+      - name: Create/Update nightly branch and commit files
         run: |
           # Configure git user
           git config --local user.email "action@github.com"
           git config --local user.name "GitHub Action"
           
-          # Create a new tag pointing to the current commit
-          Write-Host "Creating new tag nightly-builds pointing to ${{ github.sha }}"
-          git tag nightly-builds ${{ github.sha }}
+          # Create or switch to nightly branch
+          Write-Host "Creating/switching to nightly branch..."
+          git checkout -B nightly
           
-          # Push the tag to remote
-          Write-Host "Pushing tag to remote..."
-          git push origin nightly-builds --force
+          # Copy firmware files to the root for easy access
+          Write-Host "Copying firmware files to nightly branch..."
+          Copy-Item "./nightly-release/*" -Destination "./" -Force
+          
+          # Add firmware files to git
+          git add *.bin *.hex
+          
+          # Check if there are changes to commit
+          $changes = git diff --staged --name-only
+          if ($changes) {
+            Write-Host "Committing firmware files..."
+                        $commitMessage = @"
+            🌙 Nightly Build - Auto-updated
+            
+            📅 Build Date: ${{ github.event.head_commit.timestamp }}
+            🔨 Commit: ${{ github.sha }}
+            👤 Author: ${{ github.event.head_commit.author.name }}
+            💬 Message: ${{ github.event.head_commit.message }}
+            
+            Available firmware variants:
+            - SimGEKI-SimGETRO_Public.bin/hex - Public release version  
+            - SimGEKI-SimGETRO_EarlyHardware.bin/hex - Early hardware version
+            "@
+                        git commit -m "$commitMessage"
+            
+            # Push the nightly branch
+            Write-Host "Pushing nightly branch to remote..."
+            git push origin nightly --force
+          } else {
+            Write-Host "No changes to commit"
+          }
         shell: pwsh
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       
-      - name: Create/Update nightly-builds release
+      - name: Create/Update nightly release
         uses: softprops/action-gh-release@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          tag_name: nightly-builds
-          name: "SimGEKI firmeware Nightly Builds"
+          tag_name: nightly-release
+          target_commitish: nightly
+          name: "SimGEKI Firmware Nightly Builds"
           body: |
             # Welcome to the SimGEKI Nightly Builds!
 
