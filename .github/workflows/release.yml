@@ -88,18 +88,22 @@ jobs:
           git config --local user.email "action@github.com"
           git config --local user.name "GitHub Action"
           
-          # Checkout or create gh-pages branch
+          # Check if gh-pages branch exists remotely
           Write-Host "Setting up gh-pages branch..."
-          try {
-            git checkout gh-pages
-            Write-Host "Checked out existing gh-pages branch"
-          } catch {
+          $branchExists = git ls-remote --heads origin gh-pages
+          
+          if ($branchExists) {
+            Write-Host "gh-pages branch exists remotely, checking out..."
+            git fetch origin gh-pages
+            git checkout -b gh-pages origin/gh-pages
+          } else {
             Write-Host "Creating new gh-pages branch..."
             git checkout --orphan gh-pages
-            git rm -rf .
+            git rm -rf . -ErrorAction SilentlyContinue
             echo "# SimGEKI Firmware Files" > README.md
             git add README.md
             git commit -m "Initial gh-pages commit"
+            git push origin gh-pages
           }
         shell: pwsh
       
@@ -311,19 +315,26 @@ jobs:
       
       - name: Upload nightly builds to gh-pages
         run: |
-          # Checkout gh-pages branch
+          # Configure git user
+          git config --local user.email "action@github.com"
+          git config --local user.name "GitHub Action"
+          
+          # Check if gh-pages branch exists remotely
           Write-Host "Checking out gh-pages branch for nightly upload..."
-          try {
+          $branchExists = git ls-remote --heads origin gh-pages
+          
+          if ($branchExists) {
+            Write-Host "gh-pages branch exists remotely, checking out..."
             git fetch origin gh-pages
-            git checkout gh-pages
-            Write-Host "Checked out existing gh-pages branch"
-          } catch {
+            git checkout -b gh-pages origin/gh-pages
+          } else {
             Write-Host "Creating new gh-pages branch..."
             git checkout --orphan gh-pages
             git rm -rf . -ErrorAction SilentlyContinue
             echo "# SimGEKI Firmware Files" > README.md
             git add README.md
             git commit -m "Initial gh-pages commit"
+            git push origin gh-pages
           }
           
           # Create nightly directory if it doesn't exist
