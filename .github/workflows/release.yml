@@ -115,19 +115,16 @@ jobs:
           $changes = git diff --staged --name-only
           if ($changes) {
             Write-Host "Committing firmware files..."
-                        $commitMessage = @"
-            🌙 Nightly Build - Auto-updated
+            git commit -m "🌙 Nightly Build - Auto-updated
             
             📅 Build Date: ${{ github.event.head_commit.timestamp }}
             🔨 Commit: ${{ github.sha }}
             👤 Author: ${{ github.event.head_commit.author.name }}
             💬 Message: ${{ github.event.head_commit.message }}
-            
+
             Available firmware variants:
             - SimGEKI-SimGETRO_Public.bin/hex - Public release version  
-            - SimGEKI-SimGETRO_EarlyHardware.bin/hex - Early hardware version
-            "@
-                        git commit -m "$commitMessage"
+            - SimGEKI-SimGETRO_EarlyHardware.bin/hex - Early hardware version"
             
             # Push the nightly branch
             Write-Host "Pushing nightly branch to remote..."
