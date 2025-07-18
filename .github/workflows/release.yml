@@ -96,14 +96,6 @@ jobs:
             Write-Host "gh-pages branch exists remotely, checking out..."
             git fetch origin gh-pages
             git checkout -b gh-pages origin/gh-pages
-            # Clean up any source code files, keep only firmware files and READMEs
-            Write-Host "Cleaning up source code files from gh-pages..."
-            Get-ChildItem -Path "." -Recurse | Where-Object { 
-              $_.Name -notmatch "\.(bin|hex|md)$" -and 
-              $_.Name -ne "standard" -and 
-              $_.Name -ne "nightly" -and 
-              -not $_.PSIsContainer 
-            } | Remove-Item -Force -ErrorAction SilentlyContinue
           } else {
             Write-Host "Creating new gh-pages branch..."
             git checkout --orphan gh-pages
@@ -167,6 +159,16 @@ jobs:
           }
           
           $indexContent | Out-File -FilePath "./standard/README.md" -Encoding UTF8
+          
+          # Now clean up any source code files, keep only firmware files and READMEs
+          Write-Host "Cleaning up source code files from gh-pages..."
+          Get-ChildItem -Path "." -Recurse | Where-Object { 
+            $_.Name -notmatch "\.(bin|hex|md)$" -and 
+            $_.Name -ne "standard" -and 
+            $_.Name -ne "nightly" -and 
+            $_.Name -ne "release-artifacts" -and
+            -not $_.PSIsContainer 
+          } | Remove-Item -Force -ErrorAction SilentlyContinue
         shell: pwsh
       
       - name: Commit and push to gh-pages
@@ -376,14 +378,6 @@ jobs:
             Write-Host "gh-pages branch exists remotely, checking out..."
             git fetch origin gh-pages
             git checkout gh-pages
-            # Clean up any source code files from gh-pages, keep only firmware files and READMEs
-            Write-Host "Cleaning up source code files from gh-pages..."
-            Get-ChildItem -Path "." -Recurse | Where-Object { 
-              $_.Name -notmatch "\.(bin|hex|md)$" -and 
-              $_.Name -ne "standard" -and 
-              $_.Name -ne "nightly" -and 
-              -not $_.PSIsContainer 
-            } | Remove-Item -Force -ErrorAction SilentlyContinue
           } else {
             Write-Host "Creating new gh-pages branch..."
             git checkout --orphan gh-pages
@@ -450,6 +444,16 @@ jobs:
           
           $indexContent | Out-File -FilePath "./nightly/README.md" -Encoding UTF8
           Write-Host "Created README.md in nightly directory"
+          
+          # Now clean up any source code files from gh-pages, keep only firmware files and READMEs
+          Write-Host "Cleaning up source code files from gh-pages..."
+          Get-ChildItem -Path "." -Recurse | Where-Object { 
+            $_.Name -notmatch "\.(bin|hex|md)$" -and 
+            $_.Name -ne "standard" -and 
+            $_.Name -ne "nightly" -and 
+            $_.Name -ne "nightly-release" -and
+            -not $_.PSIsContainer 
+          } | Remove-Item -Force -ErrorAction SilentlyContinue
           
           # Add and commit changes
           Write-Host "Adding files to git..."
