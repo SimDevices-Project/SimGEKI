@@ -100,9 +100,15 @@ jobs:
           git config --local user.email "action@github.com"
           git config --local user.name "GitHub Action"
           
-          # Create or switch to nightly branch
-          Write-Host "Creating/switching to nightly branch..."
-          git checkout -B nightly
+          # Clean up any existing nightly references to avoid conflicts
+          Write-Host "Cleaning up existing nightly references..."
+          try { git branch -D nightly } catch { Write-Host "Local nightly branch not found" }
+          try { git tag -d nightly } catch { Write-Host "Local nightly tag not found" }
+          try { git push origin --delete nightly } catch { Write-Host "Remote nightly branch/tag not found" }
+          
+          # Create or switch to nightly branch from current commit
+          Write-Host "Creating fresh nightly branch..."
+          git checkout -b nightly
           
           # Copy firmware files to the root for easy access
           Write-Host "Copying firmware files to nightly branch..."
@@ -126,9 +132,9 @@ jobs:
             - SimGEKI-SimGETRO_Public.bin/hex - Public release version  
             - SimGEKI-SimGETRO_EarlyHardware.bin/hex - Early hardware version"
             
-            # Push the nightly branch
+            # Push the nightly branch explicitly specifying it's a branch
             Write-Host "Pushing nightly branch to remote..."
-            git push origin nightly --force
+            git push origin refs/heads/nightly:refs/heads/nightly --force
           } else {
             Write-Host "No changes to commit"
           }
@@ -136,16 +142,25 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       
-      - name: Delete existing nightly release
+      - name: Delete existing nightly release and tag
         continue-on-error: true
         run: |
           # 使用 GitHub CLI 删除现有的 nightly release（如果存在）
           Write-Host "Attempting to delete existing nightly release..."
-          gh release delete nightly --yes 2>$null
-          if ($LASTEXITCODE -eq 0) {
+          try { 
+            gh release delete nightly --yes 
             Write-Host "Existing nightly release deleted"
-          } else {
+          } catch { 
             Write-Host "No existing nightly release found or already deleted"
+          }
+          
+          # 删除远程 nightly tag（如果存在）
+          Write-Host "Attempting to delete remote nightly tag..."
+          try { 
+            git push origin --delete refs/tags/nightly 
+            Write-Host "Remote nightly tag deleted"
+          } catch { 
+            Write-Host "Remote nightly tag not found"
           }
         shell: pwsh
         env:
