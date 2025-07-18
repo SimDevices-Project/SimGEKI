@@ -12,6 +12,9 @@ jobs:
   build-firmware:
     name: Build Multi-Target Firmware
     runs-on: windows-2022
+    permissions:
+      contents: write
+      actions: read
     strategy:
       matrix:
         target: [SimGETRO_Public, SimGETRO_EarlyHardware]
@@ -62,11 +65,17 @@ jobs:
   update-nightly-builds:
     name: Update Nightly Builds
     runs-on: windows-2022
+    permissions:
+      contents: write
+      actions: read
     needs: build-firmware
     if: (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master') && github.event_name == 'push'
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          fetch-depth: 0
       
       - name: Download all artifacts
         uses: actions/download-artifact@v4
@@ -88,20 +97,36 @@ jobs:
       - name: Delete existing nightly-builds tag and release
         continue-on-error: true
         run: |
+          # Set error action preference to continue on errors
+          $ErrorActionPreference = "Continue"
+          
           # Try to delete local tag first
-          git tag -d nightly-builds 2>/dev/null || echo "Local tag not found"
+          Write-Host "Attempting to delete local tag..."
+          git tag -d nightly-builds
+          if ($LASTEXITCODE -ne 0) { Write-Host "Local tag not found or already deleted" }
+          
           # Delete remote tag if it exists
-          git push origin --delete nightly-builds 2>/dev/null || echo "Remote tag not found or already deleted"
+          Write-Host "Attempting to delete remote tag..."
+          git push origin --delete nightly-builds
+          if ($LASTEXITCODE -ne 0) { Write-Host "Remote tag not found or already deleted" }
+        shell: pwsh
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       
       - name: Create/Update nightly-builds tag
         run: |
+          # Configure git user
           git config --local user.email "action@github.com"
           git config --local user.name "GitHub Action"
+          
           # Create a new tag pointing to the current commit
+          Write-Host "Creating new tag nightly-builds pointing to ${{ github.sha }}"
           git tag nightly-builds ${{ github.sha }}
+          
+          # Push the tag to remote
+          Write-Host "Pushing tag to remote..."
           git push origin nightly-builds --force
+        shell: pwsh
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       
