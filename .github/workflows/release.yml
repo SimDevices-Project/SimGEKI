@@ -61,6 +61,96 @@ jobs:
             ./output-${{ matrix.target }}/SimGEKI-${{ matrix.target }}.bin
             ./output-${{ matrix.target }}/SimGEKI-${{ matrix.target }}.hex
 
+  # Upload release builds to gh-pages standard folder
+  upload-release-to-gh-pages:
+    name: Upload Release to gh-pages
+    runs-on: windows-2022
+    permissions:
+      contents: write
+      actions: read
+    needs: build-firmware
+    if: startsWith(github.ref, 'refs/tags/') && !contains(github.ref, 'nightly-builds')
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          fetch-depth: 0
+      
+      - name: Download all artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: ./release-artifacts
+      
+      - name: Setup gh-pages branch
+        run: |
+          # Configure git user
+          git config --local user.email "action@github.com"
+          git config --local user.name "GitHub Action"
+          
+          # Checkout or create gh-pages branch
+          Write-Host "Setting up gh-pages branch..."
+          try {
+            git checkout gh-pages
+            Write-Host "Checked out existing gh-pages branch"
+          } catch {
+            Write-Host "Creating new gh-pages branch..."
+            git checkout --orphan gh-pages
+            git rm -rf .
+            echo "# SimGEKI Firmware Files" > README.md
+            git add README.md
+            git commit -m "Initial gh-pages commit"
+          }
+        shell: pwsh
+      
+      - name: Prepare standard release files
+        run: |
+          # Create standard directory if it doesn't exist
+          if (-not (Test-Path "./standard")) {
+            mkdir "standard"
+          }
+          
+          # Copy all firmware files to standard directory
+          Get-ChildItem -Path "./release-artifacts" -Recurse -Include "*.bin", "*.hex" | ForEach-Object {
+            $destPath = "./standard/" + $_.Name
+            Copy-Item $_.FullName -Destination $destPath -Force
+            Write-Host "Copied $($_.Name) to standard folder"
+          }
+          
+          # Create index file for easy browsing
+          $date = Get-Date -Format 'yyyy-MM-dd HH:mm:ss UTC'
+          $indexContent = "# SimGEKI Standard Release Firmware Files`n`n"
+          $indexContent += "Last updated: $date`n"
+          $indexContent += "Release tag: ${{ github.ref_name }}`n`n"
+          $indexContent += "## Available Files:`n`n"
+          
+          Get-ChildItem -Path "./standard" -Include "*.bin", "*.hex" | ForEach-Object {
+            $indexContent += "- [$($_.Name)](./$($_.Name))`n"
+          }
+          
+          $indexContent | Out-File -FilePath "./standard/README.md" -Encoding UTF8
+        shell: pwsh
+      
+      - name: Commit and push to gh-pages
+        run: |
+          git add standard/
+          
+          # Check if there are changes to commit
+          $changes = git diff --staged --name-only
+          if ($changes) {
+            git commit -m "📦 Update standard release files - ${{ github.ref_name }}
+            
+            Release: ${{ github.ref_name }}
+            Commit: ${{ github.sha }}
+            Date: $(Get-Date -Format 'yyyy-MM-dd HH:mm:ss UTC')"
+            
+            git push origin gh-pages
+            Write-Host "Successfully pushed standard release files to gh-pages"
+          } else {
+            Write-Host "No changes to commit for standard release"
+          }
+        shell: pwsh
+
   # Nightly builds job - collect all artifacts and update nightly branch
   update-nightly-builds:
     name: Update Nightly Branch
@@ -218,3 +308,73 @@ jobs:
           prerelease: true
           files: |
             ./nightly-release/*
+      
+      - name: Upload nightly builds to gh-pages
+        run: |
+          # Checkout gh-pages branch
+          Write-Host "Checking out gh-pages branch for nightly upload..."
+          try {
+            git fetch origin gh-pages
+            git checkout gh-pages
+            Write-Host "Checked out existing gh-pages branch"
+          } catch {
+            Write-Host "Creating new gh-pages branch..."
+            git checkout --orphan gh-pages
+            git rm -rf . -ErrorAction SilentlyContinue
+            echo "# SimGEKI Firmware Files" > README.md
+            git add README.md
+            git commit -m "Initial gh-pages commit"
+          }
+          
+          # Create nightly directory if it doesn't exist
+          if (-not (Test-Path "./nightly")) {
+            mkdir "nightly"
+          }
+          
+          # Copy all firmware files to nightly directory
+          Get-ChildItem -Path "./nightly-release" -Include "*.bin", "*.hex" | ForEach-Object {
+            $destPath = "./nightly/" + $_.Name
+            Copy-Item $_.FullName -Destination $destPath -Force
+            Write-Host "Copied $($_.Name) to nightly folder"
+          }
+          
+          # Create index file for easy browsing
+          $date = Get-Date -Format 'yyyy-MM-dd HH:mm:ss UTC'
+          $indexContent = "# SimGEKI Nightly Build Firmware Files`n`n"
+          $indexContent += "Last updated: $date`n"
+          $indexContent += "Build commit: ${{ github.sha }}`n"
+          $indexContent += "Build author: ${{ github.event.head_commit.author.name }}`n`n"
+          $indexContent += "## Available Files:`n`n"
+          
+          Get-ChildItem -Path "./nightly" -Include "*.bin", "*.hex" | ForEach-Object {
+            $indexContent += "- [$($_.Name)](./$($_.Name))`n"
+          }
+          
+          $indexContent += "`n## Access URLs:`n`n"
+          $indexContent += "Base URL: https://${{ github.repository_owner }}.github.io/${{ github.event.repository.name }}/nightly/`n`n"
+          
+          Get-ChildItem -Path "./nightly" -Include "*.bin", "*.hex" | ForEach-Object {
+            $indexContent += "- [$($_.Name)](https://${{ github.repository_owner }}.github.io/${{ github.event.repository.name }}/nightly/$($_.Name))`n"
+          }
+          
+          $indexContent | Out-File -FilePath "./nightly/README.md" -Encoding UTF8
+          
+          # Commit and push changes
+          git add nightly/
+          
+          $changes = git diff --staged --name-only
+          if ($changes) {
+            git commit -m "🌙 Update nightly firmware files
+            
+            Build Date: $date
+            Commit: ${{ github.sha }}
+            Author: ${{ github.event.head_commit.author.name }}"
+            
+            git push origin gh-pages
+            Write-Host "Successfully pushed nightly files to gh-pages"
+          } else {
+            Write-Host "No changes to commit for nightly files"
+          }
+        shell: pwsh
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
