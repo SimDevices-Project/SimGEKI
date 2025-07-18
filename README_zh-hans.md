@@ -24,7 +24,7 @@
 
 ## 自己造一台！
 
-![SimDevices Wiki 页面](https://sim.bysb.net/#/simgetro/diy/core_and_firmware/)
+[SimDevices Wiki 页面](https://sim.bysb.net/#/simgetro/diy/core_and_firmware/)
 查看该页面来了解如果拥有一台属于你自己的SimGEKi，内容包含但不限于原理图、PCB设计甚至还包含CAD设计图！
 Check this page to get your own SimGEKI, Sch files, Pcb files even Cad files all included!
 

@@ -24,7 +24,7 @@ You could refer to the following table to find what you're looking for.
 
 ## Build Yourself
 
-![SimDevices Wiki Page](https://sim.bysb.net/#/simgetro/diy/core_and_firmware/)
+[SimDevices Wiki Page](https://sim.bysb.net/#/simgetro/diy/core_and_firmware/)
 Check this page to get your own SimGEKI, Sch files, Pcb files even Cad files all included!
 
 ## Attention
