@@ -96,6 +96,14 @@ jobs:
             Write-Host "gh-pages branch exists remotely, checking out..."
             git fetch origin gh-pages
             git checkout -b gh-pages origin/gh-pages
+            # Clean up any source code files, keep only firmware files and READMEs
+            Write-Host "Cleaning up source code files from gh-pages..."
+            Get-ChildItem -Path "." -Recurse | Where-Object { 
+              $_.Name -notmatch "\.(bin|hex|md)$" -and 
+              $_.Name -ne "standard" -and 
+              $_.Name -ne "nightly" -and 
+              -not $_.PSIsContainer 
+            } | Remove-Item -Force -ErrorAction SilentlyContinue
           } else {
             Write-Host "Creating new gh-pages branch..."
             git checkout --orphan gh-pages
@@ -111,15 +119,34 @@ jobs:
         run: |
           # Create standard directory if it doesn't exist
           if (-not (Test-Path "./standard")) {
-            mkdir "standard"
+            New-Item -ItemType Directory -Path "./standard" -Force
           }
           
-          # Copy all firmware files to standard directory
-          Get-ChildItem -Path "./release-artifacts" -Recurse -Include "*.bin", "*.hex" | ForEach-Object {
-            $destPath = "./standard/" + $_.Name
-            Copy-Item $_.FullName -Destination $destPath -Force
-            Write-Host "Copied $($_.Name) to standard folder"
+          # Copy all firmware files to standard directory with detailed logging
+          Write-Host "Copying firmware files to standard directory..."
+          $releaseFiles = Get-ChildItem -Path "./release-artifacts" -Recurse -Include "*.bin", "*.hex"
+          
+          if ($releaseFiles.Count -eq 0) {
+            Write-Host "No firmware files found in release-artifacts directory!"
+            Get-ChildItem -Path "./release-artifacts" -Recurse | ForEach-Object { Write-Host "Found: $($_.FullName)" }
+            exit 1
           }
+          
+          $releaseFiles | ForEach-Object {
+            $destPath = "./standard/$($_.Name)"
+            Write-Host "Copying $($_.FullName) to $destPath"
+            Copy-Item $_.FullName -Destination $destPath -Force
+            if (Test-Path $destPath) {
+              Write-Host "✓ Successfully copied $($_.Name)"
+            } else {
+              Write-Host "✗ Failed to copy $($_.Name)"
+            }
+          }
+          
+          # Verify files were copied
+          Write-Host "Verifying files in standard directory:"
+          $copiedFiles = Get-ChildItem -Path "./standard" -Include "*.bin", "*.hex"
+          $copiedFiles | ForEach-Object { Write-Host "  ✓ $($_.Name)" }
           
           # Create index file for easy browsing
           $date = Get-Date -Format 'yyyy-MM-dd HH:mm:ss UTC'
@@ -128,8 +155,15 @@ jobs:
           $indexContent += "Release tag: ${{ github.ref_name }}`n`n"
           $indexContent += "## Available Files:`n`n"
           
-          Get-ChildItem -Path "./standard" -Include "*.bin", "*.hex" | ForEach-Object {
+          $copiedFiles | ForEach-Object {
             $indexContent += "- [$($_.Name)](./$($_.Name))`n"
+          }
+          
+          $indexContent += "`n## Direct Access URLs:`n`n"
+          $indexContent += "Base URL: ``https://${{ github.repository_owner }}.github.io/${{ github.event.repository.name }}/standard/```n`n"
+          
+          $copiedFiles | ForEach-Object {
+            $indexContent += "- [$($_.Name)](https://${{ github.repository_owner }}.github.io/${{ github.event.repository.name }}/standard/$($_.Name))`n"
           }
           
           $indexContent | Out-File -FilePath "./standard/README.md" -Encoding UTF8
@@ -315,18 +349,41 @@ jobs:
       
       - name: Upload nightly builds to gh-pages
         run: |
-          # Configure git user
+          # Configure git user first
           git config --local user.email "action@github.com"
           git config --local user.name "GitHub Action"
           
+          # Save current working directory and files
+          $currentDir = Get-Location
+          $nightlyFiles = Get-ChildItem -Path "./nightly-release" -Include "*.bin", "*.hex"
+          
+          Write-Host "Current directory: $currentDir"
+          Write-Host "Nightly files found:"
+          $nightlyFiles | ForEach-Object { Write-Host "  - $($_.Name)" }
+          
+          # Check if we have files to upload
+          if ($nightlyFiles.Count -eq 0) {
+            Write-Host "No firmware files found in nightly-release directory!"
+            Get-ChildItem -Path "./nightly-release" -Recurse | ForEach-Object { Write-Host "Found: $($_.FullName)" }
+            exit 1
+          }
+          
           # Check if gh-pages branch exists remotely
-          Write-Host "Checking out gh-pages branch for nightly upload..."
+          Write-Host "Setting up gh-pages branch for nightly upload..."
           $branchExists = git ls-remote --heads origin gh-pages
           
           if ($branchExists) {
             Write-Host "gh-pages branch exists remotely, checking out..."
             git fetch origin gh-pages
-            git checkout -b gh-pages origin/gh-pages
+            git checkout gh-pages
+            # Clean up any source code files from gh-pages, keep only firmware files and READMEs
+            Write-Host "Cleaning up source code files from gh-pages..."
+            Get-ChildItem -Path "." -Recurse | Where-Object { 
+              $_.Name -notmatch "\.(bin|hex|md)$" -and 
+              $_.Name -ne "standard" -and 
+              $_.Name -ne "nightly" -and 
+              -not $_.PSIsContainer 
+            } | Remove-Item -Force -ErrorAction SilentlyContinue
           } else {
             Write-Host "Creating new gh-pages branch..."
             git checkout --orphan gh-pages
@@ -338,18 +395,41 @@ jobs:
           }
           
           # Create nightly directory if it doesn't exist
+          Write-Host "Creating nightly directory..."
           if (-not (Test-Path "./nightly")) {
-            mkdir "nightly"
+            New-Item -ItemType Directory -Path "./nightly" -Force
+            Write-Host "Created nightly directory"
+          } else {
+            Write-Host "Nightly directory already exists"
           }
           
-          # Copy all firmware files to nightly directory
-          Get-ChildItem -Path "./nightly-release" -Include "*.bin", "*.hex" | ForEach-Object {
-            $destPath = "./nightly/" + $_.Name
+          # Copy all firmware files to nightly directory with detailed logging
+          Write-Host "Copying firmware files to nightly directory..."
+          $nightlyFiles | ForEach-Object {
+            $destPath = "./nightly/$($_.Name)"
+            Write-Host "Copying $($_.FullName) to $destPath"
             Copy-Item $_.FullName -Destination $destPath -Force
-            Write-Host "Copied $($_.Name) to nightly folder"
+            if (Test-Path $destPath) {
+              Write-Host "✓ Successfully copied $($_.Name)"
+            } else {
+              Write-Host "✗ Failed to copy $($_.Name)"
+            }
+          }
+          
+          # Verify files were copied
+          Write-Host "Verifying files in nightly directory:"
+          $copiedFiles = Get-ChildItem -Path "./nightly" -Include "*.bin", "*.hex"
+          if ($copiedFiles.Count -eq 0) {
+            Write-Host "ERROR: No files found in nightly directory after copy!"
+            Write-Host "Directory contents:"
+            Get-ChildItem -Path "./nightly" | ForEach-Object { Write-Host "  - $($_.Name)" }
+            exit 1
+          } else {
+            $copiedFiles | ForEach-Object { Write-Host "  ✓ $($_.Name)" }
           }
           
           # Create index file for easy browsing
+          Write-Host "Creating README.md for nightly directory..."
           $date = Get-Date -Format 'yyyy-MM-dd HH:mm:ss UTC'
           $indexContent = "# SimGEKI Nightly Build Firmware Files`n`n"
           $indexContent += "Last updated: $date`n"
@@ -357,32 +437,41 @@ jobs:
           $indexContent += "Build author: ${{ github.event.head_commit.author.name }}`n`n"
           $indexContent += "## Available Files:`n`n"
           
-          Get-ChildItem -Path "./nightly" -Include "*.bin", "*.hex" | ForEach-Object {
+          $copiedFiles | ForEach-Object {
             $indexContent += "- [$($_.Name)](./$($_.Name))`n"
           }
           
-          $indexContent += "`n## Access URLs:`n`n"
-          $indexContent += "Base URL: https://${{ github.repository_owner }}.github.io/${{ github.event.repository.name }}/nightly/`n`n"
+          $indexContent += "`n## Direct Access URLs:`n`n"
+          $indexContent += "Base URL: ``https://${{ github.repository_owner }}.github.io/${{ github.event.repository.name }}/nightly/```n`n"
           
-          Get-ChildItem -Path "./nightly" -Include "*.bin", "*.hex" | ForEach-Object {
+          $copiedFiles | ForEach-Object {
             $indexContent += "- [$($_.Name)](https://${{ github.repository_owner }}.github.io/${{ github.event.repository.name }}/nightly/$($_.Name))`n"
           }
           
           $indexContent | Out-File -FilePath "./nightly/README.md" -Encoding UTF8
+          Write-Host "Created README.md in nightly directory"
           
-          # Commit and push changes
+          # Add and commit changes
+          Write-Host "Adding files to git..."
           git add nightly/
           
           $changes = git diff --staged --name-only
           if ($changes) {
+            Write-Host "Files to be committed:"
+            $changes | ForEach-Object { Write-Host "  - $_" }
+            
             git commit -m "🌙 Update nightly firmware files
             
             Build Date: $date
             Commit: ${{ github.sha }}
-            Author: ${{ github.event.head_commit.author.name }}"
+            Author: ${{ github.event.head_commit.author.name }}
             
+            Files updated:
+            $(($copiedFiles | ForEach-Object { "- $($_.Name)" }) -join "`n")"
+            
+            Write-Host "Pushing to gh-pages..."
             git push origin gh-pages
-            Write-Host "Successfully pushed nightly files to gh-pages"
+            Write-Host "✓ Successfully pushed nightly files to gh-pages"
           } else {
             Write-Host "No changes to commit for nightly files"
           }
