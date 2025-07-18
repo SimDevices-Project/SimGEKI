@@ -137,7 +137,7 @@ jobs:
           
           # Verify files were copied
           Write-Host "Verifying files in standard directory:"
-          $copiedFiles = Get-ChildItem -Path "./standard" -Include "*.bin", "*.hex"
+          $copiedFiles = Get-ChildItem -Path "./standard" -Recurse -Include "*.bin", "*.hex"
           $copiedFiles | ForEach-Object { Write-Host "  ✓ $($_.Name)" }
           
           # Create index file for easy browsing
@@ -357,7 +357,7 @@ jobs:
           
           # Save current working directory and files
           $currentDir = Get-Location
-          $nightlyFiles = Get-ChildItem -Path "./nightly-release" -Include "*.bin", "*.hex"
+          $nightlyFiles = Get-ChildItem -Path "./nightly-release" -Recurse -Include "*.bin", "*.hex"
           
           Write-Host "Current directory: $currentDir"
           Write-Host "Nightly files found:"
@@ -412,7 +412,7 @@ jobs:
           
           # Verify files were copied
           Write-Host "Verifying files in nightly directory:"
-          $copiedFiles = Get-ChildItem -Path "./nightly" -Include "*.bin", "*.hex"
+          $copiedFiles = Get-ChildItem -Path "./nightly" -Recurse -Include "*.bin", "*.hex"
           if ($copiedFiles.Count -eq 0) {
             Write-Host "ERROR: No files found in nightly directory after copy!"
             Write-Host "Directory contents:"
