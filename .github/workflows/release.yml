@@ -394,7 +394,7 @@ jobs:
           
           # Copy all firmware files to nightly directory with detailed logging
           Write-Host "Copying firmware files to nightly directory..."
-          $nightlyFiles = Get-ChildItem -Path "./nightly-release-ghpages" -Include "*.bin", "*.hex"
+          $nightlyFiles = Get-ChildItem -Path "./nightly-release-ghpages" -Recurse -Include "*.bin", "*.hex"
           $nightlyFiles | ForEach-Object {
             $destPath = "./nightly/$($_.Name)"
             Write-Host "Copying $($_.FullName) to $destPath"
@@ -408,7 +408,7 @@ jobs:
           
           # Verify files were copied
           Write-Host "Verifying files in nightly directory:"
-          $copiedFiles = Get-ChildItem -Path "./nightly" -Include "*.bin", "*.hex"
+          $copiedFiles = Get-ChildItem -Path "./nightly" -Recurse -Include "*.bin", "*.hex"
           if ($copiedFiles.Count -eq 0) {
             Write-Host "ERROR: No files found in nightly directory after copy!"
             Write-Host "Directory contents:"
