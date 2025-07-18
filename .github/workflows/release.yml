@@ -136,42 +136,70 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       
-      - name: Create/Update nightly release
+      - name: Delete existing nightly release
+        continue-on-error: true
+        run: |
+          # 使用 GitHub CLI 删除现有的 nightly release（如果存在）
+          Write-Host "Attempting to delete existing nightly release..."
+          gh release delete nightly --yes 2>$null
+          if ($LASTEXITCODE -eq 0) {
+            Write-Host "Existing nightly release deleted"
+          } else {
+            Write-Host "No existing nightly release found or already deleted"
+          }
+        shell: pwsh
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      
+      - name: Create new nightly release with updated info
         uses: softprops/action-gh-release@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          tag_name: nightly-release
+          tag_name: nightly
           target_commitish: nightly
-          name: "SimGEKI Firmware Nightly Builds"
+          name: "SimGEKI Firmware Nightly Builds (Updated ${{ github.event.head_commit.timestamp }})"
           body: |
-            # Welcome to the SimGEKI Nightly Builds!
+            # 🌙 SimGEKI Nightly Builds - Auto Updated!
 
-            ## What is this?
+            ## ℹ️ What is this?
 
             Nightly Builds are the latest development versions of the SimGEKI firmware, automatically built with every commit to the main branch. This means you always have access to the most recent changes and features, but please note that these builds are not guaranteed to be stable.
 
-            ## How to use?
+            ## 🚀 How to use?
 
-            Download the firmware files from the assets below and flash them to your SimGEKI device. Make sure to check the compatibility with your hardware version. To flash the firmware, you can refer to the following link for instructions [Update Firmware](https://sim.bysb.net/#/simgeki2/configs/update-firmware/)
-
-            ## Build Information
-            This release is automatically generated from the latest commit on the main branch. It includes all changes made since the last nightly build.
-
-            📅 **Build Date**: ${{ github.event.head_commit.timestamp }}
-            🔨 **Commit**: ${{ github.sha }}
-            👤 **Author**: ${{ github.event.head_commit.author.name }}
-            💬 **Message**: ${{ github.event.head_commit.message }}
+            Download the firmware files from the assets below and flash them to your SimGEKI device. Make sure to check the compatibility with your hardware version. 
             
+            📖 **Flash Instructions**: [Update Firmware Guide](https://sim.bysb.net/#/simgeki2/configs/update-firmware/)
+
+            ## 📋 Latest Build Information
+
+            � **Build Time**: ${{ github.event.head_commit.timestamp }}  
+            🔨 **Source Commit**: [`${{ github.sha }}`](https://github.com/${{ github.repository }}/commit/${{ github.sha }})  
+            👤 **Author**: ${{ github.event.head_commit.author.name }}  
+            � **Commit Message**: 
+            ```
+            ${{ github.event.head_commit.message }}
+            ```
+
+            ## 📦 Available Firmware Variants
+
+            | Variant | Description | Download |
+            |---------|-------------|----------|
+            | **SimGETRO_Public** | Public release version | [📥 BIN](https://github.com/${{ github.repository }}/releases/download/nightly/SimGEKI-SimGETRO_Public.bin) / [📥 HEX](https://github.com/${{ github.repository }}/releases/download/nightly/SimGEKI-SimGETRO_Public.hex) |
+            | **SimGETRO_EarlyHardware** | Early hardware version | [📥 BIN](https://github.com/${{ github.repository }}/releases/download/nightly/SimGEKI-SimGETRO_EarlyHardware.bin) / [📥 HEX](https://github.com/${{ github.repository }}/releases/download/nightly/SimGEKI-SimGETRO_EarlyHardware.hex) |
+
+            ## ⚠️ Important Notes
+
+            - 🔄 **Auto-Updated**: This release is automatically updated with every commit to the main branch
+            - 🧪 **Development Build**: These builds may be unstable and are intended for testing
+            - 📅 **Last Updated**: ${{ github.event.head_commit.timestamp }}
+            - 🌐 **Repository**: [SimDevices-Project/SimGEKI](https://github.com/${{ github.repository }})
+
             ---
             
-            This release is automatically updated with every commit to the main branch.
-            
-            **Available firmware variants:**
-            - `SimGEKI-SimGETRO_Public.bin/hex` - Public release version
-            - `SimGEKI-SimGETRO_EarlyHardware.bin/hex` - Early hardware version
-            
-            ⚠️ **Note**: These are development builds and may be unstable.
+            💡 **Tip**: For stable releases, check the [official releases](https://github.com/${{ github.repository }}/releases) page.
           prerelease: true
           files: |
             ./nightly-release/*
