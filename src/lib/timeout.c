@@ -5,15 +5,15 @@
 #define MAX_TIMER_COUNT  16
 
 typedef struct {
-  uint16_t time;
-  uint16_t period;
+  uint32_t time;
+  uint32_t period;
   void (*callback)(void);
 } Timer_TypeDef;
 
 Timer_TypeDef interval[MAX_TIMER_COUNT] = {0};
 Timer_TypeDef timeout[MAX_TIMER_COUNT]  = {0};
 
-uint16_t timerSet = 0;
+uint32_t timerSet = 0;
 
 xdata void Timer4_Config(void)
 {
@@ -49,7 +49,7 @@ void TIM4_IRQHandler(void)
   }
 }
 
-uint8_t setInterval(void (*callback)(void), uint16_t period)
+uint8_t setInterval(void (*callback)(void), uint32_t period)
 {
   for (uint8_t i = 0; i < MAX_TIMER_COUNT; i++) {
     if (interval[i].callback == NULL) {
@@ -62,7 +62,7 @@ uint8_t setInterval(void (*callback)(void), uint16_t period)
   return 0xFF;
 }
 
-uint8_t setTimeout(void (*callback)(void), uint16_t period)
+uint8_t setTimeout(void (*callback)(void), uint32_t period)
 {
   for (uint8_t i = 0; i < MAX_TIMER_COUNT; i++) {
     if (timeout[i].callback == NULL) {

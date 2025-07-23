@@ -2,6 +2,7 @@
 #include "led.h"
 #include "keyscan.h"
 #include "roller.h"
+#include "sleep.h"
 
 // #include "debug.h"
 
@@ -132,6 +133,7 @@ void HIDIO_Update()
   prevRollerValue = activeRollerValue;
 
   if (freshRequired) {
+    Sleep_Alive();
     HIDIO_FreshData();
   }
 }

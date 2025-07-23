@@ -6,6 +6,7 @@
 #include "usb_prop.h"
 
 #include "led.h"
+#include "sleep.h"
 
 #include "pn532.h"
 #include "pn532_uart.h"
@@ -240,6 +241,8 @@ void CDC_LED_IO_Handler()
       CDC_LED_IO_PutChar(resPackect->buffer[i]);
     }
   }
+
+  Sleep_Alive();
 }
 
 #define CARD_READER_RATE_HI  1
@@ -433,6 +436,8 @@ void CDC_CARD_IO_Handler()
       CDC_CARD_IO_SendDataReady();
       break;
   }
+
+  Sleep_Alive();
 }
 
 // LED IO CDC 数据读取

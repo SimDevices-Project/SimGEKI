@@ -1,6 +1,7 @@
 #include "led.h"
 #include "ch422.h"
 #include "timeout.h"
+#include "sleep.h"
 
 #define RGB_PORT_COUNT      3
 #define RGB_COUNT_PER_PORT  6
@@ -199,12 +200,6 @@ xdata void LED_Init_RGB()
   WS2812_Init();
 }
 
-xdata void LED_Init()
-{
-  LED_Init_RGB();
-  CH422_Init();
-}
-
 xdata void LED_Effect_Red()
 {
   LED_7C_Set(LED_7C_L1, LED_ON, LED_OFF, LED_OFF);
@@ -280,6 +275,21 @@ xdata void LED_Effect_Normal()
   LED_RGB_SetPort(LED_RGB_PORT_UART, 0x00, 0x00, 0x00);
 }
 
+xdata void LED_Effect_Close()
+{
+  LED_7C_Set(LED_7C_L1, LED_OFF, LED_OFF, LED_OFF);
+  LED_7C_Set(LED_7C_L2, LED_OFF, LED_OFF, LED_OFF);
+  LED_7C_Set(LED_7C_L3, LED_OFF, LED_OFF, LED_OFF);
+  LED_7C_Set(LED_7C_R1, LED_OFF, LED_OFF, LED_OFF);
+  LED_7C_Set(LED_7C_R2, LED_OFF, LED_OFF, LED_OFF);
+  LED_7C_Set(LED_7C_R3, LED_OFF, LED_OFF, LED_OFF);
+
+  LED_RGB_SetPort(LED_RGB_PORT_LEFT, 0x00, 0x00, 0x00);
+  LED_RGB_SetPort(LED_RGB_PORT_RIGHT, 0x00, 0x00, 0x00);
+
+  LED_RGB_SetPort(LED_RGB_PORT_UART, 0x00, 0x00, 0x00);
+}
+
 xdata void LED_Animation_PowerOn()
 {
   setTimeout(LED_Effect_Red, 500);
@@ -287,6 +297,15 @@ xdata void LED_Animation_PowerOn()
   setTimeout(LED_Effect_Blue, 1500);
   setTimeout(LED_Effect_White, 2000);
   setTimeout(LED_Effect_Normal, 3000);
+}
+
+xdata void LED_Init()
+{
+  LED_Init_RGB();
+  CH422_Init();
+
+  Sleep_RegisterSleep(LED_Effect_Close);
+  Sleep_RegisterWakeup(LED_Animation_PowerOn);
 }
 
 void LED_Refresh()

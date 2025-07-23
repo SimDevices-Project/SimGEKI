@@ -11,12 +11,14 @@
 
 typedef struct {
   const uint16_t RollerOffset;
-  const uint8_t _unused[FLASH_FAST_DATA_SIZE - 2];
+  const uint32_t SleepTimeout;
+  const uint8_t _unused[FLASH_FAST_DATA_SIZE - 6];
 } __packed FlashData;
 
 typedef struct {
   uint16_t RollerOffset;
-  uint8_t _unused[FLASH_FAST_DATA_SIZE - 2];
+  uint32_t SleepTimeout;
+  uint8_t _unused[FLASH_FAST_DATA_SIZE - 6];
 } __packed RamData;
 
 // extern FlashData *Data;

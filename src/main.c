@@ -12,6 +12,7 @@
 #include "hidio.h"
 #include "cdc.h"
 #include "pn532.h"
+#include "sleep.h"
 
 #include "usb_lib.h"
 
@@ -28,6 +29,7 @@ int main(void)
 
   Delay_Init();
   Timeout_Init();
+  Sleep_Init();
 
   Set_USBConfig();
   USB_Init();
