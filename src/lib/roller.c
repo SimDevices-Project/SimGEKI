@@ -377,8 +377,9 @@ void Roller_Update()
       }
 
       // 读取ADC值
-      EncoderValue = Get_ADC_ConversionVal(sum >> 6) << 4;
+      EncoderValue = Get_ADC_ConversionVal(sum >> 6);
       EncoderValue = ~EncoderValue; // 取反以符合编码器方向
+      EncoderValue <<= 4;
 
       // 重新开始ADC转换
       DMA_Cmd(DMA1_Channel1, DISABLE);
