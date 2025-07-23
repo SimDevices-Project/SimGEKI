@@ -4,12 +4,11 @@
 __attribute__((aligned(8))) RamData dat;
 
 static volatile const RamData DEFAULT_DATA __attribute__((section(".flashdat"))) = {
-  .RollerOffset = 0x0000,
-  .SleepTimeout = 0x000927C0, // 600000 ms = 10 minutes
-  ._unused = {0}
-};
+    .RollerOffset = 0x0000,
+    .SleepTimeout = 0x000927C0, // 600000 ms = 10 minutes
+    ._unused      = {0}};
 
-const FlashData *Data = (FlashData *)FLASH_FAST_DATA_BASE_ADDR;
+FlashData *Data     = (FlashData *)FLASH_FAST_DATA_BASE_ADDR;
 RamData *GlobalData = &dat;
 
 /*********************************************************************
@@ -30,16 +29,17 @@ RamData *GlobalData = &dat;
 void LoadData()
 {
   /* HCLK = SYSCLK/2 */
-  RCC->CFGR0 |= (uint32_t)RCC_HPRE_DIV2;
+  // RCC->CFGR0 |= (uint32_t)RCC_HPRE_DIV2;
 
   // FLASH_read((uint32_t)Data, (uint8_t *)((uint32_t)GlobalData), FLASH_FAST_DATA_SIZE);
   // memset((uint8_t *)GlobalData, 0xAA, FLASH_FAST_DATA_SIZE);
 
   // GlobalData->RollerOffset = 0xAAAA;
-  memcpy((uint8_t *)GlobalData, (uint8_t *)Data, FLASH_FAST_DATA_SIZE);
+  memset(&dat, 0x00, FLASH_FAST_DATA_SIZE);
+  memcpy(&dat, (uint8_t *)Data, FLASH_FAST_DATA_SIZE);
 
   /* HCLK = SYSCLK */
-  RCC->CFGR0 &= ~(uint32_t)RCC_HPRE_DIV2;
+  // RCC->CFGR0 &= ~(uint32_t)RCC_HPRE_DIV2;
 }
 
 void SaveData()

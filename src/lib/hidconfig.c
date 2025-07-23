@@ -4,6 +4,7 @@
 #include "string.h"
 
 #include "keyscan.h"
+#include "data.h"
 
 uint8_t HIDCFG_Buffer_OUT[64] = {0x00};
 uint8_t HIDCFG_Buffer_IN[64]  = {0x00};
@@ -43,6 +44,35 @@ void HIDCONFIG_Receive_Handler()
       dataUpload->symbol   = dataReceive->symbol;
 
       switch (dataReceive->command) {
+        case RELOAD_DATA: {
+          // Reload data from flash
+          LoadData();
+          dataUpload->command = RELOAD_DATA;
+          dataUpload->state   = STATE_OK;
+          break;
+        }
+        case SAVE_DATA: {
+          // Save data to flash
+          SaveData();
+          dataUpload->command = SAVE_DATA;
+          dataUpload->state   = STATE_OK;
+          break;
+        }
+        case SLEEP_SET_TIMEOUT: {
+          // Set sleep timeout
+          GlobalData->SleepTimeout = dataReceive->sleep_timeout;
+          dataUpload->command      = SLEEP_SET_TIMEOUT;
+          dataUpload->state        = STATE_OK;
+          break;
+        }
+        case SLEEP_GET_TIMEOUT: {
+          // Get sleep timeout
+          dataUpload->sleep_timeout = GlobalData->SleepTimeout;
+          dataUpload->command       = SLEEP_GET_TIMEOUT;
+          dataUpload->state         = STATE_OK;
+          dataUpload->sleep_timeout = GlobalData->SleepTimeout;
+          break;
+        }
         /**
          * @brief Get roller data : 0xA1
          * This command is used to get the current roller value and raw value.

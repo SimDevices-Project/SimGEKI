@@ -462,5 +462,4 @@ void Roller_ResetOffset()
     newVal = VALUE_OFFSET_MASK - rawVal + VALUE_DEFAULT + 1;
   }
   _offset = newVal;
-  SaveData();
 }

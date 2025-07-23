@@ -20,6 +20,12 @@ typedef enum {
 } __packed HidconfigLedTag;
 
 typedef enum {
+  RELOAD_DATA = 0x80,
+  SAVE_DATA   = 0x81,
+
+  SLEEP_SET_TIMEOUT = 0x90,
+  SLEEP_GET_TIMEOUT = 0x91,
+
   ROLLER_SET_OFFSET = 0xA0,
   ROLLER_GET_DATA   = 0xA1,
 
@@ -38,6 +44,11 @@ typedef struct {
   uint8_t state;
   union {
     uint8_t payload[60];
+    struct
+    {
+      uint32_t sleep_timeout;
+    };
+
     struct {
       uint16_t roller_value;     // Roller value, 0x0000-0xFFFF
       uint16_t roller_raw_value; // Roller raw value, 0x0000-0xFFFF
