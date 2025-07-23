@@ -75,6 +75,7 @@ void HIDIO_Receive_Handler()
       break;
     }
   }
+  Sleep_Alive();
 }
 
 void HIDIO_Upload()
