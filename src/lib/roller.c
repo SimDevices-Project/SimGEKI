@@ -445,21 +445,26 @@ uint16_t Roller_GetValue()
     outputValue = debounceAvgValue;
   }
 
-  // 对outputValue进行扩大处理
-  int32_t diff = (int32_t)outputValue - 0x8000; // 计算与0x8000的差值
-  diff         = diff * multiple;               // 扩大multiple倍
+  // offset 计算
+  if (outputValue <= VALUE_OFFSET_MASK - _offset) {
+    outputValue = outputValue + _offset;
+  } else {
+    outputValue = ((_offset + outputValue) & VALUE_OFFSET_MASK) + 1;
+  }
 
-  // 计算扩大后的值
-  int32_t expandedValue = 0x8000 + diff;
+  // 对outputValue进行扩大处理
+  int32_t tmp = (int32_t)outputValue - 0x8000; // 计算与0x8000的差值
+  tmp         = tmp * multiple;                // 扩大multiple倍
+  tmp         = 0x8000 + tmp;                  // 计算扩大后的值
 
   // 限制在有效范围内
   uint16_t currentExpandedValue;
-  if (expandedValue > 0xFFFF) {
+  if (tmp > 0xFFFF) {
     currentExpandedValue = 0xFFFF;
-  } else if (expandedValue < 0x0000) {
+  } else if (tmp < 0x0000) {
     currentExpandedValue = 0x0000;
   } else {
-    currentExpandedValue = (uint16_t)expandedValue;
+    currentExpandedValue = (uint16_t)tmp;
   }
 
   // 对扩大后的数据进行插值处理，使数值更连续
@@ -472,24 +477,21 @@ uint16_t Roller_GetValue()
     outputValue       = currentExpandedValue;
   } else {
     // 计算当前值与上次值的差异
-    int32_t valueDiff = (int32_t)currentExpandedValue - (int32_t)lastExpandedValue;
+    uint16_t valueDiff = currentExpandedValue > lastExpandedValue ? currentExpandedValue - lastExpandedValue : lastExpandedValue - currentExpandedValue;
 
     // 如果变化较大，进行平滑插值（降低历史数据权重以提高响应速度）
-    if (valueDiff > 64 || valueDiff < -64) {
-      outputValue = (uint16_t)((int32_t)lastExpandedValue + (int32_t)currentExpandedValue * 7) >> 3; // 1:7加权平均，快速响应
+    if (valueDiff > 256) {
+      outputValue = (uint16_t)(((uint32_t)lastExpandedValue + (uint32_t)currentExpandedValue * 3) >> 2); // 1:3加权平均
+    } else if (valueDiff > 64) {
+      outputValue = (uint16_t)(((uint32_t)lastExpandedValue + (uint32_t)currentExpandedValue * 7) >> 3); // 1:7加权平均，快速响应
     } else {
-      outputValue = (uint16_t)((int32_t)lastExpandedValue + (int32_t)currentExpandedValue * 15) >> 4; // 1:15加权平均，最快响应
+      outputValue = (uint16_t)(((uint32_t)lastExpandedValue + (uint32_t)currentExpandedValue * 15) >> 4); // 1:15加权平均，最快响应
     }
 
     lastExpandedValue = outputValue; // 更新历史值
   }
 
-  // offset 计算
-  if (outputValue <= VALUE_OFFSET_MASK - _offset) {
-    return outputValue + _offset;
-  } else {
-    return ((_offset + outputValue) & VALUE_OFFSET_MASK) + 1;
-  }
+  return outputValue;
 }
 
 // 重设Offset，使经过Offset处理后的编码器值为 0x8000
