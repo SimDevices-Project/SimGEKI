@@ -410,6 +410,8 @@ uint8_t debounceIndex                    = 0;   // 滑动窗口索引
 // 获取经过OFFSET处理并去抖后的编码器值
 uint16_t Roller_GetValue()
 {
+  const uint8_t multiple = 4; // 缩放倍数
+
   uint16_t rawVal     = Roller_GetRawValue();
   uint8_t refreshFlag = 0;
 
@@ -441,6 +443,50 @@ uint16_t Roller_GetValue()
     outputValue = debounceAvgValue;
   } else if (debounceAvgValue >= outputValue && debounceAvgValue - outputValue > DEBOUNCE_LIMIT_B) {
     outputValue = debounceAvgValue;
+  }
+
+  // 对outputValue进行扩大处理
+  int32_t diff = (int32_t)outputValue - 0x8000;  // 计算与0x8000的差值
+  diff = diff * multiple;  // 扩大multiple倍
+  
+  // 计算扩大后的值
+  int32_t expandedValue = 0x8000 + diff;
+  
+  // 限制在有效范围内
+  uint16_t currentExpandedValue;
+  if (expandedValue > 0xFFFF) {
+    currentExpandedValue = 0xFFFF;
+  } else if (expandedValue < 0x0000) {
+    currentExpandedValue = 0x0000;
+  } else {
+    currentExpandedValue = (uint16_t)expandedValue;
+  }
+
+  // 对扩大后的数据进行插值处理，使数值更连续
+  static uint16_t lastExpandedValue = 0x8000;  // 保存上次扩大后的值
+  static uint8_t firstTime = 1;
+  
+  if (firstTime) {
+    lastExpandedValue = currentExpandedValue;
+    firstTime = 0;
+    outputValue = currentExpandedValue;
+  } else {
+    // 计算当前值与上次值的差异
+    int32_t valueDiff = (int32_t)currentExpandedValue - (int32_t)lastExpandedValue;
+    
+    // 如果变化较大，进行平滑插值（降低历史数据权重以提高响应速度）
+    if (valueDiff > 256 || valueDiff < -256) {
+      // 大步长变化时，使用轻度插值平滑
+      outputValue = (uint16_t)((int32_t)lastExpandedValue + (int32_t)currentExpandedValue * 3) >> 2;  // 1:3加权平均，当前值权重更高
+    } else if (valueDiff > 64 || valueDiff < -64) {
+      // 中等步长变化时，使用很轻的插值
+      outputValue = (uint16_t)((int32_t)lastExpandedValue + (int32_t)currentExpandedValue * 7) >> 3;  // 1:7加权平均，快速响应
+    } else {
+      // 小步长变化时，几乎直接使用当前值
+      outputValue = (uint16_t)((int32_t)lastExpandedValue + (int32_t)currentExpandedValue * 15) >> 4;  // 1:15加权平均，最快响应
+    }
+    
+    lastExpandedValue = outputValue;  // 更新历史值
   }
 
   // offset 计算
