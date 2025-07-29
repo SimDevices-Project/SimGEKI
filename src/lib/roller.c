@@ -399,8 +399,8 @@ uint16_t Roller_GetRawValue()
 }
 
 #define DEBOUNCE_LENGTH  8                      // 滑动窗口大小
-#define DEBOUNCE_LIMIT_A 64                     // 去抖阈值
-#define DEBOUNCE_LIMIT_B 16                     // 滤波后的去抖阈值
+#define DEBOUNCE_LIMIT_A 0x0100                 // 去抖阈值
+#define DEBOUNCE_LIMIT_B 0x0040                 // 滤波后的去抖阈值
 uint16_t debounceBuffer[DEBOUNCE_LENGTH] = {0}; // 滑动窗口
 uint32_t debounceSumValue                = 0;   // 滑动窗口和
 uint16_t debounceAvgValue                = 0;   // 滑动窗口平均值
@@ -470,22 +470,27 @@ uint16_t Roller_GetValue()
   // 对扩大后的数据进行插值处理，使数值更连续
   static uint16_t lastExpandedValue = 0x8000; // 保存上次扩大后的值
   static uint8_t firstTime          = 1;
-
+  
   if (firstTime) {
     lastExpandedValue = currentExpandedValue;
     firstTime         = 0;
-    outputValue       = currentExpandedValue;
+    outputValue  = currentExpandedValue;
   } else {
     // 计算当前值与上次值的差异
-    uint16_t valueDiff = currentExpandedValue > lastExpandedValue ? currentExpandedValue - lastExpandedValue : lastExpandedValue - currentExpandedValue;
+    uint16_t valueDiff = currentExpandedValue > lastExpandedValue ? 
+                         currentExpandedValue - lastExpandedValue : 
+                         lastExpandedValue - currentExpandedValue;
 
-    // 如果变化较大，进行平滑插值（降低历史数据权重以提高响应速度）
-    if (valueDiff > 256) {
-      outputValue = (uint16_t)(((uint32_t)lastExpandedValue + (uint32_t)currentExpandedValue * 3) >> 2); // 1:3加权平均
-    } else if (valueDiff > 64) {
-      outputValue = (uint16_t)(((uint32_t)lastExpandedValue + (uint32_t)currentExpandedValue * 7) >> 3); // 1:7加权平均，快速响应
+    // 避免震荡的插值算法
+    if (valueDiff <= 8) {
+      // 差异很小，直接使用当前值避免震荡
+      outputValue = currentExpandedValue;
+    } else if (valueDiff <= 64) {
+      // 小差异，温和插值
+      outputValue = (uint16_t)(((uint32_t)lastExpandedValue + (uint32_t)currentExpandedValue) >> 1); // 1:1平均
     } else {
-      outputValue = (uint16_t)(((uint32_t)lastExpandedValue + (uint32_t)currentExpandedValue * 15) >> 4); // 1:15加权平均，最快响应
+      // 大差异，快速收敛插值
+      outputValue = (uint16_t)(((uint32_t)lastExpandedValue + (uint32_t)currentExpandedValue * 7) >> 3); // 1:7加权平均，快速向目标收敛
     }
 
     lastExpandedValue = outputValue; // 更新历史值
