@@ -398,32 +398,28 @@ uint16_t Roller_GetRawValue()
   return EncoderValue;
 }
 
-#define DEBOUNCE_LENGTH  8                      // 滑动窗口大小
-#define DEBOUNCE_LIMIT_A 0x0100                 // 去抖阈值
-#define DEBOUNCE_LIMIT_B 0x0040                 // 滤波后的去抖阈值
-uint16_t debounceBuffer[DEBOUNCE_LENGTH] = {0}; // 滑动窗口
-uint32_t debounceSumValue                = 0;   // 滑动窗口和
-uint16_t debounceAvgValue                = 0;   // 滑动窗口平均值
-uint16_t outputValue                     = 0;   // 滤波后的去抖值
-uint8_t debounceIndex                    = 0;   // 滑动窗口索引
+#define DEBOUNCE_LENGTH  8      // 滑动窗口大小
+#define DEBOUNCE_LIMIT_A 0x0100 // 去抖阈值
+#define DEBOUNCE_LIMIT_B 0x0040 // 滤波后的去抖阈值
 
 // 获取经过OFFSET处理并去抖后的编码器值
 uint16_t Roller_GetValue()
 {
   const uint8_t multiple = 3; // 缩放倍数
 
+  static uint16_t outputValue                     = 0;   // 滤波后的去抖值
+  static uint16_t debounceBuffer[DEBOUNCE_LENGTH] = {0}; // 滑动窗口
+  static uint32_t debounceSumValue                = 0;   // 滑动窗口和
+  static uint16_t debounceAvgValue                = 0;   // 滑动窗口平均值
+  static uint8_t debounceIndex                    = 0;   // 滑动窗口索引
+
   uint16_t rawVal     = Roller_GetRawValue();
   uint8_t refreshFlag = 0;
 
   // 去抖
-  if (rawVal > debounceAvgValue) {
-    if (rawVal - debounceAvgValue > DEBOUNCE_LIMIT_A) {
-      refreshFlag = 1;
-    }
-  } else {
-    if (debounceAvgValue - rawVal > DEBOUNCE_LIMIT_A) {
-      refreshFlag = 1;
-    }
+  // 如果当前值与平均值的差异超过阈值，则刷新整个滑动窗口，说明出现了大角度转动
+  if ((rawVal > debounceAvgValue ? rawVal - debounceAvgValue : debounceAvgValue - rawVal) > DEBOUNCE_LIMIT_A) {
+    refreshFlag = 1;
   }
   if (refreshFlag == 1) {
     for (uint8_t i = 0; i < DEBOUNCE_LENGTH; i++) {
@@ -438,24 +434,24 @@ uint16_t Roller_GetValue()
     debounceIndex    = (debounceIndex + 1) % DEBOUNCE_LENGTH;
     debounceAvgValue = debounceSumValue / DEBOUNCE_LENGTH;
   }
-
-  if (outputValue > debounceAvgValue && outputValue - debounceAvgValue > DEBOUNCE_LIMIT_B) {
-    outputValue = debounceAvgValue;
-  } else if (debounceAvgValue >= outputValue && debounceAvgValue - outputValue > DEBOUNCE_LIMIT_B) {
+  // 如果当前值与平均值的差异超过更严格的去抖阈值，才将当前值设置为平均值，说明出现了小角度转动，但不需要刷新整个窗口
+  if ((outputValue > debounceAvgValue ? outputValue - debounceAvgValue : debounceAvgValue - outputValue) > DEBOUNCE_LIMIT_B) {
     outputValue = debounceAvgValue;
   }
+
+  uint16_t finalOutputValue; // 使用独立变量作为最终输出，避免与去抖部分的outputValue冲突
 
   // offset 计算
   if (outputValue <= VALUE_OFFSET_MASK - _offset) {
-    outputValue = outputValue + _offset;
+    finalOutputValue = outputValue + _offset;
   } else {
-    outputValue = ((_offset + outputValue) & VALUE_OFFSET_MASK) + 1;
+    finalOutputValue = ((_offset + outputValue) & VALUE_OFFSET_MASK) + 1;
   }
 
-  // 对outputValue进行扩大处理
-  int32_t tmp = (int32_t)outputValue - 0x8000; // 计算与0x8000的差值
-  tmp         = tmp * multiple;                // 扩大multiple倍
-  tmp         = 0x8000 + tmp;                  // 计算扩大后的值
+  // 对finalOutputValue进行扩大处理
+  int32_t tmp = (int32_t)finalOutputValue - 0x8000; // 计算与0x8000的差值
+  tmp         = tmp * multiple;                     // 扩大multiple倍
+  tmp         = 0x8000 + tmp;                       // 计算扩大后的值
 
   // 限制在有效范围内
   uint16_t currentExpandedValue;
@@ -470,33 +466,31 @@ uint16_t Roller_GetValue()
   // 对扩大后的数据进行插值处理，使数值更连续
   static uint16_t lastExpandedValue = 0x8000; // 保存上次扩大后的值
   static uint8_t firstTime          = 1;
-  
+
   if (firstTime) {
     lastExpandedValue = currentExpandedValue;
     firstTime         = 0;
-    outputValue  = currentExpandedValue;
+    finalOutputValue  = currentExpandedValue;
   } else {
     // 计算当前值与上次值的差异
-    uint16_t valueDiff = currentExpandedValue > lastExpandedValue ? 
-                         currentExpandedValue - lastExpandedValue : 
-                         lastExpandedValue - currentExpandedValue;
+    uint16_t valueDiff = currentExpandedValue > lastExpandedValue ? currentExpandedValue - lastExpandedValue : lastExpandedValue - currentExpandedValue;
 
     // 避免震荡的插值算法
     if (valueDiff <= 8) {
       // 差异很小，直接使用当前值避免震荡
-      outputValue = currentExpandedValue;
+      finalOutputValue = currentExpandedValue;
     } else if (valueDiff <= 64) {
       // 小差异，温和插值
-      outputValue = (uint16_t)(((uint32_t)lastExpandedValue + (uint32_t)currentExpandedValue) >> 1); // 1:1平均
+      finalOutputValue = (uint16_t)(((uint32_t)lastExpandedValue + (uint32_t)currentExpandedValue) >> 1); // 1:1平均
     } else {
       // 大差异，快速收敛插值
-      outputValue = (uint16_t)(((uint32_t)lastExpandedValue + (uint32_t)currentExpandedValue * 7) >> 3); // 1:7加权平均，快速向目标收敛
+      finalOutputValue = (uint16_t)(((uint32_t)lastExpandedValue + (uint32_t)currentExpandedValue * 7) >> 3); // 1:7加权平均，快速向目标收敛
     }
 
-    lastExpandedValue = outputValue; // 更新历史值
+    lastExpandedValue = currentExpandedValue; // 更新历史值为当前真实输入值，避免反馈循环
   }
 
-  return outputValue;
+  return finalOutputValue;
 }
 
 // 重设Offset，使经过Offset处理后的编码器值为 0x8000
