@@ -14,7 +14,7 @@
 #include "usb_conf.h"
 
 /* USB Device Descriptors */
-xdata const uint8_t USBD_DeviceDescriptor[] = {
+uint8_t USBD_DeviceDescriptor[] = {
     USBD_SIZE_DEVICE_DESC,        // bLength
     0x01,                         // bDescriptorType
     0x10, 0x01,                   // bcdUSB
@@ -22,9 +22,9 @@ xdata const uint8_t USBD_DeviceDescriptor[] = {
     0x02,                         // bDeviceSubClass
     0x01,                         // bDeviceProtocol
     DEF_USBD_UEP0_SIZE,           // bMaxPacketSize0
-    VENDOR_ID_L, VENDOR_ID_H,     // 厂商ID
-    PRODUCT_ID_L, PRODUCT_ID_H,   // 产品ID
-    PRODUCT_BCD_L, PRODUCT_BCD_H, // 设备版本号
+    0, 0,     // 厂商ID
+    0, 0,   // 产品ID
+    0, 0, // 设备版本号
     0x01,                         // iManufacturer
     0x02,                         // iProduct
     0x03,                         // iSerialNumber
@@ -418,7 +418,7 @@ void _IntToUnicode(uint32_t value, uint8_t *pbuf, uint8_t len)
   }
 }
 
-void USBD_SerialNumUpdate()
+xdata void USBD_SerialNumUpdate()
 {
   uint32_t Device_Serial0, Device_Serial1, Device_Serial2;
   Device_Serial0 = *(uint32_t *)0x1FFFF7E8;
@@ -430,4 +430,14 @@ void USBD_SerialNumUpdate()
     _IntToUnicode(Device_Serial1, &USBD_StringSerial[10], 4);
     _IntToUnicode(Device_Serial2, &USBD_StringSerial[18], 4);
   }
+}
+
+xdata void USBD_DeviceDescriptorUpdate()
+{
+  USBD_DeviceDescriptor[8] = VENDOR_ID_L; // 厂商ID
+  USBD_DeviceDescriptor[9] = VENDOR_ID_H;
+  USBD_DeviceDescriptor[10] = PRODUCT_ID_L; // 产品ID
+  USBD_DeviceDescriptor[11] = PRODUCT_ID_H;
+  USBD_DeviceDescriptor[12] = PRODUCT_BCD_L; // 设备版本号
+  USBD_DeviceDescriptor[13] = PRODUCT_BCD_H;
 }

@@ -92,6 +92,7 @@ extern const uint8_t USBD_StringCustomHID[USBD_SIZE_STRING_CUSTOM_HID];
 extern const uint8_t USBD_StringCustomHID_zh_hans[USBD_SIZE_STRING_CUSTOM_HID_zh_hans];
 
 void USBD_SerialNumUpdate();
+void USBD_DeviceDescriptorUpdate();
 
 #ifdef __cplusplus
 }

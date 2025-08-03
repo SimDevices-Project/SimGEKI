@@ -32,6 +32,7 @@ USER_STANDARD_REQUESTS  *pUser_Standard_Requests;
 xdata void USB_Init(void)
 {
   USBD_SerialNumUpdate();
+  USBD_DeviceDescriptorUpdate();
   pInformation = &Device_Info;
   pInformation->ControlState = 2;
   pProperty = &Device_Property;
