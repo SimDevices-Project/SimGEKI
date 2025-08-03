@@ -14,12 +14,12 @@ typedef enum {
 } __packed LED_RGB_Port;
 
 typedef enum {
-  LED_7C_L1 = 0x00,
-  LED_7C_L2 = 0x02,
-  LED_7C_L3 = 0x04,
-  LED_7C_R1 = 0x01,
-  LED_7C_R2 = 0x03,
-  LED_7C_R3 = 0x05,
+  LED_7C_L1 = 0x01,
+  LED_7C_L2 = 0x03,
+  LED_7C_L3 = 0x05,
+  LED_7C_R1 = 0x00,
+  LED_7C_R2 = 0x02,
+  LED_7C_R3 = 0x04,
 } __packed LED_7C_Tag;
 
 typedef enum {
