@@ -63,7 +63,7 @@ extern "C" {
 #define USBD_SIZE_STRING_CARDIO_zh_hans   24
 #define USBD_SIZE_STRING_CUSTOM_HID_zh_hans 20
 
-extern const uint8_t USBD_DeviceDescriptor[USBD_SIZE_DEVICE_DESC];
+extern uint8_t USBD_DeviceDescriptor[USBD_SIZE_DEVICE_DESC];
 extern const uint8_t USBD_ConfigDescriptor[USBD_SIZE_CONFIG_DESC];
 
 extern const uint8_t USBD_HidRepDesc[USBD_SIZE_REPORT_DESC];

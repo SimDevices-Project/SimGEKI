@@ -16,6 +16,7 @@ extern "C" {
 
 #ifndef xdata
   #define xdata __attribute__((section(".stext"))) 
+  #define xdata_rodata __attribute__((section(".ssrodata")))
 #endif // !xdata
 
 #if !defined(CH32V20x_D8W) && !defined(CH32V20x_D8) && !defined(CH32V20x_D6)
