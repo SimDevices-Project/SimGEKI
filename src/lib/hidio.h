@@ -63,8 +63,8 @@ const static uint8_t hid_key_map[KEY_COUNT][2] = {
     // COL3
     {0x03, 0x40}, // LMenu
     {0x01, 0x20}, // RMenu
-    {0x01, 0x02}, // Service
-    {0x00, 0x40}, // Test
+    {0x01, 0x02}, // Test
+    {0x00, 0x40}, // Service
     {0},
 
     // COIN

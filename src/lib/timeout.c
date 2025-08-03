@@ -22,7 +22,7 @@ xdata void Timer4_Config(void)
   TIM_TimeBaseInitTypeDef TIM_TimeBaseStructure;
   TIM_TimeBaseStructure.TIM_Period        = 1000 - 1;
   TIM_TimeBaseStructure.TIM_Prescaler     = TIMER_CLOCK_FREQ / 1000000 - 1;
-  TIM_TimeBaseStructure.TIM_ClockDivision = 0;
+  TIM_TimeBaseStructure.TIM_ClockDivision = TIM_CKD_DIV1;
   TIM_TimeBaseStructure.TIM_CounterMode   = TIM_CounterMode_Up;
   TIM_TimeBaseInit(TIM4, &TIM_TimeBaseStructure);
 
@@ -40,11 +40,9 @@ xdata void Timer4_Config(void)
 void TIM4_IRQHandler(void) __attribute__((interrupt("WCH-Interrupt-fast")));
 void TIM4_IRQHandler(void)
 {
-  // timerSet += TIM_GetCounter(TIM4);
-  timerSet++;
-
   if (TIM_GetITStatus(TIM4, TIM_IT_Update) != RESET) {
     TIM_ClearITPendingBit(TIM4, TIM_IT_Update);
+    timerSet += TIM_GetCounter(TIM4);
     TIM_SetCounter(TIM4, 0);
   }
 }
