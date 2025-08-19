@@ -53,7 +53,7 @@ extern "C" {
 #define USBD_SIZE_STRING_PRODUCT          38
 #define USBD_SIZE_STRING_SERIAL           26
 #define USBD_SIZE_STRING_CONFIG           22
-#define USBD_SIZE_STRING_HIDIO            188
+#define USBD_SIZE_STRING_HIDIO            186
 #define USBD_SIZE_STRING_LEDIO            30
 #define USBD_SIZE_STRING_CARDIO           34
 #define USBD_SIZE_STRING_CUSTOM_HID       30

@@ -31,8 +31,10 @@ typedef enum {
 
   LED_SET_MODE = 0xB0,
 
-  SP_LED_SET   = 0xE0, // Special LED set command, for pc dll
-  SP_INPUT_GET = 0xE1, // Special input get command, for pc dll
+  SP_LED_SET         = 0xE0, // Special LED set command, for pc dll
+  SP_INPUT_GET       = 0xE1, // Special input get command, for pc dll
+  SP_INPUT_GET_START = 0xE2,
+  SP_INPUT_GET_END   = 0xE3,
 
   UPDATE_FIRMWARE = 0xF1,
   CMD_NOT_SUPPORT = 0xFF,
@@ -90,10 +92,12 @@ typedef struct {
   };
 } __packed HidconfigData;
 
-#define STATE_OK    0x01
-#define STATE_ERROR 0xFF
+#define STATE_OK     0x01
+#define STATE_ACTIVE 0x10
+#define STATE_ERROR  0xFF
 
 void HIDCONFIG_Receive_Handler();
+void SP_INPUT_OnDataUpdate_Handler();
 
 extern uint8_t HIDCFG_Buffer_OUT[64];
 extern uint8_t HIDCFG_Buffer_IN[64];

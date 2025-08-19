@@ -11,6 +11,8 @@
 #include "usb_lib.h"
 #include "usb_prop.h"
 
+#include "hidconfig.h"
+
 #define OUT_EP ENDP1
 
 uint8_t HID_Buffer_OUT[64] = {0x00};
@@ -81,6 +83,7 @@ void HIDIO_Receive_Handler()
 void HIDIO_Upload()
 {
   USBD_ENDPx_DataUp(OUT_EP, HID_Buffer_IN, 64);
+  SP_INPUT_OnDataUpdate_Handler();
 }
 
 void HIDIO_FreshData()

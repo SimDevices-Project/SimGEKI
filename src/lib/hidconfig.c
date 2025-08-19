@@ -17,6 +17,30 @@ static HidconfigData *dataUpload  = (HidconfigData *)HIDCFG_Buffer_IN;
 void HIDCONFIG_Upload();
 void HIDCONFIG_Receive_Handler();
 
+volatile uint8_t sp_input_state = 0;
+
+void SP_INPUT_Upload()
+{
+  memset(HIDCFG_Buffer_IN, 0, 64); // Clear buffer
+
+  dataUpload->reportID = HIDCONFIG_REPORT_ID;
+  dataUpload->symbol   = 0x00; // No symbol for special input
+  dataUpload->command  = SP_INPUT_GET;
+  dataUpload->state    = STATE_OK;
+
+  dataUpload->roller_value_sp = Roller_GetValue();
+  dataUpload->input_status    = KeyScan_GetAllKeyDebouncedStatus();
+
+  HIDCONFIG_Upload();
+}
+
+void SP_INPUT_OnDataUpdate_Handler()
+{
+  if (sp_input_state == 1) {
+    SP_INPUT_Upload();
+  }
+}
+
 /**
  * Request
  * 1 byte: Report ID
@@ -25,7 +49,7 @@ void HIDCONFIG_Receive_Handler();
  * 1 byte: Unused
  * 60 bytes: Payload
  *
- * Response
+ * Response (Not Every Command)
  * 1 byte: Report ID
  * 1 byte: Symbol, same as request
  * 1 byte: Command, same as request
@@ -49,6 +73,7 @@ void HIDCONFIG_Receive_Handler()
           LoadData();
           dataUpload->command = RELOAD_DATA;
           dataUpload->state   = STATE_OK;
+          HIDCONFIG_Upload();
           break;
         }
         case SAVE_DATA: {
@@ -56,6 +81,7 @@ void HIDCONFIG_Receive_Handler()
           SaveData();
           dataUpload->command = SAVE_DATA;
           dataUpload->state   = STATE_OK;
+          HIDCONFIG_Upload();
           break;
         }
         case SLEEP_SET_TIMEOUT: {
@@ -63,6 +89,7 @@ void HIDCONFIG_Receive_Handler()
           GlobalData->SleepTimeout = dataReceive->sleep_timeout;
           dataUpload->command      = SLEEP_SET_TIMEOUT;
           dataUpload->state        = STATE_OK;
+          HIDCONFIG_Upload();
           break;
         }
         case SLEEP_GET_TIMEOUT: {
@@ -71,6 +98,7 @@ void HIDCONFIG_Receive_Handler()
           dataUpload->command       = SLEEP_GET_TIMEOUT;
           dataUpload->state         = STATE_OK;
           dataUpload->sleep_timeout = GlobalData->SleepTimeout;
+          HIDCONFIG_Upload();
           break;
         }
         /**
@@ -90,6 +118,7 @@ void HIDCONFIG_Receive_Handler()
           dataUpload->state            = STATE_OK;
           dataUpload->roller_value     = rollerValue;
           dataUpload->roller_raw_value = rollerRawValue;
+          HIDCONFIG_Upload();
           break;
         }
         /**
@@ -104,6 +133,7 @@ void HIDCONFIG_Receive_Handler()
 
           dataUpload->command = ROLLER_SET_OFFSET;
           dataUpload->state   = STATE_OK;
+          HIDCONFIG_Upload();
           break;
         }
         /**
@@ -155,7 +185,7 @@ void HIDCONFIG_Receive_Handler()
 
           dataUpload->command = LED_SET_MODE;
           dataUpload->state   = STATE_OK;
-
+          HIDCONFIG_Upload();
           break;
         }
         /**
@@ -205,6 +235,8 @@ void HIDCONFIG_Receive_Handler()
               dataUpload->state = STATE_ERROR;
               break;
           }
+          break;
+          // No Response
         }
         /**
          * @brief Special input get command : 0xE1
@@ -231,19 +263,30 @@ void HIDCONFIG_Receive_Handler()
          * - Bit 0: Coin
          */
         case SP_INPUT_GET: {
-          dataUpload->command         = SP_INPUT_GET;
-          dataUpload->state           = STATE_OK;
-          dataUpload->roller_value_sp = Roller_GetValue();
-          dataUpload->input_status    = KeyScan_GetAllKeyDebouncedStatus();
+          SP_INPUT_Upload();
+          break;
+        }
+        case SP_INPUT_GET_START: {
+          sp_input_state      = 1; // Start special input get
+          dataUpload->command = SP_INPUT_GET_START;
+          dataUpload->state   = STATE_OK;
+          HIDCONFIG_Upload();
+          break;
+        }
+        case SP_INPUT_GET_END: {
+          sp_input_state      = 0; // End special input get
+          dataUpload->command = SP_INPUT_GET_END;
+          dataUpload->state   = STATE_OK;
+          HIDCONFIG_Upload();
           break;
         }
         default: {
           dataUpload->command = CMD_NOT_SUPPORT;
           dataUpload->state   = STATE_ERROR;
+          HIDCONFIG_Upload();
           break;
         }
       }
-      HIDCONFIG_Upload();
       break;
     }
     default: {
