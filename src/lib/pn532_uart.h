@@ -2,8 +2,9 @@
 #define __PN532_UART_H
 
 #include "bsp.h"
+#include "pn532.h"
 
-#define PN532_UART_TIMEOUT 1000
+#define PN532_UART_TIMEOUT PN532_TIMEOUT_VAL
 
 /**
  * @brief 是否启用串口直通模式

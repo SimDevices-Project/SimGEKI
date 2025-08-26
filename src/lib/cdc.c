@@ -61,6 +61,7 @@ xdata void CDC_Init()
   cdc_led_io.Rx_CurPos         = 0;
   cdc_led_io.Req_PacketPos     = 0;
   cdc_led_io.Req_PacketBuf     = ledIO_PacketBuf;
+  cdc_led_io.Res_PacketBuf     = ledIO_ResponseStringBuf;
 
   cdc_card_io.PutCharBuff       = cardIO_PutCharBuf;
   cdc_card_io.PutCharBuff_Last  = 0;
@@ -74,6 +75,7 @@ xdata void CDC_Init()
   cdc_card_io.Rx_CurPos         = 0;
   cdc_card_io.Req_PacketPos     = 0;
   cdc_card_io.Req_PacketBuf     = cardIO_PacketBuf;
+  cdc_card_io.Res_PacketBuf     = cardIO_ResponseStringBuf;
 }
 
 void CDC_IO_USB_Poll(CDC_Struct *IO)
@@ -142,9 +144,9 @@ void CDC_LED_IO_Handler()
 {
   uint8_t checksum, i; // Response flag, also use for checksum & i
   IO_Packet *reqPacket  = (IO_Packet *)cdc_led_io.Req_PacketBuf;
-  IO_Packet *resPackect = (IO_Packet *)ledIO_ResponseStringBuf;
+  IO_Packet *resPackect = (IO_Packet *)cdc_led_io.Res_PacketBuf;
 
-  memset(ledIO_ResponseStringBuf, 0x00, 64); // Clear resPackect
+  memset(resPackect, 0x00, 64); // Clear resPackect
 
   resPackect->sync      = 0xE0;
   resPackect->srcNodeId = reqPacket->dstNodeId;
@@ -298,8 +300,8 @@ void CDC_CARD_IO_Handler()
   static uint8_t mifare_key_B[6];
 
   AIME_Request *req         = (AIME_Request *)cdc_card_io.Req_PacketBuf;
-  AIME_Response *resPackect = (AIME_Response *)cardIO_ResponseStringBuf;
-  memset(cardIO_ResponseStringBuf, 0x00, 128); // Clear resPackect
+  AIME_Response *resPackect = (AIME_Response *)cdc_card_io.Res_PacketBuf;
+  memset(resPackect, 0x00, 128); // Clear resPackect
   memset(&res, 0x00, 128);                     // Clear resPackect
 
   res.addr        = _req.addr;
@@ -430,13 +432,15 @@ void CDC_CARD_IO_Handler()
     case CMD_MIFARE_AUTHORIZE_A:
       PN532_mifareclassic_AuthenticateBlock(_req.uid, 4, _req.block_no, 0, mifare_key_A);
       break;
+    /**
+     * @brief 其他未定义命令，阻塞式
+     */
     // 其他未明行为
     default:
       memcpy(cardIO_ResponseStringBuf, res.buffer, 128);
       CDC_CARD_IO_SendDataReady();
       break;
   }
-
   Sleep_Alive();
 }
 

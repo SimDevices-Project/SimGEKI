@@ -26,6 +26,7 @@ typedef struct {
   uint8_t Rx_CurPos;
   uint8_t Req_PacketPos;
   uint8_t *Req_PacketBuf;
+  uint8_t *Res_PacketBuf;
 } __packed CDC_Struct;
 
 extern CDC_Struct cdc_led_io;

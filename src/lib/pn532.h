@@ -215,4 +215,6 @@ void PN532_felica_through();
  */
 #define PN532_DISABLE_FELICA_CHECK 1
 
+#define PN532_TIMEOUT_VAL 1000
+
 #endif
