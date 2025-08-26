@@ -68,10 +68,10 @@ void PN532_Polling()
 {
   static uint8_t bet = 0; // Between, Mode ISO14443A or FeliCa
   if (bet) {
-    PN532_readPassiveTargetID(PN532_MIFARE_ISO14443A, PN532_TIMEOUT_VAL >> 2);
+    PN532_readPassiveTargetID(PN532_MIFARE_ISO14443A, PN532_TIMEOUT_VAL);
     bet = 0;
   } else {
-    PN532_felica_Polling(0xFFFF, 0x00, PN532_TIMEOUT_VAL >> 2);
+    PN532_felica_Polling(0xFFFF, 0x00, PN532_TIMEOUT_VAL);
     bet = 1;
   }
 }
