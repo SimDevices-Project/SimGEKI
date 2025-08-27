@@ -175,7 +175,7 @@ void PN532_Polling();
 // Generic PN532 functions
 void PN532_SAMConfig(void);
 void PN532_getFirmwareVersion(void);
-void PN532_setPassiveActivationRetries(void);
+void PN532_setPassiveActivationRetries();
 void PN532_setRFField(uint8_t autoRFCA, uint8_t rFOnOff);
 // Polling functions
 void PN532_readPassiveTargetID(uint8_t cardbaudrate, uint16_t timeout);
