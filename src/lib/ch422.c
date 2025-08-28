@@ -73,7 +73,7 @@ xdata void IIC_Init(uint32_t bound, uint16_t address)
 
 xdata void CH422_Init()
 {
-  IIC_Init(400000, IIC_OWN_ADDRESS);
+  IIC_Init(100000, IIC_OWN_ADDRESS);
 }
 
 void CH422_Check()
