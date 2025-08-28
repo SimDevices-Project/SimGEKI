@@ -169,6 +169,7 @@ void CDC_LED_IO_Handler()
       resPackect->length           = 1;
       break;
     case CMD_EXT_BOARD_SET_LED_RGB_DIRECT:
+
       LED_RGB_Set(LED_RGB_PORT_LEFT, 0, reqPacket->request.data[0], reqPacket->request.data[1], reqPacket->request.data[2]); // Left
       LED_RGB_Set(LED_RGB_PORT_LEFT, 1, reqPacket->request.data[0], reqPacket->request.data[1], reqPacket->request.data[2]);
       LED_RGB_Set(LED_RGB_PORT_LEFT, 2, reqPacket->request.data[0], reqPacket->request.data[1], reqPacket->request.data[2]);
@@ -176,13 +177,22 @@ void CDC_LED_IO_Handler()
       LED_RGB_Set(LED_RGB_PORT_LEFT, 4, reqPacket->request.data[3], reqPacket->request.data[4], reqPacket->request.data[5]);
       LED_RGB_Set(LED_RGB_PORT_LEFT, 5, reqPacket->request.data[3], reqPacket->request.data[4], reqPacket->request.data[5]);
 
+      for (i = 2; i < RGB_COUNT_PER_PORT - 6; i++) {
+        LED_RGB_Set(LED_RGB_PORT_LEFT, i + 4, reqPacket->request.data[i * 3], reqPacket->request.data[1 + i * 3], reqPacket->request.data[2 + i * 3]);
+      }
+
       LED_RGB_Set(LED_RGB_PORT_RIGHT, 0, reqPacket->request.data[180], reqPacket->request.data[181], reqPacket->request.data[182]); // Right
       LED_RGB_Set(LED_RGB_PORT_RIGHT, 1, reqPacket->request.data[180], reqPacket->request.data[181], reqPacket->request.data[182]);
       LED_RGB_Set(LED_RGB_PORT_RIGHT, 2, reqPacket->request.data[180], reqPacket->request.data[181], reqPacket->request.data[182]);
       LED_RGB_Set(LED_RGB_PORT_RIGHT, 3, reqPacket->request.data[177], reqPacket->request.data[178], reqPacket->request.data[179]);
       LED_RGB_Set(LED_RGB_PORT_RIGHT, 4, reqPacket->request.data[177], reqPacket->request.data[178], reqPacket->request.data[179]);
       LED_RGB_Set(LED_RGB_PORT_RIGHT, 5, reqPacket->request.data[177], reqPacket->request.data[178], reqPacket->request.data[179]);
-      return;
+
+      for (i = 2; i < RGB_COUNT_PER_PORT - 6; i++) {
+        LED_RGB_Set(LED_RGB_PORT_RIGHT, i + 4, reqPacket->request.data[180 - i * 3], reqPacket->request.data[181 - i * 3], reqPacket->request.data[182 - i * 3]);
+      }
+
+      return; // 不发送回复数据
       break;
     case CMD_EXT_BOARD_INFO:
       memcpy(resPackect->response.data, "15093-06", 8);
@@ -275,7 +285,7 @@ void CDC_CARD_IO_SendData()
   cardIO_SendDataReady_Flag = 0;
 
   res->frame_len = 6 + res->payload_len;
-  checksum      = 0;
+  checksum       = 0;
   for (i = 0; i < res->frame_len; i++) {
     checksum += res->buffer[i];
   }
@@ -298,7 +308,7 @@ void CDC_CARD_IO_Handler()
   static uint8_t mifare_key_A[6];
   static uint8_t mifare_key_B[6];
 
-  AIME_Request *req         = (AIME_Request *)cdc_card_io.Req_PacketBuf;
+  AIME_Request *req  = (AIME_Request *)cdc_card_io.Req_PacketBuf;
   AIME_Response *res = (AIME_Response *)cdc_card_io.Res_PacketBuf;
   memset(res, 0x00, 128); // Clear resPackect
 

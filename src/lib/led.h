@@ -7,6 +7,11 @@ extern "C" {
 
 #include "bsp.h"
 
+#define RGB_PORT_COUNT      3
+#define RGB_COUNT_PER_PORT  35
+
+#define RGB_7COLORS_COUNT   6
+
 typedef enum {
   LED_RGB_PORT_LEFT  = 0x01,
   LED_RGB_PORT_RIGHT = 0x00,

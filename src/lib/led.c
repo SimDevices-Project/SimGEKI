@@ -3,11 +3,6 @@
 #include "timeout.h"
 #include "sleep.h"
 
-#define RGB_PORT_COUNT      3
-#define RGB_COUNT_PER_PORT  6
-
-#define RGB_7COLORS_COUNT   6
-
 #define WS2812_FREQ         800000
 #define TIMER_CLOCK_FREQ    144000000
 
