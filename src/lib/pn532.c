@@ -569,7 +569,7 @@ void PN532_SAMConfig()
   uint8_t packet_buffer[64];
   packet_buffer[0] = PN532_COMMAND_SAMCONFIGURATION;
   packet_buffer[1] = (0x01); // normal mode;
-  packet_buffer[2] = (0x17); // timeout 50ms * 20 = 1 second
+  packet_buffer[2] = (0x00); // timeout 50ms * 20 = 1 second
   packet_buffer[3] = (0x00); //  use IRQ pin
 
   PN532_Status.PN532_Option_Status   = PN532_WAITING_FOR_ACK;
