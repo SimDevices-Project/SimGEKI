@@ -2,7 +2,7 @@
 
 uint8_t KeyTriggerStatus[KEY_COUNT] = {0};
 
-#define KEY_DEBOUNCE_BITS 16
+#define KEY_DEBOUNCE_BITS 8
 
 #if KEY_DEBOUNCE_BITS <= 8
 uint8_t KeyDebounceStatus[KEY_COUNT] = {0};
