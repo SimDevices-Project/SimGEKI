@@ -30,7 +30,7 @@ xdata void KeyScan_Init()
   GPIO_InitStructure.GPIO_Speed = GPIO_Speed_50MHz;
   GPIO_Init(GPIOA, &GPIO_InitStructure);
 
-  // 设置PB10为输出
+  // 设置PB10，即OE为输出
   GPIO_InitStructure.GPIO_Pin   = GPIO_Pin_10;
   GPIO_InitStructure.GPIO_Mode  = GPIO_Mode_Out_PP;
   GPIO_InitStructure.GPIO_Speed = GPIO_Speed_50MHz;
@@ -61,10 +61,10 @@ void DebounceKey(uint8_t keyIndex)
   // 将按键的触发状态加上按键的触发状态
   KeyDebounceStatus[keyIndex] |= GetKeyTriggerStatus(keyIndex);
 
-  if (KeyDebounceStatus[keyIndex] == 0b11 || KeyDebounceStatus[keyIndex] == KEY_DEBOUNCE_MASK) {
+  if (KeyDebounceStatus[keyIndex] == 0b1 || KeyDebounceStatus[keyIndex] == KEY_DEBOUNCE_MASK) {
     // 将按键的状态设置为1
     KeyStatus[keyIndex] = 1;
-  } else if (KeyDebounceStatus[keyIndex] == KEY_DEBOUNCE_MASK - 0b11 || KeyDebounceStatus[keyIndex] == 0) {
+  } else if (KeyDebounceStatus[keyIndex] == KEY_DEBOUNCE_MASK - 0b1 || KeyDebounceStatus[keyIndex] == 0) {
     // 将按键的状态设置为0
     KeyStatus[keyIndex] = 0;
   }

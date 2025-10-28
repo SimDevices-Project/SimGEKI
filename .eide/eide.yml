@@ -1,0 +1,160 @@
+version: "4.1"
+name: SimGEKI
+type: RISC-V
+deviceName: null
+packDir: null
+srcDirs:
+  - src
+  - sdk
+virtualFolder:
+  name: <virtual_root>
+  files: []
+  folders: []
+dependenceList: []
+outDir: build
+miscInfo:
+  uid: 975f454db58c639120f6c2671caca84f
+targets:
+  SimGETRO_EarlyHardware:
+    cppPreprocessAttrs:
+      defineList:
+        - TARGET_SIMGEKI
+        - EARLY_HARDWARE
+      incList:
+        - sdk/Peripheral/inc
+        - src
+        - sdk/Core
+        - sdk/Debug
+        - src/lib
+        - src/usblib/config
+        - src/usblib/usb_driver/inc
+        - src/usblib/usb_driver/src
+      libList: []
+    excludeList:
+      - Startup/startup_ch32v30x_D8.S
+      - sdk/Startup/startup_ch32v20x_D8W.S
+      - sdk/Startup/startup_ch32v20x_D8.S
+    toolchain: RISCV_GCC
+    toolchainConfigMap:
+      RISCV_GCC:
+        linkerScriptPath: ""
+        options:
+          version: 2
+          afterBuildTasks:
+            - name: elf_to_lst
+              abortAfterFailed: false
+              command: riscv-none-embed-objdump --source --all-headers --demangle --disassemble "${OutDir}\${targetName}.elf" > "${OutDir}\${targetName}.lst"
+              disable: false
+          asm-compiler:
+            ASM_FLAGS: -Wl,-Bstatic
+          beforeBuildTasks: []
+          c/cpp-compiler:
+            C_FLAGS: -Wl, -Bstatic -fshort-enums
+            language-c: c99
+            language-cpp: c++11
+            one-elf-section-per-data: true
+            one-elf-section-per-function: true
+            optimization: level-2
+            warnings: all-warnings
+          global:
+            abi: ilp32
+            arch: rv32imac
+            code-model: medany
+            misc-control: -msmall-data-limit=8 -msave-restore -fmessage-length=0 -fsigned-char -ffunction-sections -fdata-sections -fno-common -Wunused -Wuninitialized --specs=nano.specs --specs=nosys.specs
+            output-debug-info: enable
+          linker:
+            $toolName: auto
+            LD_FLAGS: -Xlinker --gc-sections -nostartfiles -T "sdk/Ld/Link.ld"
+            output-format: elf
+            remove-unused-input-sections: true
+    uploadConfigMap:
+      Custom:
+        bin: ${ExecutableName}.bin
+        commandLine: bash ./tools/program_flash.sh "${programFile}"
+        eraseChipCommand: ""
+      JLink:
+        baseAddr: "0x08000000"
+        bin: ""
+        cpuInfo:
+          cpuName: STM32F103C8
+          vendor: ST
+        otherCmds: ""
+        proType: 1
+        speed: 8000
+      OpenOCD:
+        baseAddr: "0x08000000"
+        bin: ""
+        interface: ${workspaceFolder}/tools/null
+        target: ${workspaceFolder}/tools/wch-riscv
+    uploader: Custom
+  SimGETRO_Public:
+    cppPreprocessAttrs:
+      defineList:
+        - TARGET_SIMGEKI
+      incList:
+        - sdk/Peripheral/inc
+        - src
+        - sdk/Core
+        - sdk/Debug
+        - src/lib
+        - src/usblib/config
+        - src/usblib/usb_driver/inc
+        - src/usblib/usb_driver/src
+      libList: []
+    excludeList:
+      - Startup/startup_ch32v30x_D8.S
+      - sdk/Startup/startup_ch32v20x_D8W.S
+      - sdk/Startup/startup_ch32v20x_D8.S
+    toolchain: RISCV_GCC
+    toolchainConfigMap:
+      RISCV_GCC:
+        linkerScriptPath: ""
+        options:
+          version: 2
+          afterBuildTasks:
+            - name: elf_to_lst
+              abortAfterFailed: false
+              command: riscv-none-embed-objdump --source --all-headers --demangle --disassemble "${OutDir}\${targetName}.elf" > "${OutDir}\${targetName}.lst"
+              disable: false
+          asm-compiler:
+            ASM_FLAGS: -Wl,-Bstatic
+          beforeBuildTasks: []
+          c/cpp-compiler:
+            C_FLAGS: -Wl, -Bstatic -fshort-enums
+            language-c: c99
+            language-cpp: c++11
+            one-elf-section-per-data: true
+            one-elf-section-per-function: true
+            optimization: level-2
+            warnings: all-warnings
+          global:
+            abi: ilp32
+            arch: rv32imac
+            code-model: medany
+            misc-control: -msmall-data-limit=8 -msave-restore -fmessage-length=0 -fsigned-char -ffunction-sections -fdata-sections -fno-common -Wunused -Wuninitialized --specs=nano.specs --specs=nosys.specs
+            output-debug-info: enable
+          linker:
+            $toolName: auto
+            LD_FLAGS: -Xlinker --gc-sections -nostartfiles -T "sdk/Ld/Link.ld"
+            output-format: elf
+            remove-unused-input-sections: true
+    uploadConfigMap:
+      Custom:
+        bin: ${ExecutableName}.bin
+        commandLine: bash ./tools/program_flash.sh "${programFile}"
+        eraseChipCommand: ""
+      JLink:
+        baseAddr: "0x08000000"
+        bin: ""
+        cpuInfo:
+          cpuName: STM32F103C8
+          vendor: ST
+        otherCmds: ""
+        proType: 1
+        speed: 8000
+      OpenOCD:
+        baseAddr: "0x08000000"
+        bin: ""
+        interface: ${workspaceFolder}/tools/null
+        target: ${workspaceFolder}/tools/wch-riscv
+    uploader: Custom
