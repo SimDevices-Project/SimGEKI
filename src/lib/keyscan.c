@@ -2,7 +2,7 @@
 
 uint8_t KeyTriggerStatus[KEY_COUNT] = {0};
 
-#define KEY_DEBOUNCE_BITS 8
+#define KEY_DEBOUNCE_BITS 16
 
 #if KEY_DEBOUNCE_BITS <= 8
 uint8_t KeyDebounceStatus[KEY_COUNT] = {0};
@@ -61,10 +61,10 @@ void DebounceKey(uint8_t keyIndex)
   // 将按键的触发状态加上按键的触发状态
   KeyDebounceStatus[keyIndex] |= GetKeyTriggerStatus(keyIndex);
 
-  if (KeyDebounceStatus[keyIndex] == 0b1 || KeyDebounceStatus[keyIndex] == KEY_DEBOUNCE_MASK) {
+  if (KeyDebounceStatus[keyIndex] == 0b11 || KeyDebounceStatus[keyIndex] == KEY_DEBOUNCE_MASK) {
     // 将按键的状态设置为1
     KeyStatus[keyIndex] = 1;
-  } else if (KeyDebounceStatus[keyIndex] == KEY_DEBOUNCE_MASK - 0b1 || KeyDebounceStatus[keyIndex] == 0) {
+  } else if (KeyDebounceStatus[keyIndex] == KEY_DEBOUNCE_MASK - 0b11 || KeyDebounceStatus[keyIndex] == 0) {
     // 将按键的状态设置为0
     KeyStatus[keyIndex] = 0;
   }
