@@ -17,7 +17,7 @@ static HidconfigData *dataUpload  = (HidconfigData *)HIDCFG_Buffer_IN;
 void HIDCONFIG_Upload();
 void HIDCONFIG_Receive_Handler();
 
-volatile uint8_t sp_input_state = 0;
+volatile uint8_t sp_input_state = 0; // DLL输入模式 Flag
 
 void SP_INPUT_Upload()
 {
@@ -36,9 +36,7 @@ void SP_INPUT_Upload()
 
 void SP_INPUT_OnDataUpdate_Handler()
 {
-  if (sp_input_state == 1) {
-    SP_INPUT_Upload();
-  }
+  SP_INPUT_Upload();
 }
 
 /**

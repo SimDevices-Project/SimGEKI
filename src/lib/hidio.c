@@ -3,6 +3,8 @@
 #include "keyscan.h"
 #include "roller.h"
 #include "sleep.h"
+#include "string.h"
+#include "data.h"
 
 // #include "debug.h"
 
@@ -18,8 +20,13 @@
 uint8_t HID_Buffer_OUT[64] = {0x00};
 uint8_t HID_Buffer_IN[64]  = {0x00};
 
+uint8_t HID_SGIO4_Buffer_IN[64] = {0x00};
+uint8_t HID_KBD_Buffer_IN[18]   = {0x00};
+
 static DataReceive *dataReceive = (DataReceive *)HID_Buffer_OUT;
-static DataUpload *dataUpload   = (DataUpload *)HID_Buffer_IN;
+static DataUpload *dataUpload   = (DataUpload *)HID_SGIO4_Buffer_IN;
+
+static KbdData *kbdData = (KbdData *)HID_KBD_Buffer_IN;
 
 static uint16_t prevKeyStatus    = 0;
 static uint16_t activeKeyStatus  = 0;
@@ -42,7 +49,7 @@ void HIDIO_Receive_Handler()
           dataUpload->systemStatus = 0x30;
 
           clearInterval(intervalID);
-          intervalID = setInterval(HIDIO_Upload, 5);
+          intervalID = setInterval(HIDIO_SGIO4_Heartbeat, 6);
           break;
         }
         case SET_SAMPLING_COUNT: {
@@ -80,13 +87,45 @@ void HIDIO_Receive_Handler()
   Sleep_Alive();
 }
 
-void HIDIO_Upload()
+uint8_t HIDIO_SGIO4_Upload()
 {
-  USBD_ENDPx_DataUp(OUT_EP, HID_Buffer_IN, 64);
-  SP_INPUT_OnDataUpdate_Handler();
+  memset(HID_Buffer_IN, 0, 64);
+  memcpy(HID_Buffer_IN, HID_SGIO4_Buffer_IN, 64);
+  return USBD_ENDPx_DataUp(OUT_EP, HID_Buffer_IN, 64);
 }
 
-void HIDIO_FreshData()
+uint8_t HIDIO_KBD_Upload()
+{
+  memset(HID_Buffer_IN, 0, 64);
+  memcpy(HID_Buffer_IN, HID_KBD_Buffer_IN, 18);
+  return USBD_ENDPx_DataUp(OUT_EP, HID_Buffer_IN, 18);
+}
+
+void HIDIO_Upload()
+{
+  switch (GlobalData->DeviceMode) {
+    case 1:
+      HIDIO_SGIO4_Upload();
+      break;
+    case 2:
+      SP_INPUT_OnDataUpdate_Handler();
+      break;
+    case 3:
+      HIDIO_KBD_Upload();
+      break;
+    default:
+      break;
+  }
+}
+
+void HIDIO_SGIO4_Heartbeat()
+{
+  if (GlobalData->DeviceMode == 1) {
+    HIDIO_SGIO4_Upload();
+  }
+}
+
+void HIDIO_SGIO4_FreshData()
 {
   // Roller
   dataUpload->analog[0] = activeRollerValue;
@@ -114,8 +153,36 @@ void HIDIO_FreshData()
     dataUpload->coin[0].count++;
     dataUpload->coin[1].count++;
   }
+}
 
-  HIDIO_Upload();
+void HIDIO_KBD_FreshData()
+{
+  // Roller
+  // dataUpload->analog[0] = activeRollerValue;
+
+  // Buttons
+  memset(kbdData, 0x00, sizeof(KbdData));
+  kbdData->reportID = 0x31;
+
+  for (uint8_t i = 0; i < KEY_COUNT; i++) {
+    if (i == 0x04 || i == 0x09) {
+      // RSide 和 LSide 需要特殊处理
+      continue;
+    }
+    if (KeyScan_GetKeyDebouncedStatus(i)) {
+      kbdData->ctrlkey |= kbd_key_map[i][0];
+      kbdData->keymap[i] = kbd_key_map[i][1];
+    }
+  }
+  // RSide 和 LSide 特殊处理
+  if (!KeyScan_GetKeyDebouncedStatus(0x04)) {
+    kbdData->ctrlkey |= kbd_key_map[0x04][0];
+    kbdData->keymap[0x04] = kbd_key_map[0x04][1];
+  }
+  if(!KeyScan_GetKeyDebouncedStatus(0x09)) {
+    kbdData->ctrlkey |= kbd_key_map[0x09][0];
+    kbdData->keymap[0x09] = kbd_key_map[0x09][1];
+  }
 }
 
 void HIDIO_Update()
@@ -138,7 +205,19 @@ void HIDIO_Update()
 
   if (freshRequired) {
     Sleep_Alive();
-    HIDIO_FreshData();
+    switch (GlobalData->DeviceMode) {
+      case 1:
+        HIDIO_SGIO4_FreshData();
+        break;
+      case 2:
+        break;
+      case 3:
+        HIDIO_KBD_FreshData();
+        break;
+      default:
+        break;
+    }
+    HIDIO_Upload();
   }
 }
 
@@ -155,8 +234,8 @@ xdata void HIDIO_Init()
   // dataForUpload->systemStatus = 0x02;
   dataUpload->systemStatus = 0x30;
 
-  HIDIO_FreshData();
+  HIDIO_SGIO4_FreshData();
 
   clearInterval(intervalID);
-  intervalID = setInterval(HIDIO_Upload, 30);
+  intervalID = setInterval(HIDIO_SGIO4_Heartbeat, 30);
 }

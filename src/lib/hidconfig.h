@@ -20,6 +20,9 @@ typedef enum {
 } __packed HidconfigLedTag;
 
 typedef enum {
+  DEVICE_MODE_GET = 0x01,
+  DEVICE_MODE_SET = 0x02, 
+
   RELOAD_DATA = 0x80,
   SAVE_DATA   = 0x81,
 
@@ -48,9 +51,12 @@ typedef struct {
     uint8_t payload[60];
     struct
     {
+      uint8_t device_mode; // Device mode, 1:SGIO4, 2:Private HID, 3:Keyboard Mouse
+    };
+    struct
+    {
       uint32_t sleep_timeout;
     };
-
     struct {
       uint16_t roller_value;     // Roller value, 0x0000-0xFFFF
       uint16_t roller_raw_value; // Roller raw value, 0x0000-0xFFFF

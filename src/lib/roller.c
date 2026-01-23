@@ -256,6 +256,9 @@ uint16_t Get_ADC_ConversionVal(int16_t val)
   return (val + Calibrattion_Val);
 }
 
+/**
+ * @brief 重新启动SPI和DMA，关闭ADC，初始化摇杆，供后续模式切换使用
+ */
 xdata void Roller_Init()
 {
   SPI_FullDuplex_Init();
@@ -266,6 +269,15 @@ xdata void Roller_Init()
 
   DMA_Cmd(DMA1_Channel5, ENABLE);
   DMA_Cmd(DMA1_Channel4, ENABLE);
+
+  // 禁用ADC和对应DMA通道
+
+  ADC_DMACmd(ADC1, DISABLE);
+  ADC_Cmd(ADC1, DISABLE);
+
+  DMA_Cmd(DMA1_Channel1, DISABLE);
+
+  rollerMode = ROLLER_MODE_TEST;
 }
 
 xdata void Roller_ADC_Init()

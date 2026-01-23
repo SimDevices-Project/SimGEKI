@@ -41,7 +41,7 @@ extern "C" {
 #define USBD_SIZE_DEVICE_DESC             18
 #define USBD_SIZE_CONFIG_DESC             205
 
-#define USBD_SIZE_REPORT_DESC             113
+#define USBD_SIZE_REPORT_DESC             236
 #define USBD_SIZE_CUSTOM_REPORT_DESC      27
 
 #define USBD_NUMOF_REPORT_DESC            2

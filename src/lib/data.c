@@ -6,6 +6,7 @@ __attribute__((aligned(8))) RamData dat;
 static volatile const RamData DEFAULT_DATA __attribute__((section(".flashdat"))) = {
     .RollerOffset = 0x0000,
     .SleepTimeout = 0x000927C0, // 600000 ms = 10 minutes
+    .DeviceMode   = 0x03,
     ._unused      = {0}};
 
 FlashData *Data     = (FlashData *)FLASH_FAST_DATA_BASE_ADDR;

@@ -43,6 +43,12 @@ typedef struct {
   uint8_t payload[62];
 } __packed DataReceive;
 
+typedef struct {
+  uint8_t reportID;
+  uint8_t ctrlkey;
+  uint8_t keymap[16];
+} __packed KbdData;
+
 const static uint8_t hid_key_map[KEY_COUNT][2] = {
     // COL1
     {0},
@@ -71,9 +77,36 @@ const static uint8_t hid_key_map[KEY_COUNT][2] = {
     {0}, // Coin
 };
 
+const static uint8_t kbd_key_map[KEY_COUNT][2] = {
+    // COL1
+    {0},
+    {0x00, 0x16}, // LA
+    {0x00, 0x07}, // LB
+    {0x00, 0x09}, // LC
+
+    {0x00, 0x33}, // RSide
+
+    // COL2
+    {0},
+    {0x00, 0x0D}, // RA
+    {0x00, 0x0E}, // RB
+    {0x00, 0x0F}, // RC
+
+    {0x00, 0x04}, // LSide
+
+    // COL3
+    {0x00, 0x14}, // LMenu
+    {0x00, 0x13}, // RMenu
+    {0x00, 0x3A}, // Test
+    {0x00, 0x3B}, // Service
+    {0},
+
+    // COIN
+    {0x00, 0x3C}, // Coin
+};
+void HIDIO_SGIO4_Heartbeat();
 void HIDIO_Init();
 void HIDIO_Receive_Handler();
-void HIDIO_Upload();
 void HIDIO_Update();
 
 extern uint8_t HID_Buffer_OUT[64];
