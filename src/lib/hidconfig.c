@@ -134,18 +134,18 @@ void HIDCONFIG_Receive_Handler()
           HIDCONFIG_Upload();
           break;
         }
-        case DEVICE_MODE_GET: {
+        case INPUT_MODE_GET: {
           // Get device mode
-          dataUpload->command     = DEVICE_MODE_GET;
+          dataUpload->command     = INPUT_MODE_GET;
           dataUpload->state       = STATE_OK;
           dataUpload->device_mode = GlobalData->DeviceMode;
           HIDCONFIG_Upload();
           break;
         }
-        case DEVICE_MODE_SET: {
+        case INPUT_MODE_SET: {
           // Set device mode
           GlobalData->DeviceMode = dataReceive->device_mode;
-          dataUpload->command    = DEVICE_MODE_SET;
+          dataUpload->command    = INPUT_MODE_SET;
           dataUpload->state      = STATE_OK;
           HIDCONFIG_Upload();
           break;

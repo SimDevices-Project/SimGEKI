@@ -20,8 +20,8 @@ typedef enum {
 } __packed HidconfigLedTag;
 
 typedef enum {
-  DEVICE_MODE_GET = 0x01,
-  DEVICE_MODE_SET = 0x02, 
+  INPUT_MODE_GET = 0x01,
+  INPUT_MODE_SET = 0x02, 
 
   RELOAD_DATA = 0x80,
   SAVE_DATA   = 0x81,
