@@ -37,6 +37,9 @@ static uint16_t activeRollerValue = 0;
 
 uint8_t intervalID = 0xFF;
 
+#define INTERVAL_HEARTBEAT_MS_IDLE   30
+#define INTERVAL_HEARTBEAT_MS_ACTIVE 6
+
 const uint8_t bitPosMap[] = {23, 20, 22, 19, 21, 18, 17, 16, 15, 14, 13, 12, 11, 10, 9, 8, 7, 6};
 
 void HIDIO_Receive_Handler()
@@ -49,7 +52,7 @@ void HIDIO_Receive_Handler()
           dataUpload->systemStatus = 0x30;
 
           clearInterval(intervalID);
-          intervalID = setInterval(HIDIO_SGIO4_Heartbeat, 6);
+          intervalID = setInterval(HIDIO_SGIO4_Heartbeat, INTERVAL_HEARTBEAT_MS_ACTIVE);
           break;
         }
         case SET_SAMPLING_COUNT: {
@@ -103,18 +106,24 @@ uint8_t HIDIO_KBD_Upload()
 
 void HIDIO_Upload()
 {
+  uint8_t usbResult = 0xFF;
   switch (GlobalData->DeviceMode) {
     case 1:
-      HIDIO_SGIO4_Upload();
+      resetInterval(intervalID);
+      usbResult = HIDIO_SGIO4_Upload();
       break;
     case 2:
       SP_INPUT_OnDataUpdate_Handler();
+      usbResult = USB_SUCCESS;
       break;
     case 3:
-      HIDIO_KBD_Upload();
+      usbResult = HIDIO_KBD_Upload();
       break;
     default:
       break;
+  }
+  if (usbResult != USB_SUCCESS) {
+    setTimeout(HIDIO_Upload, 0); // 重试上传
   }
 }
 
@@ -179,7 +188,7 @@ void HIDIO_KBD_FreshData()
     kbdData->ctrlkey |= kbd_key_map[0x04][0];
     kbdData->keymap[0x04] = kbd_key_map[0x04][1];
   }
-  if(!KeyScan_GetKeyDebouncedStatus(0x09)) {
+  if (!KeyScan_GetKeyDebouncedStatus(0x09)) {
     kbdData->ctrlkey |= kbd_key_map[0x09][0];
     kbdData->keymap[0x09] = kbd_key_map[0x09][1];
   }
@@ -237,5 +246,5 @@ xdata void HIDIO_Init()
   HIDIO_SGIO4_FreshData();
 
   clearInterval(intervalID);
-  intervalID = setInterval(HIDIO_SGIO4_Heartbeat, 30);
+  intervalID = setInterval(HIDIO_SGIO4_Heartbeat, INTERVAL_HEARTBEAT_MS_IDLE);
 }
