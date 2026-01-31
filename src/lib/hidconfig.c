@@ -14,7 +14,7 @@ static HidconfigData *dataUpload  = (HidconfigData *)HIDCFG_Buffer_IN;
 
 #define HID_CFG_EP ENDP4
 
-void HIDCONFIG_Upload();
+uint8_t HIDCONFIG_Upload();
 void HIDCONFIG_Receive_Handler();
 
 volatile uint8_t sp_input_state = 0; // DLL输入模式 Flag
@@ -131,6 +131,22 @@ void HIDCONFIG_Receive_Handler()
 
           dataUpload->command = ROLLER_SET_OFFSET;
           dataUpload->state   = STATE_OK;
+          HIDCONFIG_Upload();
+          break;
+        }
+        case DEVICE_MODE_GET: {
+          // Get device mode
+          dataUpload->command     = DEVICE_MODE_GET;
+          dataUpload->state       = STATE_OK;
+          dataUpload->device_mode = GlobalData->DeviceMode;
+          HIDCONFIG_Upload();
+          break;
+        }
+        case DEVICE_MODE_SET: {
+          // Set device mode
+          GlobalData->DeviceMode = dataReceive->device_mode;
+          dataUpload->command    = DEVICE_MODE_SET;
+          dataUpload->state      = STATE_OK;
           HIDCONFIG_Upload();
           break;
         }
@@ -293,7 +309,7 @@ void HIDCONFIG_Receive_Handler()
   }
 }
 
-void HIDCONFIG_Upload()
+uint8_t HIDCONFIG_Upload()
 {
-  USBD_ENDPx_DataUp(HID_CFG_EP, HIDCFG_Buffer_IN, 64);
+  return USBD_ENDPx_DataUp(HID_CFG_EP, HIDCFG_Buffer_IN, 64);
 }
