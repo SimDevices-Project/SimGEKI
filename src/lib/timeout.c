@@ -91,6 +91,20 @@ void clearTimeout(uint8_t id)
   }
 }
 
+void resetTimeout(uint8_t id)
+{
+  if (id < MAX_TIMER_COUNT) {
+    timeout[id].time = 0;
+  }
+}
+
+void resetInterval(uint8_t id)
+{
+  if (id < MAX_TIMER_COUNT) {
+    interval[id].time = 0;
+  }
+}
+
 void Timer_Process()
 {
   uint16_t timerSetRec = timerSet;
