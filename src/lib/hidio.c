@@ -106,6 +106,7 @@ uint8_t HIDIO_KBD_Upload()
 
 void HIDIO_Upload()
 {
+  static uint8_t timeoutID = 0xFF;
   uint8_t usbResult = 0xFF;
   switch (GlobalData->DeviceMode) {
     case 1:
@@ -123,7 +124,8 @@ void HIDIO_Upload()
       break;
   }
   if (usbResult != USB_SUCCESS) {
-    setTimeout(HIDIO_Upload, 0); // 重试上传
+    clearTimeout(timeoutID);
+    timeoutID = setTimeout(HIDIO_Upload, 0); // 重试上传
   }
 }
 
