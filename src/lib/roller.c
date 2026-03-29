@@ -354,6 +354,7 @@ void Roller_Update()
         DMA_Cmd(DMA1_Channel4, DISABLE);
         Roller_ADC_Init();
       }
+      break;
     }
     case ROLLER_MODE_SPI: {
       if ((!DMA_GetFlagStatus(DMA1_FLAG_TC5)) && (!DMA_GetFlagStatus(DMA1_FLAG_TC4))) {
