@@ -129,18 +129,6 @@
 // uint8_t  readPassiveTargetID(uint8_t cardbaudrate, uint8_t *uid, uint8_t *uidLength, uint16_t timeout, uint8_t inlist);
 // int8_t   felica_Polling(uint16_t systemCode, uint8_t requestCode, uint8_t *idm, uint8_t *pmm, uint16_t *systemCodeResponse, uint16_t timeout);
 
-struct _PN532_Status{
-  _Bool PN532_Connected_Status;
-  uint8_t PN532_Option_Status;   
-  uint8_t PN532_CMD_Status;
-  uint8_t PN532_PARAMETER;
-  uint8_t PN532_Failed_task_key;
-  uint8_t PN532_felica_idm[8]; 
-  uint8_t PN532_felica_pmm[8]; 
-  uint8_t PN532_felica_systemcode[2];//0低位，1高位
-};
-extern struct _PN532_Status PN532_Status;
-
 enum PN532_option{
   PN532_NONE_STATUS = 0X00,
   PN532_STANDBY = 0X01,
@@ -168,7 +156,6 @@ enum PN532_cmd{
 };
 
 void PN532_Init();
-void PN532_Failed();
 void PN532_Check();
 void PN532_Polling();
 
@@ -205,7 +192,6 @@ uint8_t PN532_mifareclassic_ReadDataBlock_callback (void);
 int8_t PN532_felica_ReadWithoutEncryption_callback(void);
 int8_t PN532_felica_WriteWithoutEncryption_callback(void);
 
-void res_init(uint8_t payload_len);
 void PN532_felica_through();
 
 /**

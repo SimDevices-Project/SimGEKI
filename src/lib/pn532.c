@@ -6,14 +6,18 @@
 #include <string.h>
 #include <stdio.h>
 
-uint8_t _uid[7];       // ISO14443A uid
-uint8_t _uidLen;       // uid len
-uint8_t _key[6];       // Mifare Classic key
-uint8_t inListedTag;   // Tg number of inlisted tag.
-uint8_t _felicaIDm[8]; // FeliCa IDm (NFCID2)
-uint8_t _felicaPMm[8]; // FeliCa PMm (PAD)
-
 extern CDC_Struct cdc_card_io;
+
+typedef struct {
+  uint8_t option_status;
+  uint8_t command_status;
+  uint8_t parameter;
+  uint8_t failure_timer_id;
+  uint8_t inlisted_tag;
+  uint8_t felica_idm[8];
+  uint8_t felica_pmm[8];
+  uint8_t felica_system_code[2];
+} PN532_State;
 
 enum {
   STATUS_OK                  = 0x00,
@@ -38,13 +42,55 @@ enum {
   FelicaActive2                 = 0xA4,
 };
 
-struct _PN532_Status PN532_Status;
+static PN532_State pn532_state = {
+    .failure_timer_id = 0xFF,
+};
 
 #ifdef PN532_INTERFACE_UART
 #define INTR(fun) (PN532_UART.fun)
 #endif
 
-void res_init_s(uint8_t payload_len, AIME_Request *req, AIME_Response *res)
+static void PN532_Failed(void);
+
+static AIME_Request *PN532_GetRequest(void)
+{
+  return (AIME_Request *)cdc_card_io.Req_PacketBuf;
+}
+
+static AIME_Response *PN532_GetResponse(void)
+{
+  return (AIME_Response *)cdc_card_io.Res_PacketBuf;
+}
+
+static void PN532_ClearFailureTimer(void)
+{
+  if (pn532_state.failure_timer_id != 0xFF) {
+    clearTimeout(pn532_state.failure_timer_id);
+    pn532_state.failure_timer_id = 0xFF;
+  }
+}
+
+static void PN532_BeginCommand(enum PN532_cmd cmd, uint16_t timeout)
+{
+  pn532_state.option_status    = PN532_WAITING_FOR_ACK;
+  pn532_state.command_status   = cmd;
+  pn532_state.failure_timer_id = setTimeout(PN532_Failed, timeout);
+}
+
+static void PN532_ImmediateFailure(enum PN532_cmd cmd)
+{
+  pn532_state.option_status    = PN532_ERROR;
+  pn532_state.command_status   = cmd;
+  pn532_state.failure_timer_id = setTimeout(PN532_Failed, 0);
+}
+
+static void PN532_MarkSuccess(void)
+{
+  pn532_state.option_status = PN532_SUCCESS;
+  PN532_ClearFailureTimer();
+}
+
+static void res_init_s(uint8_t payload_len, AIME_Request *req, AIME_Response *res)
 {
   res->frame_len   = 6 + payload_len;
   res->addr        = req->addr;
@@ -54,10 +100,10 @@ void res_init_s(uint8_t payload_len, AIME_Request *req, AIME_Response *res)
   res->payload_len = payload_len;
 }
 
-void res_init(uint8_t payload_len)
+static void res_init(uint8_t payload_len)
 {
-  AIME_Response *res = (AIME_Response *)cdc_card_io.Res_PacketBuf;
-  AIME_Request *req  = (AIME_Request *)cdc_card_io.Req_PacketBuf;
+  AIME_Response *res = PN532_GetResponse();
+  AIME_Request *req  = PN532_GetRequest();
   return res_init_s(payload_len, req, res);
 }
 
@@ -80,20 +126,20 @@ void PN532_Polling()
 */
 /**************************************************************************/
 
-void PN532_Failed()
+static void PN532_Failed(void)
 {
-  AIME_Request *req  = (AIME_Request *)cdc_card_io.Req_PacketBuf;
-  AIME_Response *res = (AIME_Response *)cdc_card_io.Res_PacketBuf;
+  AIME_Request *req  = PN532_GetRequest();
+  AIME_Response *res = PN532_GetResponse();
 
-  if (PN532_Status.PN532_Option_Status == PN532_SUCCESS) {
-    PN532_Status.PN532_Option_Status = PN532_STANDBY;
+  if (pn532_state.option_status == PN532_SUCCESS) {
+    pn532_state.option_status = PN532_STANDBY;
     return;
 
-  } else if (PN532_Status.PN532_Option_Status == PN532_STANDBY) {
+  } else if (pn532_state.option_status == PN532_STANDBY) {
     //
   }
-  PN532_Status.PN532_Option_Status = PN532_ERROR;
-  switch (PN532_Status.PN532_CMD_Status) {
+  pn532_state.option_status = PN532_ERROR;
+  switch (pn532_state.command_status) {
     case PN532_SAMCONFIG:
       CDC_CARD_IO_SendDataReady();
       break;
@@ -156,7 +202,7 @@ void PN532_Failed()
 */
 /**************************************************************************/
 
-int16_t readResponse(uint8_t *buf, uint8_t len, uint8_t command)
+static int16_t readResponse(uint8_t *buf, uint8_t len, uint8_t command)
 {
   if (len < 4) {
     return PN532_NO_SPACE;
@@ -194,8 +240,7 @@ int16_t readResponse(uint8_t *buf, uint8_t len, uint8_t command)
   //       //Checksum error
   //       return PN532_INVALID_FRAME;
   //   }
-  // return length[0];
-  return 0;
+  return buf[3];
 }
 /**************************************************************************/
 /*!
@@ -204,9 +249,8 @@ int16_t readResponse(uint8_t *buf, uint8_t len, uint8_t command)
 /**************************************************************************/
 void PN532_Check()
 {
-
-  AIME_Request *req  = (AIME_Request *)cdc_card_io.Req_PacketBuf;
-  AIME_Response *res = (AIME_Response *)cdc_card_io.Res_PacketBuf;
+  AIME_Request *req  = PN532_GetRequest();
+  AIME_Response *res = PN532_GetResponse();
 
   // printf("uart check");
 #ifdef PN532_INTERFACE_UART
@@ -217,45 +261,41 @@ void PN532_Check()
   if (size == 0) {
     return;
   }
-  if (PN532_Status.PN532_Option_Status == PN532_WAITING_FOR_ACK) {
-    PN532_Status.PN532_Option_Status = PN532_WAITING_FOR_RESPONSE;
+  if (pn532_state.option_status == PN532_WAITING_FOR_ACK) {
+    pn532_state.option_status = PN532_WAITING_FOR_RESPONSE;
     if ((buffer[0] == 0) && (buffer[1] == 0) && (buffer[2] == 0xff) && (buffer[3] == 0) && (buffer[4] == 0xff) && (buffer[5] == 0)) {
       memmove(buffer, buffer + 6, size);
     }
   }
-  if (PN532_Status.PN532_Option_Status == PN532_WAITING_FOR_RESPONSE) {
+  if (pn532_state.option_status == PN532_WAITING_FOR_RESPONSE) {
     uint8_t status;
 
-    switch (PN532_Status.PN532_CMD_Status) {
+    switch (pn532_state.command_status) {
       case PN532_SAMCONFIG:
-        if (!readResponse(buffer, size, PN532_COMMAND_SAMCONFIGURATION)) {
+        if (readResponse(buffer, size, PN532_COMMAND_SAMCONFIGURATION) >= 0) {
           // success
-          PN532_Status.PN532_Option_Status = PN532_SUCCESS;
-          clearTimeout(PN532_Status.PN532_Failed_task_key);
+          PN532_MarkSuccess();
         }
         break;
       case PN532_GET_VERSION:
-        PN532_Status.PN532_Option_Status = PN532_SUCCESS;
+        PN532_MarkSuccess();
         break;
       case PN532_SET_PASSIVE_ACTIVATION_RETRIES:
-        if (!readResponse(buffer, size, PN532_COMMAND_RFCONFIGURATION)) {
+        if (readResponse(buffer, size, PN532_COMMAND_RFCONFIGURATION) >= 0) {
           // success
-          PN532_Status.PN532_Option_Status = PN532_SUCCESS;
-          clearTimeout(PN532_Status.PN532_Failed_task_key);
+          PN532_MarkSuccess();
         }
         break;
       case PN532_SET_RFFIELD:
-        if (!readResponse(buffer, size, PN532_COMMAND_RFCONFIGURATION)) {
+        if (readResponse(buffer, size, PN532_COMMAND_RFCONFIGURATION) >= 0) {
           // success
-          PN532_Status.PN532_Option_Status = PN532_SUCCESS;
-          clearTimeout(PN532_Status.PN532_Failed_task_key);
+          PN532_MarkSuccess();
         }
         break;
       case PN532_READ_PASSIVE_TARGET_ID:
-        if (!readResponse(buffer, size, PN532_COMMAND_INLISTPASSIVETARGET)) {
+        if (readResponse(buffer, size, PN532_COMMAND_INLISTPASSIVETARGET) >= 0) {
           // success
-          PN532_Status.PN532_Option_Status = PN532_SUCCESS;
-          clearTimeout(PN532_Status.PN532_Failed_task_key);
+          PN532_MarkSuccess();
           if (buffer[7] == 0) {
             res_init(1);
             res->count = 0;
@@ -273,25 +313,23 @@ void PN532_Check()
         }
         break;
       case PN532_MIFARE_AUTHENTICATE_BLOCK:
-        if (!readResponse(buffer, size, PN532_COMMAND_INDATAEXCHANGE)) {
+        if (readResponse(buffer, size, PN532_COMMAND_INDATAEXCHANGE) >= 0) {
           // Check if the response is valid and we are authenticated???
           // for an auth success it should be bytes 5-7: 0xD5 0x41 0x00
           // Mifare auth error is technically byte 7: 0x14 but anything other and 0x00 is not good
           if (buffer[7] == 0x00) {
-            PN532_Status.PN532_Option_Status = PN532_SUCCESS;
+            PN532_MarkSuccess();
             // Authentification success
-            clearTimeout(PN532_Status.PN532_Failed_task_key);
             res_init(0);
             CDC_CARD_IO_SendDataReady();
           }
         }
         break;
       case PN532_MIFARE_READ_BLOCK:
-        if (!readResponse(buffer, size, PN532_COMMAND_INDATAEXCHANGE)) {
+        if (readResponse(buffer, size, PN532_COMMAND_INDATAEXCHANGE) >= 0) {
           /* If isn't 0x00 we probably have an error */
           if (buffer[7] == 0x00) {
-            PN532_Status.PN532_Option_Status = PN532_SUCCESS;
-            clearTimeout(PN532_Status.PN532_Failed_task_key);
+            PN532_MarkSuccess();
             res_init(0x10);
             memcpy(res->block, &buffer[8], 16);
             CDC_CARD_IO_SendDataReady();
@@ -299,11 +337,10 @@ void PN532_Check()
         }
         break;
       case PN532_FELICA_POLLING:
-        if (!readResponse(buffer, size, PN532_COMMAND_INLISTPASSIVETARGET)) {
+        if (readResponse(buffer, size, PN532_COMMAND_INLISTPASSIVETARGET) >= 0) {
           // Check NbTg (pn532_packetbuffer[7])
           if (buffer[7] == 0) {
-            PN532_Status.PN532_Option_Status = PN532_SUCCESS;
-            clearTimeout(PN532_Status.PN532_Failed_task_key);
+            PN532_MarkSuccess();
             res_init(1);
             res->count = 0;
             CDC_CARD_IO_SendDataReady();
@@ -313,24 +350,23 @@ void PN532_Check()
             // Unhandled number of targets inlisted.
             break;
           }
-          inListedTag = buffer[7 + 1];
+          pn532_state.inlisted_tag = buffer[7 + 1];
           // length check
           uint8_t responseLength = buffer[7 + 2];
           if (responseLength != 18 && responseLength != 20) {
             // Wrong response length
             break;
           }
-          PN532_Status.PN532_Option_Status = PN532_SUCCESS;
-          clearTimeout(PN532_Status.PN532_Failed_task_key);
+          PN532_MarkSuccess();
           for (uint8_t i = 0; i < 8; ++i) {
             res->IDm[i] = buffer[7 + 4 + i];
             res->PMm[i] = buffer[7 + 12 + i];
           }
-          memcpy(PN532_Status.PN532_felica_pmm, res->PMm, 8);
-          memcpy(PN532_Status.PN532_felica_idm, res->IDm, 8);
+          memcpy(pn532_state.felica_pmm, res->PMm, 8);
+          memcpy(pn532_state.felica_idm, res->IDm, 8);
           if (responseLength == 20) {
-            PN532_Status.PN532_felica_systemcode[0] = buffer[7 + 21];
-            PN532_Status.PN532_felica_systemcode[1] = buffer[7 + 20];
+            pn532_state.felica_system_code[0] = buffer[7 + 21];
+            pn532_state.felica_system_code[1] = buffer[7 + 20];
           }
           res_init(0x13);
           res->count  = 1;
@@ -342,7 +378,7 @@ void PN532_Check()
       case PN532_FELICA_READ:
         // CDC_LED_IO_PutChar(0xA1);
         status = readResponse(buffer, size, PN532_COMMAND_INDATAEXCHANGE);
-        if (status == 0) {
+        if (status >= 0) {
           // CDC_LED_IO_PutChar(0xA2);
           // Check status
           if ((buffer[7] & 0x3F) != 0) {
@@ -357,7 +393,7 @@ void PN532_Check()
             // return;
           }
           // length check
-          if ((buffer[8] - 1) != 12 + 16 * PN532_Status.PN532_PARAMETER) {
+          if ((buffer[8] - 1) != 12 + 16 * pn532_state.parameter) {
             // CDC_LED_IO_PutChar(0xA5);
             // Read Without Encryption command failed (wrong response length)
             return;
@@ -370,10 +406,9 @@ void PN532_Check()
             return;
           }
           // CDC_LED_IO_PutChar(0xA7);
-          PN532_Status.PN532_Option_Status = PN532_SUCCESS;
-          clearTimeout(PN532_Status.PN532_Failed_task_key);
+          PN532_MarkSuccess();
           uint8_t k = 9 + 12;
-          for (uint8_t i = 0; i < PN532_Status.PN532_PARAMETER; i++) {
+          for (uint8_t i = 0; i < pn532_state.parameter; i++) {
             for (uint8_t j = 0; j < 16; j++) {
               res->blockData[i][j] = buffer[k++];
             }
@@ -419,8 +454,7 @@ void PN532_Check()
         //   return;
         // }
         // CDC_LED_IO_PutChar(0xB7);
-        PN532_Status.PN532_Option_Status = PN532_SUCCESS;
-        clearTimeout(PN532_Status.PN532_Failed_task_key);
+        PN532_MarkSuccess();
         res_init(0x0C);
         res->RW_status[0] = 0;
         res->RW_status[1] = 0;
@@ -436,27 +470,27 @@ void PN532_Check()
 
 void PN532_felica_through()
 {
-  AIME_Request *req = (AIME_Request *)cdc_card_io.Req_PacketBuf;
-  AIME_Response *res = (AIME_Response *)cdc_card_io.Res_PacketBuf;
+  AIME_Request *req  = PN532_GetRequest();
+  AIME_Response *res = PN532_GetResponse();
 
-  memcpy(req->encap_IDm, PN532_Status.PN532_felica_idm, 8);
-  // memcpy(res->poll_PMm,PN532_Status.PN532_felica_pmm,8);
+  memcpy(req->encap_IDm, pn532_state.felica_idm, 8);
+  // memcpy(res->poll_PMm,pn532_state.felica_pmm,8);
 
   uint8_t code   = req->encap_code;
   res->encap_code = code + 1;
   switch (code) {
     case FelicaPolling:
       res_init(0x14);
-      // res->poll_system_code[0] = PN532_Status.PN532_felica_systemcode[0];
-      // res->poll_system_code[1] = PN532_Status.PN532_felica_systemcode[1];
+      // res->poll_system_code[0] = pn532_state.felica_system_code[0];
+      // res->poll_system_code[1] = pn532_state.felica_system_code[1];
       res->poll_system_code[0] = 0x88;
       res->poll_system_code[1] = 0xb4;
       break;
     case Felica_reqSysCode:
       res_init(0x0D);
       res->felica_payload[0] = 0x01;
-      // res->felica_payload[1] = PN532_Status.PN532_felica_systemcode[0];
-      // res->felica_payload[2] = PN532_Status.PN532_felica_systemcode[1];
+      // res->felica_payload[1] = pn532_state.felica_system_code[0];
+      // res->felica_payload[2] = pn532_state.felica_system_code[1];
       res->poll_system_code[0] = 0x88;
       res->poll_system_code[1] = 0xb4;
       break;
@@ -477,14 +511,14 @@ void PN532_felica_through()
       PN532_felica_ReadWithoutEncryption(1, &serviceCodeList, req->numBlock, blockList, res->blockData);
 #endif
 #if PN532_DISABLE_FELICA_CHECK == 1
-      PN532_Status.PN532_PARAMETER = req->numBlock;
-      if (PN532_Status.PN532_PARAMETER == 1) {
+      pn532_state.parameter = req->numBlock;
+      if (pn532_state.parameter == 1) {
         for (uint8_t j = 0; j < 8; j++) {
-          res->blockData[0][j] = PN532_Status.PN532_felica_idm[j];
+          res->blockData[0][j] = pn532_state.felica_idm[j];
         }
       } else {
         for (uint8_t j = 0; j < 8; j++) {
-          res->blockData[0][j] = PN532_Status.PN532_felica_idm[j];
+          res->blockData[0][j] = pn532_state.felica_idm[j];
         }
         for (uint8_t i = 1; i < 4; i++) {
           for (uint8_t j = 0; j < 16; j++) {
@@ -509,7 +543,7 @@ void PN532_felica_through()
       PN532_felica_WriteWithoutEncryption(1, &serviceCodeList, 1, &blockList, &req->blockData);
 #endif
 #if PN532_DISABLE_FELICA_CHECK == 1
-      PN532_Status.PN532_PARAMETER = req->numBlock;
+      pn532_state.parameter = req->numBlock;
       res_init(0x0C);
       res->RW_status[0] = 0;
       res->RW_status[1] = 0;
@@ -533,6 +567,7 @@ void PN532_felica_through()
 /**************************************************************************/
 void PN532_Init()
 {
+  pn532_state.failure_timer_id = 0xFF;
   INTR(begin)();
   INTR(wakeup)();
   setTimeout(PN532_getFirmwareVersion, 100);
@@ -552,9 +587,7 @@ void PN532_getFirmwareVersion(void)
   uint8_t packet_buffer[64];
   packet_buffer[0] = (PN532_COMMAND_GETFIRMWAREVERSION);
 
-  PN532_Status.PN532_Option_Status   = PN532_WAITING_FOR_ACK;
-  PN532_Status.PN532_CMD_Status      = PN532_GET_VERSION;
-  PN532_Status.PN532_Failed_task_key = setTimeout(PN532_Failed, PN532_TIMEOUT_VAL);
+  PN532_BeginCommand(PN532_GET_VERSION, PN532_TIMEOUT_VAL);
 
   INTR(writeCommand)(packet_buffer, 1, 0, 0);
 }
@@ -572,9 +605,7 @@ void PN532_SAMConfig()
   packet_buffer[2] = (0x00); // timeout 50ms * 20 = 1 second
   packet_buffer[3] = (0x00); //  use IRQ pin
 
-  PN532_Status.PN532_Option_Status   = PN532_WAITING_FOR_ACK;
-  PN532_Status.PN532_CMD_Status      = PN532_SAMCONFIG;
-  PN532_Status.PN532_Failed_task_key = setTimeout(PN532_Failed, 5000);
+  PN532_BeginCommand(PN532_SAMCONFIG, 5000);
 
   INTR(writeCommand)(packet_buffer, 4, 0, 0);
 }
@@ -600,9 +631,7 @@ void PN532_setPassiveActivationRetries()
   packet_buffer[3] = (0x01); // MxRtyPSL (default = 0x01)
   packet_buffer[4] = (maxRetries);
 
-  PN532_Status.PN532_Option_Status   = PN532_WAITING_FOR_ACK;
-  PN532_Status.PN532_CMD_Status      = PN532_SET_PASSIVE_ACTIVATION_RETRIES;
-  PN532_Status.PN532_Failed_task_key = setTimeout(PN532_Failed, PN532_TIMEOUT_VAL);
+  PN532_BeginCommand(PN532_SET_PASSIVE_ACTIVATION_RETRIES, PN532_TIMEOUT_VAL);
 
   INTR(writeCommand)(packet_buffer, 5, 0, 0);
 }
@@ -631,9 +660,7 @@ void PN532_setRFField(uint8_t autoRFCA, uint8_t rFOnOff)
   packet_buffer[1] = (1);
   packet_buffer[2] = (0x00 | autoRFCA | rFOnOff);
 
-  PN532_Status.PN532_Option_Status   = PN532_WAITING_FOR_ACK;
-  PN532_Status.PN532_CMD_Status      = PN532_SET_RFFIELD;
-  PN532_Status.PN532_Failed_task_key = setTimeout(PN532_Failed, PN532_TIMEOUT_VAL);
+  PN532_BeginCommand(PN532_SET_RFFIELD, PN532_TIMEOUT_VAL);
 
   INTR(writeCommand)(packet_buffer, 3, 0, 0);
 }
@@ -662,9 +689,7 @@ void PN532_readPassiveTargetID(uint8_t cardbaudrate, uint16_t timeout)
   packet_buffer[1] = (1); // max 1 cards at once (we can set this to 2 later)
   packet_buffer[2] = (cardbaudrate);
 
-  PN532_Status.PN532_Option_Status   = PN532_WAITING_FOR_ACK;
-  PN532_Status.PN532_CMD_Status      = PN532_READ_PASSIVE_TARGET_ID;
-  PN532_Status.PN532_Failed_task_key = setTimeout(PN532_Failed, timeout);
+  PN532_BeginCommand(PN532_READ_PASSIVE_TARGET_ID, timeout);
 
   INTR(writeCommand)(packet_buffer, 3, 0, 0);
 }
@@ -699,16 +724,10 @@ void PN532_mifareclassic_AuthenticateBlock(uint8_t *uid, uint8_t uidLen, uint32_
   packet_buffer[2] = (keyNumber ? MIFARE_CMD_AUTH_B : MIFARE_CMD_AUTH_A);
   packet_buffer[3] = blockNumber; /* Block Number (1K = 0..63, 4K = 0..255 */
   // memcpy(packet_buffer + 4, keyData, 6);
-  for (uint8_t i = 0; i < 6; i++) {
-    packet_buffer[4 + i] = keyData[i]; /* 4 bytes card ID */
-  }
-  for (uint8_t i = 0; i < uidLen; i++) {
-    packet_buffer[10 + i] = uid[i]; /* 4 bytes card ID */
-  }
+  memcpy(packet_buffer + 4, keyData, 6);
+  memcpy(packet_buffer + 10, uid, uidLen);
 
-  PN532_Status.PN532_Option_Status   = PN532_WAITING_FOR_ACK;
-  PN532_Status.PN532_CMD_Status      = PN532_MIFARE_AUTHENTICATE_BLOCK;
-  PN532_Status.PN532_Failed_task_key = setTimeout(PN532_Failed, PN532_TIMEOUT_VAL);
+  PN532_BeginCommand(PN532_MIFARE_AUTHENTICATE_BLOCK, PN532_TIMEOUT_VAL);
 
   INTR(writeCommand)(packet_buffer, 10 + uidLen, 0, 0);
 }
@@ -735,9 +754,7 @@ void PN532_mifareclassic_ReadDataBlock(uint8_t blockNumber, uint8_t *data)
   packet_buffer[2] = (MIFARE_CMD_READ); /* Mifare Read command = 0x30 */
   packet_buffer[3] = (blockNumber);     /* Block Number (0..63 for 1K, 0..255 for 4K) */
 
-  PN532_Status.PN532_Option_Status   = PN532_WAITING_FOR_ACK;
-  PN532_Status.PN532_CMD_Status      = PN532_MIFARE_READ_BLOCK;
-  PN532_Status.PN532_Failed_task_key = setTimeout(PN532_Failed, PN532_TIMEOUT_VAL);
+  PN532_BeginCommand(PN532_MIFARE_READ_BLOCK, PN532_TIMEOUT_VAL);
 
   INTR(writeCommand)(packet_buffer, 4, 0, 0);
 }
@@ -773,9 +790,7 @@ void PN532_felica_Polling(uint16_t systemCode, uint8_t _requestCode, uint16_t ti
   packet_buffer[6] = (_requestCode);
   packet_buffer[7] = (0);
 
-  PN532_Status.PN532_Option_Status   = PN532_WAITING_FOR_ACK;
-  PN532_Status.PN532_CMD_Status      = PN532_FELICA_POLLING;
-  PN532_Status.PN532_Failed_task_key = setTimeout(PN532_Failed, timeout);
+  PN532_BeginCommand(PN532_FELICA_POLLING, timeout);
 
   INTR(writeCommand)(packet_buffer, 8, 0, 0);
 }
@@ -792,11 +807,11 @@ void PN532_felica_Polling(uint16_t systemCode, uint8_t _requestCode, uint16_t ti
                                      < 0: error
 */
 /**************************************************************************/
-void PN532_felica_SendCommand(const uint8_t *command, uint8_t commandlength)
+static void PN532_felica_SendCommand(const uint8_t *command, uint8_t commandlength)
 {
   uint8_t packet_buffer[64];
   packet_buffer[0] = 0x40; // PN532_COMMAND_INDATAEXCHANGE;--
-  packet_buffer[1] = inListedTag;
+  packet_buffer[1] = pn532_state.inlisted_tag;
   packet_buffer[2] = commandlength + 1;
   INTR(writeCommand)(packet_buffer, 3, command, commandlength);
 }
@@ -817,24 +832,20 @@ void PN532_felica_SendCommand(const uint8_t *command, uint8_t commandlength)
 void PN532_felica_ReadWithoutEncryption(uint8_t numService, const uint16_t *serviceCodeList, uint8_t numBlock, const uint16_t *blockList, uint8_t blockData[][16])
 {
   if (numService > FELICA_READ_MAX_SERVICE_NUM) {
-    PN532_Status.PN532_Option_Status   = PN532_ERROR;
-    PN532_Status.PN532_CMD_Status      = PN532_FELICA_READ;
-    PN532_Status.PN532_Failed_task_key = setTimeout(PN532_Failed, 0);
+    PN532_ImmediateFailure(PN532_FELICA_READ);
     return;
   }
   if (numBlock > 4) {
-    PN532_Status.PN532_Option_Status   = PN532_ERROR;
-    PN532_Status.PN532_CMD_Status      = PN532_FELICA_READ;
-    PN532_Status.PN532_Failed_task_key = setTimeout(PN532_Failed, 0);
+    PN532_ImmediateFailure(PN532_FELICA_READ);
     return;
   }
-  PN532_Status.PN532_PARAMETER = numBlock;
+  pn532_state.parameter = numBlock;
   uint8_t i, j = 0;
   uint8_t cmdLen = 1 + 8 + 1 + 2 * numService + 1 + 2 * numBlock;
   uint8_t cmd[cmdLen];
   cmd[j++] = FELICA_CMD_READ_WITHOUT_ENCRYPTION;
   for (i = 0; i < 8; ++i) {
-    cmd[j++] = _felicaIDm[i];
+    cmd[j++] = pn532_state.felica_idm[i];
   }
   cmd[j++] = numService;
   for (i = 0; i < numService; ++i) {
@@ -847,9 +858,7 @@ void PN532_felica_ReadWithoutEncryption(uint8_t numService, const uint16_t *serv
     cmd[j++] = blockList[i] & 0xff;
   }
 
-  PN532_Status.PN532_Option_Status   = PN532_WAITING_FOR_ACK;
-  PN532_Status.PN532_CMD_Status      = PN532_FELICA_READ;
-  PN532_Status.PN532_Failed_task_key = setTimeout(PN532_Failed, PN532_TIMEOUT_VAL);
+  PN532_BeginCommand(PN532_FELICA_READ, PN532_TIMEOUT_VAL);
   PN532_felica_SendCommand(cmd, cmdLen);
 }
 
@@ -869,24 +878,20 @@ void PN532_felica_ReadWithoutEncryption(uint8_t numService, const uint16_t *serv
 void PN532_felica_WriteWithoutEncryption(uint8_t numService, const uint16_t *serviceCodeList, uint8_t numBlock, const uint16_t *blockList, uint8_t blockData[][16])
 {
   if (numService > FELICA_WRITE_MAX_SERVICE_NUM) {
-    PN532_Status.PN532_Option_Status   = PN532_ERROR;
-    PN532_Status.PN532_CMD_Status      = PN532_FELICA_WRITE;
-    PN532_Status.PN532_Failed_task_key = setTimeout(PN532_Failed, 0);
+    PN532_ImmediateFailure(PN532_FELICA_WRITE);
     return;
   }
   if (numBlock > FELICA_WRITE_MAX_BLOCK_NUM) {
-    PN532_Status.PN532_Option_Status   = PN532_ERROR;
-    PN532_Status.PN532_CMD_Status      = PN532_FELICA_WRITE;
-    PN532_Status.PN532_Failed_task_key = setTimeout(PN532_Failed, 0);
+    PN532_ImmediateFailure(PN532_FELICA_WRITE);
     return;
   }
-  PN532_Status.PN532_PARAMETER = numBlock;
+  pn532_state.parameter = numBlock;
   uint8_t i, j = 0, k;
   uint8_t cmdLen = 1 + 8 + 1 + 2 * numService + 1 + 2 * numBlock + 16 * numBlock;
   uint8_t cmd[cmdLen];
   cmd[j++] = FELICA_CMD_WRITE_WITHOUT_ENCRYPTION;
   for (i = 0; i < 8; ++i) {
-    cmd[j++] = _felicaIDm[i];
+    cmd[j++] = pn532_state.felica_idm[i];
   }
   cmd[j++] = numService;
   for (i = 0; i < numService; ++i) {
@@ -904,8 +909,6 @@ void PN532_felica_WriteWithoutEncryption(uint8_t numService, const uint16_t *ser
     }
   }
 
-  PN532_Status.PN532_Option_Status   = PN532_WAITING_FOR_ACK;
-  PN532_Status.PN532_CMD_Status      = PN532_FELICA_WRITE;
-  PN532_Status.PN532_Failed_task_key = setTimeout(PN532_Failed, PN532_TIMEOUT_VAL);
+  PN532_BeginCommand(PN532_FELICA_WRITE, PN532_TIMEOUT_VAL);
   PN532_felica_SendCommand(cmd, cmdLen);
 }
