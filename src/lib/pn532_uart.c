@@ -20,11 +20,13 @@ uint8_t command;
 #define UARTOE              GPIO_Pin_8
 
 uint8_t RxBuffer[RX_BUFFER_COUNT][RX_BUFFER_SIZE];
-uint8_t RxIndex[RX_BUFFER_COUNT] = {0};
+volatile uint8_t RxIndex[RX_BUFFER_COUNT] = {0};
 
-uint8_t RxBufferIndex = 0;
+volatile uint8_t RxWriteIndex = 0;
+volatile uint8_t RxReadIndex  = 0;
 
-uint8_t RxBufferCount = 0;
+volatile uint8_t RxBufferCount = 0;
+volatile uint8_t RxDropCurrentFrame = 0;
 
 void USART1_IRQHandler(void) __attribute__((interrupt("WCH-Interrupt-fast")));
 
@@ -54,7 +56,17 @@ void USART1_IRQHandler(void)
     CDC_CARD_IO_PutChar(USART_ReceiveData(USART1));
     return;
 #else
-    RxBuffer[RxBufferIndex][RxIndex[RxBufferIndex]++] = USART_ReceiveData(USART1);
+    uint8_t data = USART_ReceiveData(USART1);
+    if (RxDropCurrentFrame == 0) {
+      uint8_t index = RxIndex[RxWriteIndex];
+      if (index < RX_BUFFER_SIZE) {
+        RxBuffer[RxWriteIndex][index] = data;
+        RxIndex[RxWriteIndex]         = index + 1;
+      } else {
+        // Current frame is longer than one software buffer, drop it safely.
+        RxDropCurrentFrame = 1;
+      }
+    }
 #endif
   }
 #if PN532_UART_DIRECT != 1
@@ -62,12 +74,24 @@ void USART1_IRQHandler(void)
     (void)USART1->STATR; // 读取 STATR 寄存器以清除空闲中断标志
     (void)USART1->DATAR; // 读取 DATAR 寄存器以清除空闲中断标志
     // USART_ClearFlag(USART1, USART_FLAG_IDLE); // 不需要这么清除
-    RxBufferIndex++;
-    if (RxBufferIndex >= RX_BUFFER_COUNT) {
-      RxBufferIndex = 0;
+    if ((RxDropCurrentFrame == 0) && (RxIndex[RxWriteIndex] > 0)) {
+      if (RxBufferCount < (RX_BUFFER_COUNT - 1)) {
+        RxBufferCount++;
+      } else {
+        // Queue full: drop the oldest completed frame to keep latest frames.
+        RxReadIndex++;
+        if (RxReadIndex >= RX_BUFFER_COUNT) {
+          RxReadIndex = 0;
+        }
+      }
+
+      RxWriteIndex++;
+      if (RxWriteIndex >= RX_BUFFER_COUNT) {
+        RxWriteIndex = 0;
+      }
     }
-    RxIndex[RxBufferIndex] = 0;
-    RxBufferCount++;
+    RxIndex[RxWriteIndex]  = 0;
+    RxDropCurrentFrame     = 0;
     // PN532_UART_RxDataCheck();
   }
 #endif
@@ -75,21 +99,26 @@ void USART1_IRQHandler(void)
 
 uint8_t __GetNextRxBuffer(uint8_t **buf, uint8_t *len)
 {
-  if (RxBufferCount == 0) {
-    return 0;
-  }
   uint8_t next;
   USART_ITConfig(USART1, USART_IT_RXNE, DISABLE);
 #if PN532_UART_DIRECT != 1
   USART_ITConfig(USART1, USART_IT_IDLE, DISABLE);
 #endif
-  if (RxBufferCount > RxBufferIndex) {
-    next = (RX_BUFFER_COUNT - RxBufferCount) + RxBufferIndex;
-  } else {
-    next = RxBufferIndex - RxBufferCount;
+  if (RxBufferCount == 0) {
+    USART_ITConfig(USART1, USART_IT_RXNE, ENABLE);
+#if PN532_UART_DIRECT != 1
+    USART_ITConfig(USART1, USART_IT_IDLE, ENABLE);
+#endif
+    return 0;
   }
+
+  next = RxReadIndex;
   *buf = RxBuffer[next];
   *len = RxIndex[next];
+  RxReadIndex++;
+  if (RxReadIndex >= RX_BUFFER_COUNT) {
+    RxReadIndex = 0;
+  }
   RxBufferCount--;
   USART_ITConfig(USART1, USART_IT_RXNE, ENABLE);
 #if PN532_UART_DIRECT != 1
