@@ -1,7 +1,7 @@
 # SimGEKI Standard Release Firmware Files
 
-Last updated: 2025-07-24 10:43:46 UTC
-Release tag: v1.20250724
+Last updated: 2026-03-29 15:44:35 UTC
+Release tag: v1.20260203
 
 ## Available Files:
 
