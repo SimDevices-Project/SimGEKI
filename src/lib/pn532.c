@@ -264,7 +264,7 @@ void PN532_Check()
   if (pn532_state.option_status == PN532_WAITING_FOR_ACK) {
     pn532_state.option_status = PN532_WAITING_FOR_RESPONSE;
     if ((buffer[0] == 0) && (buffer[1] == 0) && (buffer[2] == 0xff) && (buffer[3] == 0) && (buffer[4] == 0xff) && (buffer[5] == 0)) {
-      memmove(buffer, buffer + 6, size);
+      memmove(buffer, buffer + 6, size - 6);
     }
   }
   if (pn532_state.option_status == PN532_WAITING_FOR_RESPONSE) {
