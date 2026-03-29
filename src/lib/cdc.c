@@ -78,39 +78,51 @@ xdata void CDC_Init()
 void CDC_IO_USB_Poll(CDC_Struct *IO)
 {
   uint8_t usb_tx_len;
-  if (bDeviceState == CONFIGURED) {
-    // 只有在端点空闲的时候才能发送数据
-    if (GetEPTxStatus(IO->USB_EndPoint) == EP_TX_NAK) {
+  if (bDeviceState != CONFIGURED) {
+    // USB 未枚举时，直接清空待发送队列，避免阻塞与历史数据堆积。
+    IO->PutCharBuff_First = IO->PutCharBuff_Last;
+    IO->Tx_Full           = 0;
+    return;
+  }
 
-      if (IO->PutCharBuff_First != IO->PutCharBuff_Last || IO->Tx_Full) {
-        // 计算可发送数据长度
-        if (IO->PutCharBuff_First <= IO->PutCharBuff_Last) {
-          usb_tx_len = IO->PutCharBuff_Last - IO->PutCharBuff_First;
-        } else {
-          usb_tx_len = CDC_PUTCHARBUF_LEN - IO->PutCharBuff_First;
-        }
+  // 只有在端点空闲的时候才能发送数据
+  if (GetEPTxStatus(IO->USB_EndPoint) == EP_TX_NAK) {
 
-        // 限制单次发送长度
-        if (usb_tx_len > IO->USB_PacketSize) {
-          usb_tx_len = IO->USB_PacketSize;
-        }
-
-        // 复制数据
-        memcpy(usb_DataUpBuf, &IO->PutCharBuff[IO->PutCharBuff_First], usb_tx_len);
-
-        // 更新指针
-        IO->PutCharBuff_First = (IO->PutCharBuff_First + usb_tx_len) % CDC_PUTCHARBUF_LEN;
-
-        // 发送数据
-        USBD_ENDPx_DataUp(IO->USB_EndPoint, usb_DataUpBuf, usb_tx_len);
-        IO->Tx_Full = 0;
+    if (IO->PutCharBuff_First != IO->PutCharBuff_Last || IO->Tx_Full) {
+      // 计算可发送数据长度
+      if (IO->PutCharBuff_First <= IO->PutCharBuff_Last) {
+        usb_tx_len = IO->PutCharBuff_Last - IO->PutCharBuff_First;
+      } else {
+        usb_tx_len = CDC_PUTCHARBUF_LEN - IO->PutCharBuff_First;
       }
+
+      // 限制单次发送长度
+      if (usb_tx_len > IO->USB_PacketSize) {
+        usb_tx_len = IO->USB_PacketSize;
+      }
+
+      // 复制数据
+      memcpy(usb_DataUpBuf, &IO->PutCharBuff[IO->PutCharBuff_First], usb_tx_len);
+
+      // 更新指针
+      IO->PutCharBuff_First = (IO->PutCharBuff_First + usb_tx_len) % CDC_PUTCHARBUF_LEN;
+
+      // 发送数据
+      USBD_ENDPx_DataUp(IO->USB_EndPoint, usb_DataUpBuf, usb_tx_len);
+      IO->Tx_Full = 0;
     }
   }
 }
 
 void CDC_IO_PutChar(CDC_Struct *IO, uint8_t tdata)
 {
+  // USB 未枚举时，直接丢弃当前发送数据。
+  if (bDeviceState != CONFIGURED) {
+    IO->PutCharBuff_First = IO->PutCharBuff_Last;
+    IO->Tx_Full           = 0;
+    return;
+  }
+
   // Add new data to LED IO PutCharBuf
   IO->PutCharBuff[IO->PutCharBuff_Last++] = tdata;
   if (IO->PutCharBuff_Last >= CDC_PUTCHARBUF_LEN) {
