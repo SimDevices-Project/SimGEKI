@@ -119,9 +119,7 @@ void Timer_Process()
     interval[i].time += timerSetRec;
     if (interval[i].time >= interval[i].period) {
       interval[i].time = 0;
-      TIM_ITConfig(TIM4, TIM_IT_Update, DISABLE);
       interval[i].callback();
-      TIM_ITConfig(TIM4, TIM_IT_Update, ENABLE);
     }
   }
   for (i = 0; i < MAX_TIMER_COUNT; i++) {
