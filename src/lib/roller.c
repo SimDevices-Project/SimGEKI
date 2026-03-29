@@ -15,6 +15,10 @@
 #define _offset                GlobalData->RollerOffset
 #define VALUE_DEFAULT          0x8000
 
+#define ADC_DISCARD_SAMPLES 8
+#define ADC_VALID_SAMPLES   64
+#define ADC_TOTAL_SAMPLES   (ADC_DISCARD_SAMPLES + ADC_VALID_SAMPLES)
+
 typedef enum {
   ROLLER_MODE_TEST = 0,
   ROLLER_MODE_SPI,
@@ -318,7 +322,7 @@ xdata void Roller_ADC_Init()
   while (ADC_GetCalibrationStatus(ADC1));
   Calibrattion_Val = Get_CalibrationValue(ADC1); // 获取校准值
 
-  DMA_Tx_Init_ADC(DMA1_Channel1, (u32)&ADC1->RDATAR, (u32)&ADCValue, 64);
+  DMA_Tx_Init_ADC(DMA1_Channel1, (u32)&ADC1->RDATAR, (u32)&ADCValue, ADC_TOTAL_SAMPLES);
   ADC_SoftwareStartConvCmd(ADC1, ENABLE);
 
   DMA_Cmd(DMA1_Channel1, ENABLE);
@@ -384,18 +388,18 @@ void Roller_Update()
 
       uint8_t i;
       uint32_t sum = 0;
-      for (i = 8; i < 72; i++) {
+      for (i = ADC_DISCARD_SAMPLES; i < ADC_TOTAL_SAMPLES; i++) {
         sum += ADCValue[i];
       }
 
-      // 读取ADC值
+      // 读取ADC值（后64个有效样本平均）
       EncoderValue = Get_ADC_ConversionVal(sum >> 6);
       EncoderValue = ~EncoderValue; // 取反以符合编码器方向
       EncoderValue <<= 4;
 
       // 重新开始ADC转换
       DMA_Cmd(DMA1_Channel1, DISABLE);
-      DMA_SetCurrDataCounter(DMA1_Channel1, 72);
+      DMA_SetCurrDataCounter(DMA1_Channel1, ADC_TOTAL_SAMPLES);
       DMA_Cmd(DMA1_Channel1, ENABLE);
       break;
     }
