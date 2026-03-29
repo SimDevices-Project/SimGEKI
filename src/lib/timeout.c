@@ -129,10 +129,8 @@ void Timer_Process()
     timeout[i].time += timerSetRec;
     if (timeout[i].time >= timeout[i].period) {
       timeout[i].time = 0;
-      TIM_ITConfig(TIM4, TIM_IT_Update, DISABLE);
       timeout[i].callback();
       clearTimeout(i);
-      TIM_ITConfig(TIM4, TIM_IT_Update, ENABLE);
     }
   }
 }
