@@ -220,22 +220,22 @@ void HIDCONFIG_Receive_Handler()
           dataUpload->command = SP_LED_SET;
           switch (dataReceive->board_id) {
             case 0x00: // RGB ports
-              LED_RGB_SetPort(LED_RGB_PORT_LEFT, dataReceive->led_rgb_left[0][0], dataReceive->led_rgb_left[0][1], dataReceive->led_rgb_left[0][2]);
-              LED_RGB_SetPort(LED_RGB_PORT_LEFT, dataReceive->led_rgb_left[1][0], dataReceive->led_rgb_left[1][1], dataReceive->led_rgb_left[1][2]);
-              LED_RGB_SetPort(LED_RGB_PORT_LEFT, dataReceive->led_rgb_left[2][0], dataReceive->led_rgb_left[2][1], dataReceive->led_rgb_left[2][2]);
-              LED_RGB_SetPort(LED_RGB_PORT_LEFT, dataReceive->led_rgb_left[3][0], dataReceive->led_rgb_left[3][1], dataReceive->led_rgb_left[3][2]);
-              LED_RGB_SetPort(LED_RGB_PORT_LEFT, dataReceive->led_rgb_left[4][0], dataReceive->led_rgb_left[4][1], dataReceive->led_rgb_left[4][2]);
-              LED_RGB_SetPort(LED_RGB_PORT_LEFT, dataReceive->led_rgb_left[5][0], dataReceive->led_rgb_left[5][1], dataReceive->led_rgb_left[5][2]);
-              LED_RGB_SetPort(LED_RGB_PORT_RIGHT, dataReceive->led_rgb_right[0][0], dataReceive->led_rgb_right[0][1], dataReceive->led_rgb_right[0][2]);
-              LED_RGB_SetPort(LED_RGB_PORT_RIGHT, dataReceive->led_rgb_right[1][0], dataReceive->led_rgb_right[1][1], dataReceive->led_rgb_right[1][2]);
-              LED_RGB_SetPort(LED_RGB_PORT_RIGHT, dataReceive->led_rgb_right[2][0], dataReceive->led_rgb_right[2][1], dataReceive->led_rgb_right[2][2]);
-              LED_RGB_SetPort(LED_RGB_PORT_RIGHT, dataReceive->led_rgb_right[3][0], dataReceive->led_rgb_right[3][1], dataReceive->led_rgb_right[3][2]);
-              LED_RGB_SetPort(LED_RGB_PORT_RIGHT, dataReceive->led_rgb_right[4][0], dataReceive->led_rgb_right[4][1], dataReceive->led_rgb_right[4][2]);
-              LED_RGB_SetPort(LED_RGB_PORT_RIGHT, dataReceive->led_rgb_right[5][0], dataReceive->led_rgb_right[5][1], dataReceive->led_rgb_right[5][2]);
-              // LED_RGB_SetPort(LED_RGB_PORT_UART, dataReceive->led_rgb_uart[0][0], dataReceive->led_rgb_uart[0][1], dataReceive->led_rgb_uart[0][2]);
-              // LED_RGB_SetPort(LED_RGB_PORT_UART, dataReceive->led_rgb_uart[1][0], dataReceive->led_rgb_uart[1][1], dataReceive->led_rgb_uart[1][2]);
-              // LED_RGB_SetPort(LED_RGB_PORT_UART, dataReceive->led_rgb_uart[2][0], dataReceive->led_rgb_uart[2][1], dataReceive->led_rgb_uart[2][2]);
-              // LED_RGB_SetPort(LED_RGB_PORT_UART, dataReceive->led_rgb_uart[3][0], dataReceive->led_rgb_uart[3][1], dataReceive->led_rgb_uart[3][2]);
+              LED_RGB_Set(LED_RGB_PORT_LEFT, 0, dataReceive->led_rgb_left[0][0], dataReceive->led_rgb_left[0][1], dataReceive->led_rgb_left[0][2]);
+              LED_RGB_Set(LED_RGB_PORT_LEFT, 1, dataReceive->led_rgb_left[1][0], dataReceive->led_rgb_left[1][1], dataReceive->led_rgb_left[1][2]);
+              LED_RGB_Set(LED_RGB_PORT_LEFT, 2, dataReceive->led_rgb_left[2][0], dataReceive->led_rgb_left[2][1], dataReceive->led_rgb_left[2][2]);
+              LED_RGB_Set(LED_RGB_PORT_LEFT, 3, dataReceive->led_rgb_left[3][0], dataReceive->led_rgb_left[3][1], dataReceive->led_rgb_left[3][2]);
+              LED_RGB_Set(LED_RGB_PORT_LEFT, 4, dataReceive->led_rgb_left[4][0], dataReceive->led_rgb_left[4][1], dataReceive->led_rgb_left[4][2]);
+              LED_RGB_Set(LED_RGB_PORT_LEFT, 5, dataReceive->led_rgb_left[5][0], dataReceive->led_rgb_left[5][1], dataReceive->led_rgb_left[5][2]);
+              LED_RGB_Set(LED_RGB_PORT_RIGHT, 0, dataReceive->led_rgb_right[0][0], dataReceive->led_rgb_right[0][1], dataReceive->led_rgb_right[0][2]);
+              LED_RGB_Set(LED_RGB_PORT_RIGHT, 1, dataReceive->led_rgb_right[1][0], dataReceive->led_rgb_right[1][1], dataReceive->led_rgb_right[1][2]);
+              LED_RGB_Set(LED_RGB_PORT_RIGHT, 2, dataReceive->led_rgb_right[2][0], dataReceive->led_rgb_right[2][1], dataReceive->led_rgb_right[2][2]);
+              LED_RGB_Set(LED_RGB_PORT_RIGHT, 3, dataReceive->led_rgb_right[3][0], dataReceive->led_rgb_right[3][1], dataReceive->led_rgb_right[3][2]);
+              LED_RGB_Set(LED_RGB_PORT_RIGHT, 4, dataReceive->led_rgb_right[4][0], dataReceive->led_rgb_right[4][1], dataReceive->led_rgb_right[4][2]);
+              LED_RGB_Set(LED_RGB_PORT_RIGHT, 5, dataReceive->led_rgb_right[5][0], dataReceive->led_rgb_right[5][1], dataReceive->led_rgb_right[5][2]);
+              // LED_RGB_Set(LED_RGB_PORT_UART, 0, dataReceive->led_rgb_uart[0][0], dataReceive->led_rgb_uart[0][1], dataReceive->led_rgb_uart[0][2]);
+              // LED_RGB_Set(LED_RGB_PORT_UART, 1, dataReceive->led_rgb_uart[1][0], dataReceive->led_rgb_uart[1][1], dataReceive->led_rgb_uart[1][2]);
+              // LED_RGB_Set(LED_RGB_PORT_UART, 2, dataReceive->led_rgb_uart[2][0], dataReceive->led_rgb_uart[2][1], dataReceive->led_rgb_uart[2][2]);
+              // LED_RGB_Set(LED_RGB_PORT_UART, 3, dataReceive->led_rgb_uart[3][0], dataReceive->led_rgb_uart[3][1], dataReceive->led_rgb_uart[3][2]);
               break;
             case 0x01: // 7C RGB LED
               LED_7C_Set(LED_7C_L1, dataReceive->led_7c[0] & 0x01, dataReceive->led_7c[0] >> 1 & 0x01, dataReceive->led_7c[0] >> 2 & 0x01);
