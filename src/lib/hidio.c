@@ -125,7 +125,7 @@ void HIDIO_Upload()
   }
   if (usbResult != USB_SUCCESS) {
     clearTimeout(timeoutID);
-    timeoutID = setTimeout(HIDIO_Upload, 0); // 重试上传
+    timeoutID = setTimeout(HIDIO_Upload, 1); // 重试上传
   }
 }
 
