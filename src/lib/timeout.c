@@ -13,7 +13,7 @@ typedef struct {
 Timer_TypeDef interval[MAX_TIMER_COUNT] = {0};
 Timer_TypeDef timeout[MAX_TIMER_COUNT]  = {0};
 
-uint32_t timerSet = 0;
+volatile uint32_t timerSet = 0;
 
 xdata void Timer4_Config(void)
 {
@@ -107,9 +107,11 @@ void resetInterval(uint8_t id)
 
 void Timer_Process()
 {
-  uint16_t timerSetRec = timerSet;
-  uint8_t i;
+  TIM_ITConfig(TIM4, TIM_IT_Update, DISABLE);
+  uint32_t timerSetRec = timerSet;
   timerSet = 0;
+  TIM_ITConfig(TIM4, TIM_IT_Update, ENABLE);
+  uint8_t i;
   for (i = 0; i < MAX_TIMER_COUNT; i++) {
     if (interval[i].callback == NULL) {
       continue;
