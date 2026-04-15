@@ -462,7 +462,7 @@ uint16_t Roller_GetValue()
   if (outputValue <= VALUE_OFFSET_MASK - _offset) {
     finalOutputValue = outputValue + _offset;
   } else {
-    finalOutputValue = ((_offset + outputValue) & VALUE_OFFSET_MASK) + 1;
+    finalOutputValue = ((_offset + outputValue) & VALUE_OFFSET_MASK);
   }
 
   // 对finalOutputValue进行扩大处理
