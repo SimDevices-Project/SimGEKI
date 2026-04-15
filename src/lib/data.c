@@ -47,6 +47,8 @@ void SaveData()
 {
   uint32_t Offset = 0x00;
 
+  __disable_irq();
+
   /* HCLK = SYSCLK/2 */
   RCC->CFGR0 |= (uint32_t)RCC_HPRE_DIV2;
 
@@ -64,4 +66,6 @@ void SaveData()
 
   /* HCLK = SYSCLK */
   RCC->CFGR0 &= ~(uint32_t)RCC_HPRE_DIV2;
+
+  __enable_irq();
 }
