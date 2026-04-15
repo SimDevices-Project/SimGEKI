@@ -365,8 +365,8 @@ void PN532_Check()
           memcpy(pn532_state.felica_pmm, res->PMm, 8);
           memcpy(pn532_state.felica_idm, res->IDm, 8);
           if (responseLength == 20) {
-            pn532_state.felica_system_code[0] = buffer[7 + 21];
-            pn532_state.felica_system_code[1] = buffer[7 + 20];
+            pn532_state.felica_system_code[0] = buffer[7 + 20]; // 高字节
+            pn532_state.felica_system_code[1] = buffer[7 + 21]; // 低字节
           }
           res_init(0x13);
           res->count  = 1;
@@ -481,18 +481,18 @@ void PN532_felica_through()
   switch (code) {
     case FelicaPolling:
       res_init(0x14);
-      // res->poll_system_code[0] = pn532_state.felica_system_code[0];
-      // res->poll_system_code[1] = pn532_state.felica_system_code[1];
-      res->poll_system_code[0] = 0x88;
-      res->poll_system_code[1] = 0xb4;
+      res->poll_system_code[0] = pn532_state.felica_system_code[0];
+      res->poll_system_code[1] = pn532_state.felica_system_code[1];
+      // res->poll_system_code[0] = 0x88;
+      // res->poll_system_code[1] = 0xb4;
       break;
     case Felica_reqSysCode:
       res_init(0x0D);
       res->felica_payload[0] = 0x01;
-      // res->felica_payload[1] = pn532_state.felica_system_code[0];
-      // res->felica_payload[2] = pn532_state.felica_system_code[1];
-      res->poll_system_code[0] = 0x88;
-      res->poll_system_code[1] = 0xb4;
+      res->felica_payload[1] = pn532_state.felica_system_code[0];
+      res->felica_payload[2] = pn532_state.felica_system_code[1];
+      // res->poll_system_code[0] = 0x88;
+      // res->poll_system_code[1] = 0xb4;
       break;
     case FelicaActive2: {
       res_init(0x0B);
