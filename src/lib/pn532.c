@@ -114,7 +114,7 @@ void PN532_Polling()
     PN532_readPassiveTargetID(PN532_MIFARE_ISO14443A, PN532_TIMEOUT_VAL);
     bet = 0;
   } else {
-    PN532_felica_Polling(0xFFFF, 0x00, PN532_TIMEOUT_VAL);
+    PN532_felica_Polling(0xFFFF, 0x01, PN532_TIMEOUT_VAL);
     bet = 1;
   }
 }
