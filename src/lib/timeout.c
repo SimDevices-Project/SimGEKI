@@ -118,7 +118,7 @@ void Timer_Process()
     }
     interval[i].time += timerSetRec;
     if (interval[i].time >= interval[i].period) {
-      interval[i].time = 0;
+      interval[i].time -= interval[i].period;
       interval[i].callback();
     }
   }
@@ -128,7 +128,7 @@ void Timer_Process()
     }
     timeout[i].time += timerSetRec;
     if (timeout[i].time >= timeout[i].period) {
-      timeout[i].time = 0;
+      timeout[i].time -= timeout[i].period;
       timeout[i].callback();
       clearTimeout(i);
     }
