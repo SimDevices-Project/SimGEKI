@@ -26,22 +26,20 @@ int main(void)
   RCC_PCLK2Config(RCC_HCLK_Div2); // RCC2 时钟 2 分频
 
   NVIC_PriorityGroupConfig(NVIC_PriorityGroup_1);
-  
-  Delay_Ms(20);
-
-  LoadData();
-
-  Delay_Ms(5);
 
   Delay_Init();
+
+  Delay_Ms(50);
+
+  LoadData();
+  Set_USBConfig();
+  USB_Interrupts_Config();
+  USB_Init();
+
+  Delay_Ms(10);
+
   Timeout_Init();
   Sleep_Init();
-
-  Set_USBConfig();
-  USB_Init();
-  USB_Interrupts_Config();
-
-  Delay_Ms(20);
 
   LED_Init();
   HIDIO_Init();

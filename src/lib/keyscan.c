@@ -102,7 +102,7 @@ void KeyScan_Scan()
         break;
     }
 
-    Delay_Us(20);
+    Delay_Us(10);
 
     // 检测每一列的输入状态
     for (int col = 0; col < COL_NUM; col++) {
