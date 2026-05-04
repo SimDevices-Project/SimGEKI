@@ -1,7 +1,7 @@
 # SimGEKI Nightly Build Firmware Files
 
-Last updated: 2026-04-24 08:42:00 UTC
-Build commit: cdf91e371f67efbaf6c62d97fbcc465684dd77e3
+Last updated: 2026-05-04 18:43:52 UTC
+Build commit: d2554b2d921cf70ba7d9324808ee8e54cc5e70d2
 Build author: Handle
 
 ## Available Files:
