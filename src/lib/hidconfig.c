@@ -34,6 +34,28 @@ void SP_INPUT_Upload()
   HIDCONFIG_Upload();
 }
 
+void HIDCONFIG_Get_SerialNumber(uint8_t *buf)
+{
+  uint32_t Device_Serial0, Device_Serial1, Device_Serial2;
+  Device_Serial0 = *(uint32_t *)0x1FFFF7E8;
+  Device_Serial1 = *(uint32_t *)0x1FFFF7EC;
+  Device_Serial2 = *(uint32_t *)0x1FFFF7F0;
+
+  // 按uint8_t顺序存储，低字节在前
+  buf[3]  = (Device_Serial0 & 0xFF);
+  buf[2]  = ((Device_Serial0 >> 8) & 0xFF);
+  buf[1]  = ((Device_Serial0 >> 16) & 0xFF);
+  buf[0]  = ((Device_Serial0 >> 24) & 0xFF);
+  buf[7]  = (Device_Serial1 & 0xFF);
+  buf[6]  = ((Device_Serial1 >> 8) & 0xFF);
+  buf[5]  = ((Device_Serial1 >> 16) & 0xFF);
+  buf[4]  = ((Device_Serial1 >> 24) & 0xFF);
+  buf[11] = (Device_Serial2 & 0xFF);
+  buf[10] = ((Device_Serial2 >> 8) & 0xFF);
+  buf[9]  = ((Device_Serial2 >> 16) & 0xFF);
+  buf[8]  = ((Device_Serial2 >> 24) & 0xFF);
+}
+
 void SP_INPUT_OnDataUpdate_Handler()
 {
   SP_INPUT_Upload();
@@ -290,6 +312,13 @@ void HIDCONFIG_Receive_Handler()
         case SP_INPUT_GET_END: {
           sp_input_state      = 0; // End special input get
           dataUpload->command = SP_INPUT_GET_END;
+          dataUpload->state   = STATE_OK;
+          HIDCONFIG_Upload();
+          break;
+        }
+        case GET_SERIAL_NUMBER: {
+          HIDCONFIG_Get_SerialNumber(dataUpload->payload);
+          dataUpload->command = GET_SERIAL_NUMBER;
           dataUpload->state   = STATE_OK;
           HIDCONFIG_Upload();
           break;

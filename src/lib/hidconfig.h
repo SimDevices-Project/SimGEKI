@@ -23,6 +23,8 @@ typedef enum {
   INPUT_MODE_GET = 0x01,
   INPUT_MODE_SET = 0x02, 
 
+  GET_SERIAL_NUMBER = 0x10,
+
   RELOAD_DATA = 0x80,
   SAVE_DATA   = 0x81,
 
