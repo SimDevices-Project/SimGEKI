@@ -49,6 +49,19 @@ typedef struct {
   uint8_t keymap[16];
 } __packed KbdData;
 
+typedef struct {
+  uint8_t reportID;
+  uint8_t button;
+  uint8_t x;
+  uint8_t y;
+  uint8_t wheel;
+} __packed MseData;
+typedef struct {
+  uint8_t reportID;
+  uint16_t x;
+  uint16_t y;
+} __packed SpMseData;
+
 const static uint8_t hid_key_map[KEY_COUNT][2] = {
     // COL1
     {0},

@@ -20,13 +20,15 @@
 uint8_t HID_Buffer_OUT[64] = {0x00};
 uint8_t HID_Buffer_IN[64]  = {0x00};
 
-uint8_t HID_SGIO4_Buffer_IN[64] = {0x00};
-uint8_t HID_KBD_Buffer_IN[18]   = {0x00};
+uint8_t HID_SGIO4_Buffer_IN[64]    = {0x00};
+uint8_t HID_KeyBoard_Buffer_IN[18] = {0x00};
+uint8_t HID_SPMouse_Buffer_IN[5]   = {0x22, 0x00, 0x00, 0x00, 0x40};
 
 static DataReceive *dataReceive = (DataReceive *)HID_Buffer_OUT;
 static DataUpload *dataUpload   = (DataUpload *)HID_SGIO4_Buffer_IN;
 
-static KbdData *kbdData = (KbdData *)HID_KBD_Buffer_IN;
+static KbdData *kbdData     = (KbdData *)HID_KeyBoard_Buffer_IN;
+static SpMseData *spMseData = (SpMseData *)HID_SPMouse_Buffer_IN;
 
 static uint16_t prevKeyStatus    = 0;
 static uint16_t activeKeyStatus  = 0;
@@ -97,17 +99,36 @@ uint8_t HIDIO_SGIO4_Upload()
   return USBD_ENDPx_DataUp(OUT_EP, HID_Buffer_IN, 64);
 }
 
+volatile static uint8_t kbdUploadState = 0; // 0: 发送键盘, 1: 发送鼠标
+volatile static uint8_t kbdUploadPending = 0; // 键盘发送状态
+volatile static uint8_t spMseChanged = 0;
+
 uint8_t HIDIO_KBD_Upload()
 {
-  memset(HID_Buffer_IN, 0, 64);
-  memcpy(HID_Buffer_IN, HID_KBD_Buffer_IN, 18);
-  return USBD_ENDPx_DataUp(OUT_EP, HID_Buffer_IN, 18);
+  uint8_t result;
+
+  if (kbdUploadState == 0) {
+    memset(HID_Buffer_IN, 0, 64);
+    memcpy(HID_Buffer_IN, HID_KeyBoard_Buffer_IN, 18);
+    result = USBD_ENDPx_DataUp(OUT_EP, HID_Buffer_IN, 18);
+    if (result == USB_SUCCESS) {
+      kbdUploadState = 1;
+    }
+  } else {
+    memset(HID_Buffer_IN, 0, 64);
+    memcpy(HID_Buffer_IN, HID_SPMouse_Buffer_IN, 5);
+    result = USBD_ENDPx_DataUp(OUT_EP, HID_Buffer_IN, 5);
+    if (result == USB_SUCCESS) {
+      kbdUploadState = 0;
+    }
+  }
+  return result;
 }
 
 void HIDIO_Upload()
 {
   static uint8_t timeoutID = 0xFF;
-  uint8_t usbResult = 0xFF;
+  uint8_t usbResult        = 0xFF;
   switch (GlobalData->DeviceMode) {
     case 1:
       resetInterval(intervalID);
@@ -118,7 +139,24 @@ void HIDIO_Upload()
       usbResult = USB_SUCCESS;
       break;
     case 3:
+      if (kbdUploadPending) {
+        usbResult = HIDIO_KBD_Upload();
+        if (usbResult == USB_SUCCESS && kbdUploadState == 0) {
+          kbdUploadPending = 0;
+          spMseChanged = 0;
+        }
+        break;
+      }
+      kbdUploadState = 0;
       usbResult = HIDIO_KBD_Upload();
+      if (usbResult == USB_SUCCESS) {
+        if (spMseChanged) {
+          kbdUploadPending = 1;
+          usbResult = 0xFE;
+        } else {
+          kbdUploadState = 0;
+        }
+      }
       break;
     default:
       break;
@@ -168,8 +206,16 @@ void HIDIO_SGIO4_FreshData()
 
 void HIDIO_KBD_FreshData()
 {
+  static uint16_t prevSpMseX = 0;
   // Roller
-  // dataUpload->analog[0] = activeRollerValue;
+  spMseData->x = 0x8000 - (activeRollerValue >> 1);
+
+  if (spMseData->x != prevSpMseX) {
+    spMseChanged = 1;
+  } else {
+    spMseChanged = 0;
+  }
+  prevSpMseX = spMseData->x;
 
   // Buttons
   memset(kbdData, 0x00, sizeof(KbdData));
