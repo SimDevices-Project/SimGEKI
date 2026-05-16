@@ -90,6 +90,7 @@ C_SOURCES = \
 	src/lib/roller.c \
 	src/lib/timeout.c \
 	src/lib/sleep.c \
+	src/lib/ledmanager.c \
 	src/main.c \
 	src/system_ch32v20x.c \
 	src/usblib/config/hw_config.c \

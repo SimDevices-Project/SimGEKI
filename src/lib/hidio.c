@@ -99,9 +99,9 @@ uint8_t HIDIO_SGIO4_Upload()
   return USBD_ENDPx_DataUp(OUT_EP, HID_Buffer_IN, 64);
 }
 
-volatile static uint8_t kbdUploadState = 0; // 0: 发送键盘, 1: 发送鼠标
+volatile static uint8_t kbdUploadState   = 0; // 0: 发送键盘, 1: 发送鼠标
 volatile static uint8_t kbdUploadPending = 0; // 键盘发送状态
-volatile static uint8_t spMseChanged = 0;
+volatile static uint8_t spMseChanged     = 0;
 
 uint8_t HIDIO_KBD_Upload()
 {
@@ -143,16 +143,16 @@ void HIDIO_Upload()
         usbResult = HIDIO_KBD_Upload();
         if (usbResult == USB_SUCCESS && kbdUploadState == 0) {
           kbdUploadPending = 0;
-          spMseChanged = 0;
+          spMseChanged     = 0;
         }
         break;
       }
       kbdUploadState = 0;
-      usbResult = HIDIO_KBD_Upload();
+      usbResult      = HIDIO_KBD_Upload();
       if (usbResult == USB_SUCCESS) {
         if (spMseChanged) {
           kbdUploadPending = 1;
-          usbResult = 0xFE;
+          usbResult        = 0xFE;
         } else {
           kbdUploadState = 0;
         }
@@ -208,7 +208,7 @@ void HIDIO_KBD_FreshData()
 {
   static uint16_t prevSpMseX = 0;
   // Roller
-  spMseData->x = 0x8000 - (activeRollerValue >> 1);
+  spMseData->x = ((~activeRollerValue) >> 1);
 
   if (spMseData->x != prevSpMseX) {
     spMseChanged = 1;

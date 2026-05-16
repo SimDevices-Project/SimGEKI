@@ -2,6 +2,7 @@
 #include "ch422.h"
 #include "timeout.h"
 #include "sleep.h"
+#include "ledmanager.h"
 
 #define WS2812_FREQ         800000
 #define TIMER_CLOCK_FREQ    144000000
@@ -305,6 +306,7 @@ xdata void LED_Init()
 
 void LED_Refresh()
 {
+  LEDManager_Handle();
   WS2812_Refresh();
   CH422_Refresh();
 }
