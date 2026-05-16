@@ -27,18 +27,18 @@ TARGET ?= SimGETRO_Public
 PROJECT_NAME = SimGEKI
 
 # Toolchain configuration
-COMPILER_DIR ?= ./tools/wch_riscv_gcc_8_2_0
+COMPILER_DIR ?= ./tools/wch_riscv_gcc
 _PATH_TMP:=$(COMPILER_DIR)/bin:$(PATH)
 export PATH=$(_PATH_TMP)
 
 EXE?=.exe
-CC=$(COMPILER_DIR)/bin/riscv-none-embed-gcc$(EXE)
-AS=$(COMPILER_DIR)/bin/riscv-none-embed-gcc$(EXE)
-CXX=$(COMPILER_DIR)/bin/riscv-none-embed-g++$(EXE)
-LD=$(COMPILER_DIR)/bin/riscv-none-embed-gcc$(EXE)
-AR=$(COMPILER_DIR)/bin/riscv-none-embed-ar$(EXE)
-OBJCOPY=$(COMPILER_DIR)/bin/riscv-none-embed-objcopy$(EXE)
-OBJDUMP=riscv-none-embed-objdump
+CC=$(COMPILER_DIR)/bin/riscv-wch-elf-gcc$(EXE)
+AS=$(COMPILER_DIR)/bin/riscv-wch-elf-gcc$(EXE)
+CXX=$(COMPILER_DIR)/bin/riscv-wch-elf-g++$(EXE)
+LD=$(COMPILER_DIR)/bin/riscv-wch-elf-gcc$(EXE)
+AR=$(COMPILER_DIR)/bin/riscv-wch-elf-ar$(EXE)
+OBJCOPY=$(COMPILER_DIR)/bin/riscv-wch-elf-objcopy$(EXE)
+OBJDUMP=riscv-wch-elf-objdump
 
 # Build directories
 BUILD_DIR := ./build/$(TARGET)

@@ -118,7 +118,7 @@ targets:
           afterBuildTasks:
             - name: elf_to_lst
               abortAfterFailed: false
-              command: riscv-none-embed-objdump --source --all-headers --demangle --disassemble "${OutDir}\${targetName}.elf" > "${OutDir}\${targetName}.lst"
+              command: riscv-wch-elf-objdump --source --all-headers --demangle --disassemble "${OutDir}\${targetName}.elf" > "${OutDir}\${targetName}.lst"
               disable: false
           asm-compiler:
             ASM_FLAGS: -Wl,-Bstatic
@@ -159,6 +159,6 @@ targets:
       OpenOCD:
         baseAddr: "0x08000000"
         bin: ""
-        interface: ${workspaceFolder}/tools/null
-        target: ${workspaceFolder}/tools/wch-riscv
-    uploader: Custom
+        interface: ${workspaceFolder}/tools/wch-interface
+        target: ${workspaceFolder}/tools/wch-target
+    uploader: OpenOCD

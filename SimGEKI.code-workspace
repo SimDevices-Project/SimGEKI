@@ -42,8 +42,9 @@
         },
         "C_Cpp.errorSquiggles": "disabled",
         "EIDE.SerialPortMonitor.BaudRate": 115200,
-        "EIDE.RISCV.InstallDirectory": "${workspaceFolder}/tools/wch_riscv_gcc_8_2_0",
-        "EIDE.RISCV.ToolPrefix": "riscv-none-embed-"
+        "EIDE.RISCV.InstallDirectory": "${workspaceFolder}/tools/wch_riscv_gcc",
+        "EIDE.RISCV.ToolPrefix": "riscv-wch-elf-",
+        "EIDE.OpenOCD.ExePath": ".\\tools\\wch_openocd\\bin\\openocd.exe"
     },
     "extensions": {
         "recommendations": [
