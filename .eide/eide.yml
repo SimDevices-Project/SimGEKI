@@ -45,7 +45,7 @@ targets:
           afterBuildTasks:
             - name: elf_to_lst
               abortAfterFailed: false
-              command: riscv-none-embed-objdump --source --all-headers --demangle --disassemble "${OutDir}\${targetName}.elf" > "${OutDir}\${targetName}.lst"
+              command: riscv-wch-elf-objdump --source --all-headers --demangle --disassemble "${OutDir}\${targetName}.elf" > "${OutDir}\${targetName}.lst"
               disable: false
           asm-compiler:
             ASM_FLAGS: -Wl,-Bstatic

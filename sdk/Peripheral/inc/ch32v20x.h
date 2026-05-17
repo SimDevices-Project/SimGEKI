@@ -14,9 +14,6 @@
 extern "C" {
 #endif
 
-#define xdata
-#define xdata_rodata
-
 #ifndef xdata
   #define xdata __attribute__((section(".stext"))) 
   #define xdata_rodata __attribute__((section(".ssrodata")))
