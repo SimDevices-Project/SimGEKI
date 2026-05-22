@@ -2,8 +2,6 @@
 #include "keyscan.h"
 #include "data.h"
 
-static uint16_t activeKeyStatus = 0;
-
 void LEDManager_Handle()
 {
   if (GlobalData->LEDManager == 0) {
