@@ -107,6 +107,25 @@ static void res_init(uint8_t payload_len)
   return res_init_s(payload_len, req, res);
 }
 
+/**
+ * @brief 发送错误响应并清理状态机
+ * @note  用于处理UART收到意外/无效数据时，确保：
+ *        1. 状态机被清理，避免残留数据在下次命令时被误上传
+ *        2. 主机收到明确的错误状态反馈
+ *        3. 清除超时定时器，防止状态卡死
+ * @param error_status 错误状态码 (如 STATUS_INVALID_DATA, STATUS_CARD_ERROR)
+ */
+static void PN532_SendErrorResponse(uint8_t error_status)
+{
+  AIME_Response *res = PN532_GetResponse();
+  AIME_Request *req  = PN532_GetRequest();
+  res_init_s(0, req, res);
+  res->status = error_status;
+  pn532_state.option_status = PN532_STANDBY;
+  PN532_ClearFailureTimer();
+  CDC_CARD_IO_SendDataReady();
+}
+
 void PN532_Polling()
 {
   static uint8_t bet = 0; // Between, Mode ISO14443A or FeliCa
@@ -270,31 +289,44 @@ void PN532_Check()
   if (pn532_state.option_status == PN532_WAITING_FOR_RESPONSE) {
     uint8_t status;
 
+    // 处理PN532 UART响应
+    // 安全改进: 所有分支在响应验证失败时都会发送错误响应并清理状态机
+    // 防止UART收到意外/干扰数据时残留数据被误上传到CDC
     switch (pn532_state.command_status) {
       case PN532_SAMCONFIG:
         if (readResponse(buffer, size, PN532_COMMAND_SAMCONFIGURATION) >= 0) {
-          // success
           PN532_MarkSuccess();
+        } else {
+          // 协议帧无效(如干扰数据)，发送错误响应并清理状态
+          PN532_SendErrorResponse(STATUS_INVALID_DATA);
         }
         break;
       case PN532_GET_VERSION:
-        PN532_MarkSuccess();
+        if (readResponse(buffer, size, PN532_COMMAND_GETFIRMWAREVERSION) >= 0) {
+          PN532_MarkSuccess();
+        } else {
+          // 协议帧无效，发送错误响应并清理状态
+          PN532_SendErrorResponse(STATUS_INVALID_DATA);
+        }
         break;
       case PN532_SET_PASSIVE_ACTIVATION_RETRIES:
         if (readResponse(buffer, size, PN532_COMMAND_RFCONFIGURATION) >= 0) {
-          // success
           PN532_MarkSuccess();
+        } else {
+          // 协议帧无效，发送错误响应并清理状态
+          PN532_SendErrorResponse(STATUS_INVALID_DATA);
         }
         break;
       case PN532_SET_RFFIELD:
         if (readResponse(buffer, size, PN532_COMMAND_RFCONFIGURATION) >= 0) {
-          // success
           PN532_MarkSuccess();
+        } else {
+          // 协议帧无效，发送错误响应并清理状态
+          PN532_SendErrorResponse(STATUS_INVALID_DATA);
         }
         break;
       case PN532_READ_PASSIVE_TARGET_ID:
         if (readResponse(buffer, size, PN532_COMMAND_INLISTPASSIVETARGET) >= 0) {
-          // success
           PN532_MarkSuccess();
           if (buffer[7] == 0) {
             res_init(1);
@@ -310,35 +342,44 @@ void PN532_Check()
           res->count = 1;
           res->type  = 0x10;
           CDC_CARD_IO_SendDataReady();
+        } else {
+          // 协议帧无效(干扰数据导致)，发送错误响应并清理状态
+          PN532_SendErrorResponse(STATUS_CARD_ERROR);
         }
         break;
       case PN532_MIFARE_AUTHENTICATE_BLOCK:
         if (readResponse(buffer, size, PN532_COMMAND_INDATAEXCHANGE) >= 0) {
-          // Check if the response is valid and we are authenticated???
-          // for an auth success it should be bytes 5-7: 0xD5 0x41 0x00
-          // Mifare auth error is technically byte 7: 0x14 but anything other and 0x00 is not good
           if (buffer[7] == 0x00) {
             PN532_MarkSuccess();
-            // Authentification success
             res_init(0);
             CDC_CARD_IO_SendDataReady();
+          } else {
+            // PN532返回认证失败状态，发送错误响应并清理状态
+            PN532_SendErrorResponse(STATUS_CARD_ERROR);
           }
+        } else {
+          // 协议帧无效，发送错误响应并清理状态
+          PN532_SendErrorResponse(STATUS_INVALID_DATA);
         }
         break;
       case PN532_MIFARE_READ_BLOCK:
         if (readResponse(buffer, size, PN532_COMMAND_INDATAEXCHANGE) >= 0) {
-          /* If isn't 0x00 we probably have an error */
           if (buffer[7] == 0x00) {
             PN532_MarkSuccess();
             res_init(0x10);
             memcpy(res->block, &buffer[8], 16);
             CDC_CARD_IO_SendDataReady();
+          } else {
+            // PN532返回读取失败状态，发送错误响应并清理状态
+            PN532_SendErrorResponse(STATUS_CARD_ERROR);
           }
+        } else {
+          // 协议帧无效，发送错误响应并清理状态
+          PN532_SendErrorResponse(STATUS_INVALID_DATA);
         }
         break;
       case PN532_FELICA_POLLING:
         if (readResponse(buffer, size, PN532_COMMAND_INLISTPASSIVETARGET) >= 0) {
-          // Check NbTg (pn532_packetbuffer[7])
           if (buffer[7] == 0) {
             PN532_MarkSuccess();
             res_init(1);
@@ -347,14 +388,15 @@ void PN532_Check()
             break;
           }
           if (buffer[7] != 1) {
-            // Unhandled number of targets inlisted.
+            // 检测到异常数量的目标，发送错误响应并清理状态
+            PN532_SendErrorResponse(STATUS_CARD_ERROR);
             break;
           }
           pn532_state.inlisted_tag = buffer[7 + 1];
-          // length check
           uint8_t responseLength = buffer[7 + 2];
           if (responseLength != 18 && responseLength != 20) {
-            // Wrong response length
+            // 响应长度异常，发送错误响应并清理状态
+            PN532_SendErrorResponse(STATUS_INVALID_DATA);
             break;
           }
           PN532_MarkSuccess();
@@ -365,47 +407,42 @@ void PN532_Check()
           memcpy(pn532_state.felica_pmm, res->PMm, 8);
           memcpy(pn532_state.felica_idm, res->IDm, 8);
           if (responseLength == 20) {
-            pn532_state.felica_system_code[0] = buffer[7 + 20]; // 高字节
-            pn532_state.felica_system_code[1] = buffer[7 + 21]; // 低字节
+            pn532_state.felica_system_code[0] = buffer[7 + 20];
+            pn532_state.felica_system_code[1] = buffer[7 + 21];
           }
           res_init(0x13);
           res->count  = 1;
           res->type   = 0x20;
           res->id_len = 0x10;
           CDC_CARD_IO_SendDataReady();
+        } else {
+          // 协议帧无效，发送错误响应并清理状态
+          PN532_SendErrorResponse(STATUS_CARD_ERROR);
         }
         break;
       case PN532_FELICA_READ:
-        // CDC_LED_IO_PutChar(0xA1);
         status = readResponse(buffer, size, PN532_COMMAND_INDATAEXCHANGE);
         if (status >= 0) {
-          // CDC_LED_IO_PutChar(0xA2);
-          // Check status
           if ((buffer[7] & 0x3F) != 0) {
-            // CDC_LED_IO_PutChar(0xA3);
-            // Status code indicates an error
-            return;
+            // FeliCa状态码指示错误，发送错误响应并清理状态
+            PN532_SendErrorResponse(STATUS_CARD_ERROR);
+            break;
           }
-          // length check
           if ((status - 2) != buffer[8] - 1) {
-            // CDC_LED_IO_PutChar(0xA4);
-            // Wrong response length
-            // return;
+            // 响应长度校验失败，发送错误响应并清理状态
+            PN532_SendErrorResponse(STATUS_INVALID_DATA);
+            break;
           }
-          // length check
           if ((buffer[8] - 1) != 12 + 16 * pn532_state.parameter) {
-            // CDC_LED_IO_PutChar(0xA5);
-            // Read Without Encryption command failed (wrong response length)
-            return;
+            // 数据长度不匹配预期，发送错误响应并清理状态
+            PN532_SendErrorResponse(STATUS_INVALID_DATA);
+            break;
           }
-
-          // status flag check
           if (buffer[9 + 9] != 0 || buffer[9 + 10] != 0) {
-            // CDC_LED_IO_PutChar(0xA6);
-            // Read Without Encryption command failed
-            return;
+            // FeliCa读命令失败，发送错误响应并清理状态
+            PN532_SendErrorResponse(STATUS_CARD_ERROR);
+            break;
           }
-          // CDC_LED_IO_PutChar(0xA7);
           PN532_MarkSuccess();
           uint8_t k = 9 + 12;
           for (uint8_t i = 0; i < pn532_state.parameter; i++) {
@@ -419,41 +456,18 @@ void PN532_Check()
           res_init(0x0D + req->numBlock * 16);
           res->encap_len = 0x0D + req->numBlock * 16;
           CDC_CARD_IO_SendDataReady();
+        } else {
+          // 协议帧无效，发送错误响应并清理状态
+          PN532_SendErrorResponse(STATUS_INVALID_DATA);
         }
         break;
       case PN532_FELICA_WRITE:
-        // CDC_LED_IO_PutChar(0xB1);
         status = readResponse(buffer, size, PN532_COMMAND_INDATAEXCHANGE);
         if (status < 0) {
-          // CDC_LED_IO_PutChar(0xB2);
-          // Could not receive response
-          return;
+          // 协议帧无效，发送错误响应并清理状态
+          PN532_SendErrorResponse(STATUS_INVALID_DATA);
+          break;
         }
-        // Check status
-        // if ((buffer[7] & 0x3F)!=0) {
-        //   CDC_LED_IO_PutChar(0xB3);
-        //   //Status code indicates an error
-        //   return;
-        // }
-        // // length check
-        // if ( (status - 2) != buffer[7+1] - 1) {
-        //   CDC_LED_IO_PutChar(0xB4);
-        //   //Wrong response length
-        //   //return;
-        // }
-        // if ( (buffer[7+1] - 1) != 11 ) {
-        //   CDC_LED_IO_PutChar(0xB5);
-        //   //Write Without Encryption command failed (wrong response length)
-        //   return;
-        // }
-
-        // // status flag check
-        // if ( buffer[9+9] != 0 || buffer[9+10] != 0 ) {
-        //   CDC_LED_IO_PutChar(0xB6);
-        //   //Write Without Encryption command failed
-        //   return;
-        // }
-        // CDC_LED_IO_PutChar(0xB7);
         PN532_MarkSuccess();
         res_init(0x0C);
         res->RW_status[0] = 0;
