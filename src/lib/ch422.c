@@ -22,13 +22,18 @@
 
 #define CH422_DAT_LEN      5
 #define CH422_COLORDAT_LEN 3
-uint8_t Colors[CH422_DAT_LEN]    = {0xFF, 0xFF, 0xFF, 0xFF, 0x05};
+
+#define CH422_RETRY_LIMIT  15 // 20ms调用一次，约300ms无响应则重置总线
+
+uint8_t Colors[CH422_DAT_LEN]          = {0xFF, 0xFF, 0xFF, 0xFF, 0x05};
 const uint8_t Addresses[CH422_DAT_LEN] = {0x72, 0x74, 0x70, 0x76, 0x48};
 
 uint8_t data_len    = CH422_DAT_LEN;
 uint8_t master_sate = 0xFF;
 
 volatile uint8_t data_index = 0;
+
+static uint16_t stall_counter = 0;
 
 /*********************************************************************
  * @fn      IIC_Init
@@ -76,39 +81,64 @@ xdata void CH422_Init()
   IIC_Init(100000, IIC_OWN_ADDRESS);
 }
 
+static void CH422_ResetBus(void)
+{
+  I2C_SoftwareResetCmd(I2C1, ENABLE);
+  I2C_SoftwareResetCmd(I2C1, DISABLE);
+  I2C_Cmd(I2C1, DISABLE);
+  I2C_Cmd(I2C1, ENABLE);
+  master_sate   = 0;
+  data_index    = 0;
+  stall_counter = 0;
+}
+
 void CH422_Check()
 {
+  if (master_sate == 0xFF) {
+    return;
+  }
+
+  stall_counter++;
+  if (stall_counter > CH422_RETRY_LIMIT) {
+    CH422_ResetBus();
+    return;
+  }
+
   switch (master_sate) {
     case 0: {
       if (!I2C_GetFlagStatus(I2C1, I2C_FLAG_BUSY)) {
         I2C_GenerateSTART(I2C1, ENABLE);
-        master_sate = 1;
+        master_sate   = 1;
+        stall_counter = 0;
       }
       break;
     }
     case 1: {
       if (I2C_CheckEvent(I2C1, I2C_EVENT_MASTER_MODE_SELECT)) {
         I2C_Send7bitAddress(I2C1, Addresses[data_index], I2C_Direction_Transmitter);
-        master_sate = 2;
+        master_sate   = 2;
+        stall_counter = 0;
       }
       break;
     }
     case 2: {
       if (I2C_CheckEvent(I2C1, I2C_EVENT_MASTER_TRANSMITTER_MODE_SELECTED)) {
         I2C_SendData(I2C1, Colors[data_index]);
-        master_sate = 3;
+        master_sate   = 3;
+        stall_counter = 0;
       }
       break;
     }
     case 3: {
       if (I2C_CheckEvent(I2C1, I2C_EVENT_MASTER_BYTE_TRANSMITTED)) {
         I2C_GenerateSTOP(I2C1, ENABLE);
+        stall_counter = 0;
         data_index++;
         if (data_index >= data_len) {
           data_index  = 0;
           master_sate = 0xFF;
           if (data_len == CH422_DAT_LEN) {
-            data_len = CH422_COLORDAT_LEN; // 减少数据长度，不再重复初始化CH422
+            data_len = CH422_COLORDAT_LEN;
           }
         } else {
           master_sate = 0;
@@ -126,7 +156,8 @@ uint8_t timerID = 0xFF;
 void CH422_Refresh()
 {
   if (master_sate == 0xFF) {
-    master_sate = 0;
+    stall_counter = 0;
+    master_sate   = 0;
     clearInterval(timerID);
     timerID = setInterval(CH422_Check, 0);
   }
