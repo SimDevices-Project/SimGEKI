@@ -208,7 +208,7 @@ void HIDIO_KBD_FreshData()
 {
   static uint16_t prevSpMseX = 0;
   // Roller
-  spMseData->x = ((~activeRollerValue) >> 1);
+  spMseData->x =  (uint16_t)(~activeRollerValue) >> 1;
 
   if (spMseData->x != prevSpMseX) {
     spMseChanged = 1;
