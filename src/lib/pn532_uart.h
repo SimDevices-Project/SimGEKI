@@ -14,6 +14,13 @@
  */
 #define PN532_UART_DIRECT 0
 
+/**
+ * @brief 是否启用串口转发
+ * 0 - 禁用
+ * 1 - 转发到 LED IO
+ */
+#define PN532_UART_FORWARD 0
+
 void PN532_UART_Check(uint8_t *buffer, uint8_t *size);
 
 typedef struct

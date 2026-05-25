@@ -17,7 +17,7 @@ uint8_t command;
 #define RX_BUFFER_SIZE  128
 #define RX_BUFFER_COUNT 4
 
-#define UARTOE              GPIO_Pin_8
+#define UARTOE          GPIO_Pin_8
 
 uint8_t RxBuffer[RX_BUFFER_COUNT][RX_BUFFER_SIZE];
 volatile uint8_t RxIndex[RX_BUFFER_COUNT] = {0};
@@ -25,7 +25,7 @@ volatile uint8_t RxIndex[RX_BUFFER_COUNT] = {0};
 volatile uint8_t RxWriteIndex = 0;
 volatile uint8_t RxReadIndex  = 0;
 
-volatile uint8_t RxBufferCount = 0;
+volatile uint8_t RxBufferCount      = 0;
 volatile uint8_t RxDropCurrentFrame = 0;
 
 void USART1_IRQHandler(void) __attribute__((interrupt("WCH-Interrupt-fast")));
@@ -52,11 +52,11 @@ PN532_Interface PN532_UART = {
 void USART1_IRQHandler(void)
 {
   if (USART_GetITStatus(USART1, USART_IT_RXNE) != RESET) {
-#if PN532_UART_DIRECT == 1
-    CDC_CARD_IO_PutChar(USART_ReceiveData(USART1));
-    return;
-#else
     uint8_t data = USART_ReceiveData(USART1);
+#if PN532_UART_DIRECT == 1
+    CDC_CARD_IO_PutChar(data);
+    return;
+#endif
     if (RxDropCurrentFrame == 0) {
       uint8_t index = RxIndex[RxWriteIndex];
       if (index < RX_BUFFER_SIZE) {
@@ -67,7 +67,6 @@ void USART1_IRQHandler(void)
         RxDropCurrentFrame = 1;
       }
     }
-#endif
   }
 #if PN532_UART_DIRECT != 1
   if (USART_GetITStatus(USART1, USART_IT_IDLE) != RESET) {
@@ -90,8 +89,8 @@ void USART1_IRQHandler(void)
         RxWriteIndex = 0;
       }
     }
-    RxIndex[RxWriteIndex]  = 0;
-    RxDropCurrentFrame     = 0;
+    RxIndex[RxWriteIndex] = 0;
+    RxDropCurrentFrame    = 0;
     // PN532_UART_RxDataCheck();
   }
 #endif
@@ -183,11 +182,11 @@ void PN532_UART_Init()
 #if PN532_UART_DIRECT != 1
   USART_ITConfig(USART1, USART_IT_IDLE, ENABLE);
 #endif
-NVIC_InitStructure.NVIC_IRQChannel                   = USART1_IRQn;
-	NVIC_InitStructure.NVIC_IRQChannelPreemptionPriority = 1;
-	NVIC_InitStructure.NVIC_IRQChannelSubPriority        = 0;
-	NVIC_InitStructure.NVIC_IRQChannelCmd                = ENABLE;
-	NVIC_Init(&NVIC_InitStructure);
+  NVIC_InitStructure.NVIC_IRQChannel                   = USART1_IRQn;
+  NVIC_InitStructure.NVIC_IRQChannelPreemptionPriority = 1;
+  NVIC_InitStructure.NVIC_IRQChannelSubPriority        = 0;
+  NVIC_InitStructure.NVIC_IRQChannelCmd                = ENABLE;
+  NVIC_Init(&NVIC_InitStructure);
 
   USART_Cmd(USART1, ENABLE);
   GPIO_SetBits(GPIOA, UARTOE); // 使能UART电平转换芯片

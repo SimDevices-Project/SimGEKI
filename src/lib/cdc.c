@@ -147,6 +147,9 @@ void CDC_LED_IO_PutChar(uint8_t tdata)
 void CDC_CARD_IO_PutChar(uint8_t tdata)
 {
   CDC_IO_PutChar(&cdc_card_io, tdata);
+#if PN532_UART_FORWARD == 1
+  CDC_LED_IO_PutChar(tdata);
+#endif
 }
 
 void CDC_LED_IO_Handler()
@@ -446,8 +449,9 @@ void CDC_CARD_IO_Handler()
      */
     // 其他未明行为
     default:
-      memcpy(cardIO_ResponseStringBuf, res->buffer, 128);
-      CDC_CARD_IO_SendDataReady();
+      // memcpy(cardIO_ResponseStringBuf, res->buffer, 128);
+      // CDC_CARD_IO_SendDataReady();
+      // 丢弃数据，无响应
       break;
   }
   Sleep_Alive();
@@ -529,7 +533,7 @@ void CDC_CARD_IO_UART_Poll()
   }
   SetEPRxValid(CDC_CARD_IO_EP);
   return;
-#else
+#endif
   uint8_t cur_byte;
   static uint8_t checksum  = 0;
   static uint8_t prev_byte = 0;
@@ -537,6 +541,9 @@ void CDC_CARD_IO_UART_Poll()
 
   while (cdc_card_io.Rx_Pending) {
     cur_byte = cdc_card_io.Rx_PendingBuf[cdc_card_io.Rx_CurPos];
+#if PN532_UART_FORWARD == 1
+    CDC_LED_IO_PutChar(cur_byte);
+#endif
     if (cur_byte == 0xE0 && prev_byte != 0xD0) {
       checksum                  = 0x00;
       cdc_card_io.Req_PacketPos = 0;
@@ -597,7 +604,6 @@ void CDC_CARD_IO_UART_Poll()
   }
 
   return;
-#endif
 }
 
 void CDC_UART_Poll()
