@@ -449,9 +449,8 @@ void CDC_CARD_IO_Handler()
      */
     // 其他未明行为
     default:
-      // memcpy(cardIO_ResponseStringBuf, res->buffer, 128);
-      // CDC_CARD_IO_SendDataReady();
-      // 丢弃数据，无响应
+      memcpy(cardIO_ResponseStringBuf, res->buffer, 128);
+      CDC_CARD_IO_SendDataReady();
       break;
   }
   Sleep_Alive();
@@ -533,7 +532,7 @@ void CDC_CARD_IO_UART_Poll()
   }
   SetEPRxValid(CDC_CARD_IO_EP);
   return;
-#endif
+#else
   uint8_t cur_byte;
   static uint8_t checksum  = 0;
   static uint8_t prev_byte = 0;
@@ -604,6 +603,7 @@ void CDC_CARD_IO_UART_Poll()
   }
 
   return;
+#endif
 }
 
 void CDC_UART_Poll()

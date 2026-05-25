@@ -52,11 +52,11 @@ PN532_Interface PN532_UART = {
 void USART1_IRQHandler(void)
 {
   if (USART_GetITStatus(USART1, USART_IT_RXNE) != RESET) {
-    uint8_t data = USART_ReceiveData(USART1);
+    uint8_t data = USART_ReceiveData(USART1) & 0xFF;
 #if PN532_UART_DIRECT == 1
     CDC_CARD_IO_PutChar(data);
     return;
-#endif
+#else
     if (RxDropCurrentFrame == 0) {
       uint8_t index = RxIndex[RxWriteIndex];
       if (index < RX_BUFFER_SIZE) {
@@ -67,6 +67,7 @@ void USART1_IRQHandler(void)
         RxDropCurrentFrame = 1;
       }
     }
+#endif
   }
 #if PN532_UART_DIRECT != 1
   if (USART_GetITStatus(USART1, USART_IT_IDLE) != RESET) {
