@@ -120,7 +120,7 @@ static void PN532_SendErrorResponse(uint8_t error_status)
   AIME_Response *res = PN532_GetResponse();
   AIME_Request *req  = PN532_GetRequest();
   res_init_s(0, req, res);
-  res->status = error_status;
+  res->status               = error_status;
   pn532_state.option_status = PN532_STANDBY;
   PN532_ClearFailureTimer();
   CDC_CARD_IO_SendDataReady();
@@ -335,8 +335,16 @@ void PN532_Check()
             CDC_CARD_IO_SendDataReady();
             break;
           }
+          if (buffer[3] < 6) {
+            PN532_SendErrorResponse(STATUS_INVALID_DATA);
+            break;
+          }
           res_init(0x07);
           res->id_len = buffer[5 + 7];
+          if (buffer[3] < 6 + res->id_len) {
+            PN532_SendErrorResponse(STATUS_INVALID_DATA);
+            break;
+          }
           for (uint8_t i = 0; i < buffer[5 + 7]; i++) {
             res->mifare_uid[i] = buffer[6 + i + 7];
           }
@@ -394,7 +402,7 @@ void PN532_Check()
             break;
           }
           pn532_state.inlisted_tag = buffer[7 + 1];
-          uint8_t responseLength = buffer[7 + 2];
+          uint8_t responseLength   = buffer[7 + 2];
           if (responseLength != 18 && responseLength != 20) {
             // 响应长度异常，发送错误响应并清理状态
             PN532_SendErrorResponse(STATUS_INVALID_DATA);
@@ -491,7 +499,7 @@ void PN532_felica_through()
   memcpy(req->encap_IDm, pn532_state.felica_idm, 8);
   // memcpy(res->poll_PMm,pn532_state.felica_pmm,8);
 
-  uint8_t code   = req->encap_code;
+  uint8_t code    = req->encap_code;
   res->encap_code = code + 1;
   switch (code) {
     case FelicaPolling:
