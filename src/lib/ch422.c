@@ -23,7 +23,7 @@
 #define CH422_DAT_LEN      5
 #define CH422_COLORDAT_LEN 3
 
-#define CH422_RETRY_LIMIT  15 // 20ms调用一次，约300ms无响应则重置总线
+#define CH422_RETRY_LIMIT  5000 // IIC总线最快1us调用一次，约5ms-50ms无响应则重置总线
 
 uint8_t Colors[CH422_DAT_LEN]          = {0xFF, 0xFF, 0xFF, 0xFF, 0x05};
 const uint8_t Addresses[CH422_DAT_LEN] = {0x72, 0x74, 0x70, 0x76, 0x48};
