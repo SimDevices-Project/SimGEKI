@@ -1,10 +1,12 @@
 # Firmware for SimGETRO (CH32V203 based)
 
-![License](https://img.shields.io/github/license/SimDevices-Project/SimGEKI.svg)
-
 [简体中文](./README_zh-hans.md)
 
-The repository for firmware of SimGETRO designed based on the ch32v203 chip.
+The repository for firmware of SimGETRO/SimGEKI designed based on the ch32v203 chip.
+
+## License
+
+For non-commercial use, this project is distributed under the AGPL-v3 license. For commercial use, please contact us for individual licensing.
 
 ## Compiling
 

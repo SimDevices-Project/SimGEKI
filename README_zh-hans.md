@@ -1,10 +1,12 @@
 # SimGETRO 固件 (CH32V203版本)
 
-![License](https://img.shields.io/github/license/SimDevices-Project/SimGEKI.svg)
-
 [简体中文](./README_zh-hans.md)
 
 本仓库为基于CH32V203芯片驱动的SimGETRO固件
+
+## 协议
+
+对于非商业使用，本项目遵循AGPL-v3协议进行分发。商业使用需要联系获取独立授权。
 
 ## 编译
 
