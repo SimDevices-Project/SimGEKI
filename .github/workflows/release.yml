@@ -162,9 +162,45 @@ jobs:
           } | Remove-Item -Force -Recurse -ErrorAction SilentlyContinue
         shell: pwsh
       
+      - name: Generate latest.json manifest
+        run: |
+          $nightlyData = $null
+          try {
+            $nightlyPub = gh api repos/$env:GITHUB_REPOSITORY/releases/tags/nightly --jq '.published_at' 2>$null
+            if ($nightlyPub) {
+              $nightlyData = [ordered]@{
+                build_time = $nightlyPub
+                commit = $null
+              }
+              try {
+                $nightlyBody = gh api repos/$env:GITHUB_REPOSITORY/releases/tags/nightly --jq '.body' 2>$null
+                if ($nightlyBody -match 'Source Commit:.*?`([0-9a-f]{40})`') {
+                  $nightlyData.commit = $matches[1]
+                }
+              } catch {}
+            }
+          } catch {
+            Write-Host "No nightly release found, nightly will be null"
+          }
+          
+          $manifest = [ordered]@{
+            stable = [ordered]@{
+              tag_name = "${{ github.ref_name }}"
+              published_at = "${{ github.event.release.published_at }}"
+            }
+            nightly = $nightlyData
+          }
+          
+          $manifest | ConvertTo-Json -Depth 3 | Out-File -FilePath "./latest.json" -Encoding UTF8
+          Write-Host "Generated latest.json:"
+          Get-Content "./latest.json"
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      
       - name: Commit and push to gh-pages
         run: |
-          git add standard/
+          git add standard/ latest.json
           
           # Check if there are changes to commit
           $changes = git diff --staged --name-only
@@ -455,9 +491,35 @@ jobs:
             (Get-ChildItem $_.FullName -Force | Measure-Object).Count -eq 0
           } | Remove-Item -Force -Recurse -ErrorAction SilentlyContinue
           
+          # Generate latest.json manifest
+          $stableData = $null
+          try {
+            $stableJson = gh api repos/$env:GITHUB_REPOSITORY/releases/latest --jq '{tag_name: .tag_name, published_at: .published_at}' 2>$null
+            if ($stableJson) {
+              $stableData = $stableJson | ConvertFrom-Json
+            }
+          } catch {
+            Write-Host "No stable release found, stable will be null"
+          }
+          
+          $nightlyPub = gh api repos/$env:GITHUB_REPOSITORY/releases/tags/nightly --jq '.published_at' 2>$null
+          $nightlyData = [ordered]@{
+            build_time = $nightlyPub
+            commit = "${{ github.sha }}"
+          }
+          
+          $manifest = [ordered]@{
+            stable = $stableData
+            nightly = $nightlyData
+          }
+          
+          $manifest | ConvertTo-Json -Depth 3 | Out-File -FilePath "./latest.json" -Encoding UTF8
+          Write-Host "Generated latest.json:"
+          Get-Content "./latest.json"
+          
           # Add and commit changes
           Write-Host "Adding files to git..."
-          git add nightly/
+          git add nightly/ latest.json
           
           $changes = git diff --staged --name-only
           if ($changes) {
