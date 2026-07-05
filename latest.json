@@ -1,0 +1,10 @@
+{
+  "stable": {
+    "published_at": "2026-06-06T20:53:32Z",
+    "tag_name": "v1.20260529"
+  },
+  "nightly": {
+    "build_time": "2026-07-05T21:08:39Z",
+    "commit": "2ee3678de0e924912fa421251c9d431f8400be3d"
+  }
+}
