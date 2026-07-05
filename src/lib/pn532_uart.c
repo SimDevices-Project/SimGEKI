@@ -14,6 +14,8 @@
 
 uint8_t command;
 
+volatile uint8_t PN532_UART_DIRECT = 0;
+
 #define RX_BUFFER_SIZE  128
 #define RX_BUFFER_COUNT 4
 
@@ -53,24 +55,23 @@ void USART1_IRQHandler(void)
 {
   if (USART_GetITStatus(USART1, USART_IT_RXNE) != RESET) {
     uint8_t data = USART_ReceiveData(USART1) & 0xFF;
-#if PN532_UART_DIRECT == 1
-    CDC_CARD_IO_PutChar(data);
-    return;
-#else
-    if (RxDropCurrentFrame == 0) {
-      uint8_t index = RxIndex[RxWriteIndex];
-      if (index < RX_BUFFER_SIZE) {
-        RxBuffer[RxWriteIndex][index] = data;
-        RxIndex[RxWriteIndex]         = index + 1;
-      } else {
-        // Current frame is longer than one software buffer, drop it safely.
-        RxDropCurrentFrame = 1;
+    if (PN532_UART_DIRECT == 1) {
+      CDC_CARD_IO_PutChar(data);
+    } else {
+      if (RxDropCurrentFrame == 0) {
+        uint8_t index = RxIndex[RxWriteIndex];
+        if (index < RX_BUFFER_SIZE) {
+          RxBuffer[RxWriteIndex][index] = data;
+          RxIndex[RxWriteIndex]         = index + 1;
+        } else {
+          // Current frame is longer than one software buffer, drop it safely.
+          RxDropCurrentFrame = 1;
+        }
       }
     }
-#endif
   }
-#if PN532_UART_DIRECT != 1
-  if (USART_GetITStatus(USART1, USART_IT_IDLE) != RESET) {
+  if (PN532_UART_DIRECT != 1) {
+    if (USART_GetITStatus(USART1, USART_IT_IDLE) != RESET) {
     (void)USART1->STATR; // 读取 STATR 寄存器以清除空闲中断标志
     (void)USART1->DATAR; // 读取 DATAR 寄存器以清除空闲中断标志
     // USART_ClearFlag(USART1, USART_FLAG_IDLE); // 不需要这么清除
@@ -93,22 +94,22 @@ void USART1_IRQHandler(void)
     RxIndex[RxWriteIndex] = 0;
     RxDropCurrentFrame    = 0;
     // PN532_UART_RxDataCheck();
+    }
   }
-#endif
 }
 
 uint8_t __GetNextRxBuffer(uint8_t **buf, uint8_t *len)
 {
   uint8_t next;
   USART_ITConfig(USART1, USART_IT_RXNE, DISABLE);
-#if PN532_UART_DIRECT != 1
-  USART_ITConfig(USART1, USART_IT_IDLE, DISABLE);
-#endif
+  if (PN532_UART_DIRECT != 1) {
+    USART_ITConfig(USART1, USART_IT_IDLE, DISABLE);
+  }
   if (RxBufferCount == 0) {
     USART_ITConfig(USART1, USART_IT_RXNE, ENABLE);
-#if PN532_UART_DIRECT != 1
-    USART_ITConfig(USART1, USART_IT_IDLE, ENABLE);
-#endif
+    if (PN532_UART_DIRECT != 1) {
+      USART_ITConfig(USART1, USART_IT_IDLE, ENABLE);
+    }
     return 0;
   }
 
@@ -121,9 +122,9 @@ uint8_t __GetNextRxBuffer(uint8_t **buf, uint8_t *len)
   }
   RxBufferCount--;
   USART_ITConfig(USART1, USART_IT_RXNE, ENABLE);
-#if PN532_UART_DIRECT != 1
-  USART_ITConfig(USART1, USART_IT_IDLE, ENABLE);
-#endif
+  if (PN532_UART_DIRECT != 1) {
+    USART_ITConfig(USART1, USART_IT_IDLE, ENABLE);
+  }
   return 1;
 }
 
@@ -132,14 +133,14 @@ void PN532_UART_Check(uint8_t *_buffer, uint8_t *_size)
   uint8_t *buffer;
   uint8_t size;
   while (__GetNextRxBuffer(&buffer, &size)) {
-#if PN532_UART_DIRECT == 2
-    for (uint8_t i = 0; i < size; i++) {
-      CDC_CARD_IO_PutChar(buffer[i]);
+    if (PN532_UART_DIRECT == 2) {
+      for (uint8_t i = 0; i < size; i++) {
+        CDC_CARD_IO_PutChar(buffer[i]);
+      }
+    } else if (PN532_UART_DIRECT == 0) {
+      memcpy(_buffer, buffer, size);
+      *_size = size;
     }
-#elif PN532_UART_DIRECT == 0
-    memcpy(_buffer, buffer, size);
-    *_size = size;
-#endif
   }
 }
 
@@ -180,9 +181,7 @@ void PN532_UART_Init()
 
   USART_Init(USART1, &USART_InitStructure);
   USART_ITConfig(USART1, USART_IT_RXNE, ENABLE);
-#if PN532_UART_DIRECT != 1
   USART_ITConfig(USART1, USART_IT_IDLE, ENABLE);
-#endif
   NVIC_InitStructure.NVIC_IRQChannel                   = USART1_IRQn;
   NVIC_InitStructure.NVIC_IRQChannelPreemptionPriority = 1;
   NVIC_InitStructure.NVIC_IRQChannelSubPriority        = 0;
@@ -196,8 +195,8 @@ void PN532_UART_Init()
 void PN532_UART_Wakeup()
 {
   const uint8_t startup532[] = {
-      0x55, 0x55, 0x00, 0x00, 0x00, // 5 Bytes dummy bytes to make sure PN532 wakes up
-      0x00, 0x00, 0xFF, 0x03, 0xFD, 0xD4, 0x14, 0x01, 0x17, 0x00};
+      0x55, 0x55, 0x00, 0x00, 0x00};, // 5 Bytes dummy bytes to make sure PN532 wakes up
+      // 0x00, 0x00, 0xFF, 0x03, 0xFD, 0xD4, 0x14, 0x01, 0x17, 0x00};
 
   for (uint8_t i = 0; i < sizeof(startup532); i++) {
     _SendByte(startup532[i]);

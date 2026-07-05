@@ -13,6 +13,7 @@ typedef struct {
   uint8_t command_status;
   uint8_t parameter;
   uint8_t failure_timer_id;
+  uint8_t init_got_response;
   uint8_t inlisted_tag;
   uint8_t felica_idm[8];
   uint8_t felica_pmm[8];
@@ -51,6 +52,7 @@ static PN532_State pn532_state = {
 #endif
 
 static void PN532_Failed(void);
+static void PN532_CheckInitPassthrough(void);
 
 static AIME_Request *PN532_GetRequest(void)
 {
@@ -163,11 +165,15 @@ static void PN532_Failed(void)
       CDC_CARD_IO_SendDataReady();
       break;
     case PN532_GET_VERSION:
-      PN532_getFirmwareVersion();
+      if (!PN532_UART_DIRECT) {
+        PN532_getFirmwareVersion();
+      }
       CDC_CARD_IO_SendDataReady();
       break;
     case PN532_SET_PASSIVE_ACTIVATION_RETRIES:
-      PN532_setPassiveActivationRetries();
+      if (!PN532_UART_DIRECT) {
+        PN532_setPassiveActivationRetries();
+      }
       CDC_CARD_IO_SendDataReady();
       break;
     case PN532_SET_RFFIELD:
@@ -212,6 +218,20 @@ static void PN532_Failed(void)
       res->status = STATUS_INVALID_COMMAND;
       CDC_CARD_IO_SendDataReady();
       break;
+  }
+}
+
+/**************************************************************************/
+/*!
+    @brief  Checks if PN532 initialization got no UART response, and if so,
+            switches UART to direct passthrough mode (CDC CARD IO).
+            Called 6 seconds after PN532_Init().
+*/
+/**************************************************************************/
+static void PN532_CheckInitPassthrough(void)
+{
+  if (!pn532_state.init_got_response) {
+    PN532_UART_DIRECT = 1;
   }
 }
 
@@ -297,6 +317,7 @@ void PN532_Check()
       case PN532_SAMCONFIG:
         if (readResponse(buffer, size, PN532_COMMAND_SAMCONFIGURATION) >= 0) {
           PN532_MarkSuccess();
+          pn532_state.init_got_response = 1;
         } else {
           // 协议帧无效(如干扰数据)，发送错误响应并清理状态
           PN532_SendErrorResponse(STATUS_INVALID_DATA);
@@ -305,6 +326,7 @@ void PN532_Check()
       case PN532_GET_VERSION:
         if (readResponse(buffer, size, PN532_COMMAND_GETFIRMWAREVERSION) >= 0) {
           PN532_MarkSuccess();
+          pn532_state.init_got_response = 1;
         } else {
           // 协议帧无效，发送错误响应并清理状态
           PN532_SendErrorResponse(STATUS_INVALID_DATA);
@@ -313,6 +335,7 @@ void PN532_Check()
       case PN532_SET_PASSIVE_ACTIVATION_RETRIES:
         if (readResponse(buffer, size, PN532_COMMAND_RFCONFIGURATION) >= 0) {
           PN532_MarkSuccess();
+          pn532_state.init_got_response = 1;
         } else {
           // 协议帧无效，发送错误响应并清理状态
           PN532_SendErrorResponse(STATUS_INVALID_DATA);
@@ -591,11 +614,13 @@ void PN532_felica_through()
 void PN532_Init()
 {
   pn532_state.failure_timer_id = 0xFF;
+  pn532_state.init_got_response = 0;
   INTR(begin)();
   INTR(wakeup)();
   setTimeout(PN532_getFirmwareVersion, 100);
   setTimeout(PN532_setPassiveActivationRetries, 200);
   setTimeout(PN532_SAMConfig, 300);
+  setTimeout(PN532_CheckInitPassthrough, 6000);
 }
 
 /**************************************************************************/

@@ -285,9 +285,9 @@ const uint8_t CARD_READER_EXTRA_INFO_LOWRATE[10] = "15084\xFF\x10\x00\x12";
 // 通知 Card IO 数据已准备好
 void CDC_CARD_IO_SendDataReady()
 {
-#if PN532_UART_DIRECT == 0
-  cardIO_SendDataReady_Flag = 1;
-#endif
+  if (PN532_UART_DIRECT == 0) {
+    cardIO_SendDataReady_Flag = 1;
+  }
 }
 
 // 发送准备好的 Card IO 数据
@@ -520,19 +520,19 @@ void CDC_LED_IO_UART_Poll()
 // Card IO CDC 数据读取
 void CDC_CARD_IO_UART_Poll()
 {
-#if PN532_UART_DIRECT != 0
-  uint8_t dat;
-  while (cdc_card_io.Rx_Pending) {
-    dat = cdc_card_io.Rx_PendingBuf[cdc_card_io.Rx_CurPos];
-    USART_SendData(USART1, dat);
-    // CDC_CARD_IO_PutChar(dat);
-    while (USART_GetFlagStatus(USART1, USART_FLAG_TXE) == RESET);
-    cdc_card_io.Rx_CurPos++;
-    cdc_card_io.Rx_Pending--;
+  if (PN532_UART_DIRECT != 0) {
+    uint8_t dat;
+    while (cdc_card_io.Rx_Pending) {
+      dat = cdc_card_io.Rx_PendingBuf[cdc_card_io.Rx_CurPos];
+      USART_SendData(USART1, dat);
+      // CDC_CARD_IO_PutChar(dat);
+      while (USART_GetFlagStatus(USART1, USART_FLAG_TXE) == RESET);
+      cdc_card_io.Rx_CurPos++;
+      cdc_card_io.Rx_Pending--;
+    }
+    SetEPRxValid(CDC_CARD_IO_EP);
+    return;
   }
-  SetEPRxValid(CDC_CARD_IO_EP);
-  return;
-#else
   uint8_t cur_byte;
   static uint8_t checksum  = 0;
   static uint8_t prev_byte = 0;
@@ -603,7 +603,6 @@ void CDC_CARD_IO_UART_Poll()
   }
 
   return;
-#endif
 }
 
 void CDC_UART_Poll()

@@ -12,7 +12,7 @@
  * 1 - 模式1
  * 2 - 模式2
  */
-#define PN532_UART_DIRECT 0
+extern volatile uint8_t PN532_UART_DIRECT;
 
 /**
  * @brief 是否启用串口转发
