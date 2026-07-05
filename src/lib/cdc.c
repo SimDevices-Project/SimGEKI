@@ -90,7 +90,7 @@ void CDC_IO_USB_Poll(CDC_Struct *IO)
 
     if (IO->PutCharBuff_First != IO->PutCharBuff_Last || IO->Tx_Full) {
       // 计算可发送数据长度
-      if (IO->PutCharBuff_First <= IO->PutCharBuff_Last) {
+      if (IO->PutCharBuff_First < IO->PutCharBuff_Last) {
         usb_tx_len = IO->PutCharBuff_Last - IO->PutCharBuff_First;
       } else {
         usb_tx_len = CDC_PUTCHARBUF_LEN - IO->PutCharBuff_First;
@@ -473,9 +473,11 @@ void CDC_LED_IO_UART_Poll()
     } else if (prev_byte == 0xD0) {
       cur_byte++;
     } else if (cur_byte == 0xD0) {
+      prev_byte = 0xD0;
       cdc_led_io.Rx_Pending--;
       cdc_led_io.Rx_CurPos++;
       if (cdc_led_io.Rx_Pending == 0) {
+        prev_byte = 0;
         SetEPRxValid(CDC_LED_IO_EP);
       }
       continue;
@@ -558,9 +560,11 @@ void CDC_CARD_IO_UART_Poll()
     } else if (prev_byte == 0xD0) {
       cur_byte++;
     } else if (cur_byte == 0xD0) {
+      prev_byte = 0xD0;
       cdc_card_io.Rx_Pending--;
       cdc_card_io.Rx_CurPos++;
       if (cdc_card_io.Rx_Pending == 0) {
+        prev_byte = 0;
         SetEPRxValid(CDC_CARD_IO_EP);
       }
       continue;

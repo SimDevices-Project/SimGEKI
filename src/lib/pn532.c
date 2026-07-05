@@ -3,6 +3,9 @@
 #include "pn532_uart.h"
 #include "cdc.h"
 #include "comio.h"
+#if PN532_DIAG_LED
+#include "led.h"
+#endif
 #include <string.h>
 #include <stdio.h>
 
@@ -74,6 +77,7 @@ static void PN532_ClearFailureTimer(void)
 
 static void PN532_BeginCommand(enum PN532_cmd cmd, uint16_t timeout)
 {
+  PN532_ClearFailureTimer();
   pn532_state.option_status    = PN532_WAITING_FOR_ACK;
   pn532_state.command_status   = cmd;
   pn532_state.failure_timer_id = setTimeout(PN532_Failed, timeout);
@@ -81,6 +85,7 @@ static void PN532_BeginCommand(enum PN532_cmd cmd, uint16_t timeout)
 
 static void PN532_ImmediateFailure(enum PN532_cmd cmd)
 {
+  PN532_ClearFailureTimer();
   pn532_state.option_status    = PN532_ERROR;
   pn532_state.command_status   = cmd;
   pn532_state.failure_timer_id = setTimeout(PN532_Failed, 0);
@@ -232,8 +237,20 @@ static void PN532_CheckInitPassthrough(void)
 {
   if (!pn532_state.init_got_response) {
     PN532_UART_DIRECT = 1;
+#if PN532_DIAG_LED
+    LED_RGB_SetPort(LED_RGB_PORT_UART, 0xFF, 0x00, 0x00);
+#endif
   }
 }
+
+#if PN532_DIAG_LED
+static void PN532_DiagLED(void)
+{
+  if (PN532_UART_DIRECT == 0 && pn532_state.init_got_response) {
+    LED_RGB_SetPort(LED_RGB_PORT_UART, 0x00, 0xFF, 0x00);
+  }
+}
+#endif
 
 /**************************************************************************/
 /*!
@@ -307,8 +324,11 @@ void PN532_Check()
       size -= 6;
     }
   }
+  if (size == 0) {
+    return;
+  }
   if (pn532_state.option_status == PN532_WAITING_FOR_RESPONSE) {
-    uint8_t status;
+    int16_t status;
 
     // 处理PN532 UART响应
     // 安全改进: 所有分支在响应验证失败时都会发送错误响应并清理状态机
@@ -621,6 +641,9 @@ void PN532_Init()
   setTimeout(PN532_setPassiveActivationRetries, 200);
   setTimeout(PN532_SAMConfig, 300);
   setTimeout(PN532_CheckInitPassthrough, 6000);
+#if PN532_DIAG_LED
+  setTimeout(PN532_DiagLED, 6500);
+#endif
 }
 
 /**************************************************************************/

@@ -14,12 +14,14 @@
 #define PN532_POSTAMBLE     0x00
 
 #define PN532_OK            0
-#define PN532_INVALID_ACK   0xF1
-#define PN532_TIMEOUT       0xF2
-#define PN532_INVALID_FRAME 0xF3
-#define PN532_NO_SPACE      0xF4
+#define PN532_INVALID_ACK   (-1)
+#define PN532_TIMEOUT       (-2)
+#define PN532_INVALID_FRAME (-3)
+#define PN532_NO_SPACE      (-4)
 
 #define PN532_WAITING       0xFF
+
+#define PN532_DIAG_LED      0
 
 // PN532 Commands
 #define PN532_COMMAND_DIAGNOSE              (0x00)

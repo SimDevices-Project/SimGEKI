@@ -108,7 +108,7 @@ typedef union {
     uint8_t frame_len;
     uint8_t addr;
     uint8_t seq_no;
-    uint8_t cmd;
+    IO_COMMAND cmd;
     uint8_t status;
     uint8_t payload_len;
     union {
