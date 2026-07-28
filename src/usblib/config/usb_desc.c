@@ -526,11 +526,10 @@ xdata void USBD_SerialNumUpdate()
   Device_Serial1 = *(uint32_t *)0x1FFFF7EC;
   Device_Serial2 = *(uint32_t *)0x1FFFF7F0;
 
-  if (Device_Serial0 != 0) {
-    _IntToUnicode(Device_Serial0, &USBD_StringSerial[2], 8);
-    _IntToUnicode(Device_Serial1, &USBD_StringSerial[18], 8);
-    _IntToUnicode(Device_Serial2, &USBD_StringSerial[34], 8);
-  }
+
+  _IntToUnicode(Device_Serial0, &USBD_StringSerial[2], 8);
+  _IntToUnicode(Device_Serial1, &USBD_StringSerial[18], 8);
+  _IntToUnicode(Device_Serial2, &USBD_StringSerial[34], 8);
 }
 
 xdata void USBD_DeviceDescriptorUpdate()
