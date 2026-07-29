@@ -70,6 +70,20 @@ typedef enum {
   CMD_EXT_TO_NORMAL_MODE   = 0xf5,
 } __packed IO_COMMAND;
 
+typedef enum {  // 命令执行状态，res 数据包专用
+  STATUS_OK = 0x00,
+  STATUS_CARD_ERROR = 0x01,
+  STATUS_NOT_ACCEPT = 0x02,
+  STATUS_INVALID_COMMAND = 0x03,
+  STATUS_INVALID_DATA = 0x04,
+  STATUS_SUM_ERROR = 0x05,
+  STATUS_INTERNAL_ERROR = 0x06,
+  STATUS_INVALID_FIRM_DATA = 0x07,
+  STATUS_FIRM_UPDATE_SUCCESS = 0x08,
+  STATUS_COMP_DUMMY_2ND = 0x10,  // 837-15286
+  STATUS_COMP_DUMMY_3RD = 0x20,  // 837-15396
+} __packed RES_STATUS; // From https://github.com/Sucareto/Arduino-Aime-Reader/blob/main/Aime_Reader.h, via MIT License
+
 typedef struct
 {
   IO_COMMAND command;
@@ -109,7 +123,7 @@ typedef union {
     uint8_t addr;
     uint8_t seq_no;
     IO_COMMAND cmd;
-    uint8_t status;
+    RES_STATUS status;
     uint8_t payload_len;
     union {
       char version[23];         // sg_nfc_res_get_fw_version,sg_nfc_res_get_hw_version

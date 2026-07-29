@@ -24,20 +24,6 @@ typedef struct {
 } PN532_State;
 
 enum {
-  STATUS_OK                  = 0x00,
-  STATUS_CARD_ERROR          = 0x01,
-  STATUS_NOT_ACCEPT          = 0x02,
-  STATUS_INVALID_COMMAND     = 0x03,
-  STATUS_INVALID_DATA        = 0x04,
-  STATUS_SUM_ERROR           = 0x05,
-  STATUS_INTERNAL_ERROR      = 0x06,
-  STATUS_INVALID_FIRM_DATA   = 0x07,
-  STATUS_FIRM_UPDATE_SUCCESS = 0x08,
-  STATUS_COMP_DUMMY_2ND      = 0x10,
-  STATUS_COMP_DUMMY_3RD      = 0x20,
-};
-
-enum {
   FelicaPolling                 = 0x00,
   Felica_reqResponce            = 0x04,
   FelicaReadWithoutEncryptData  = 0x06,
@@ -122,7 +108,7 @@ static void res_init(uint8_t payload_len)
  *        3. 清除超时定时器，防止状态卡死
  * @param error_status 错误状态码 (如 STATUS_INVALID_DATA, STATUS_CARD_ERROR)
  */
-static void PN532_SendErrorResponse(uint8_t error_status)
+static void PN532_SendErrorResponse(RES_STATUS error_status)
 {
   AIME_Response *res = PN532_GetResponse();
   AIME_Request *req  = PN532_GetRequest();
@@ -236,10 +222,7 @@ static void PN532_Failed(void)
 static void PN532_CheckInitPassthrough(void)
 {
   if (!pn532_state.init_got_response) {
-    PN532_UART_DIRECT = 1;
-#if PN532_DIAG_LED
-    LED_RGB_SetPort(LED_RGB_PORT_UART, 0xFF, 0x00, 0x00);
-#endif
+    PN532_UART_DIRECT = 2;
   }
 }
 
@@ -248,6 +231,8 @@ static void PN532_DiagLED(void)
 {
   if (PN532_UART_DIRECT == 0 && pn532_state.init_got_response) {
     LED_RGB_SetPort(LED_RGB_PORT_UART, 0x00, 0xFF, 0x00);
+  }else {
+    LED_RGB_SetPort(LED_RGB_PORT_UART, 0xFF, 0x00, 0x00);
   }
 }
 #endif
@@ -640,7 +625,7 @@ void PN532_Init()
   setTimeout(PN532_getFirmwareVersion, 100);
   setTimeout(PN532_setPassiveActivationRetries, 200);
   setTimeout(PN532_SAMConfig, 300);
-  setTimeout(PN532_CheckInitPassthrough, 6000);
+  setTimeout(PN532_CheckInitPassthrough, 2000);
 #if PN532_DIAG_LED
   setTimeout(PN532_DiagLED, 6500);
 #endif

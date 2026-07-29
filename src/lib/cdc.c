@@ -331,7 +331,7 @@ void CDC_CARD_IO_Handler()
   res->seq_no      = req->seq_no;
   res->cmd         = req->cmd;
   res->frame_len   = 6;
-  res->status      = 0;
+  res->status      = STATUS_OK;
   res->payload_len = 0;
 
   switch (req->cmd) {
@@ -340,10 +340,11 @@ void CDC_CARD_IO_Handler()
      */
     // 初始化
     case CMD_TO_NORMAL_MODE:
-      res->frame_len   = 6;
-      res->status      = 0;
-      res->seq_no      = 0;
-      res->payload_len = 0;
+      if (req->payload_len == 0) {
+        res->status = STATUS_INVALID_COMMAND;
+      } else {
+        res->status = STATUS_OK;
+      }
       LED_RGB_SetPort(LED_RGB_PORT_UART, 0xFF, 0xFF, 0xFF);
       CDC_CARD_IO_SendDataReady();
       break;
@@ -417,7 +418,7 @@ void CDC_CARD_IO_Handler()
       break;
     // 发送16进制数据
     case CMD_SEND_HEX_DATA:
-      res->status = 0x20;
+      res->status = STATUS_COMP_DUMMY_3RD;
       CDC_CARD_IO_SendDataReady();
       break;
     /**
