@@ -39,8 +39,8 @@ static uint16_t activeRollerValue = 0;
 
 uint8_t intervalID = 0xFF;
 
-#define INTERVAL_HEARTBEAT_MS_IDLE   30
-#define INTERVAL_HEARTBEAT_MS_ACTIVE 6
+#define INTERVAL_HEARTBEAT_MS_IDLE   20
+#define INTERVAL_HEARTBEAT_MS_ACTIVE 5
 
 const uint8_t bitPosMap[] = {23, 20, 22, 19, 21, 18, 17, 16, 15, 14, 13, 12, 11, 10, 9, 8, 7, 6};
 
