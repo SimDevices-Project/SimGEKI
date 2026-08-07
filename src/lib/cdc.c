@@ -341,7 +341,8 @@ void CDC_CARD_IO_Handler()
     // 初始化
     case CMD_TO_NORMAL_MODE:
       if (req->payload_len == 0) {
-        res->status = STATUS_INVALID_COMMAND;
+        // res->status = STATUS_INVALID_COMMAND;
+        res->status = STATUS_OK;
       } else {
         res->status = STATUS_OK;
       }
