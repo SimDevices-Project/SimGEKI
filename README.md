@@ -6,7 +6,17 @@ The repository for firmware of SimGETRO/SimGEKI designed based on the ch32v203 c
 
 ## License
 
-For non-commercial use, this project is distributed under the AGPL-v3 license. For commercial use, please contact us for individual licensing.
+Unless a file or directory states otherwise, the contributor-owned portions of
+this repository are source-available under the
+[PolyForm Noncommercial License 1.0.0](./LICENSE). It permits use, modification,
+and distribution for noncommercial purposes. Commercial use is not licensed by
+these terms and requires a separate written license from the project owner;
+please contact the owner through the
+[SimGEKI repository](https://github.com/iamapig120/SimGEKI).
+
+PolyForm Noncommercial is not an OSI-approved open-source license. Third-party
+components, including files bundled under `sdk/` and `tools/`, remain governed
+by their own license notices.
 
 ## Compiling
 
@@ -30,9 +40,11 @@ You could refer to the following table to find what you're looking for.
 [SimDevices Wiki Page](https://sim.bysb.net/#/simgetro/diy/core_and_firmware/)
 Check this page to get your own SimGEKI, Sch files, Pcb files even Cad files all included!
 
-## Attention
+## Trademarks
 
-You must not use any name, including product name and trademark, that is associated to SimPad, SimDevices, SimGEKI, SimGETRO for promotional or other purposes. Please be kindly advised.
+The software license does not grant rights to the SimPad, SimDevices, SimGEKI,
+or SimGETRO names or trademarks. Do not use them to market a product or imply
+sponsorship, endorsement, or affiliation without prior permission.
 
 ## Special Thanks
 

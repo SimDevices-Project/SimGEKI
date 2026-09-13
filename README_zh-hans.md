@@ -6,7 +6,14 @@
 
 ## 协议
 
-对于非商业使用，本项目遵循AGPL-v3协议进行分发。商业使用需要联系获取独立授权。
+除非文件或目录另有说明，本仓库中由贡献者持有权利的部分以
+[PolyForm Noncommercial License 1.0.0](./LICENSE) 作为源码可用许可发布。
+该许可允许以非商业目的使用、修改和分发；其条款不授予商业使用权。商业使用必须事先
+取得项目所有者的独立书面授权，请通过
+[SimGEKI 仓库](https://github.com/iamapig120/SimGEKI)联系项目所有者。
+
+PolyForm Noncommercial 并非 OSI 认可的开源许可证，因此本项目应表述为“源码可用”，
+而非“开源”。`sdk/`、`tools/` 等第三方组件继续适用其各自的许可声明。
 
 ## 编译
 
@@ -31,9 +38,10 @@
 查看该页面来了解如果拥有一台属于你自己的SimGEKi，内容包含但不限于原理图、PCB设计甚至还包含CAD设计图！
 Check this page to get your own SimGEKI, Sch files, Pcb files even Cad files all included!
 
-## 注意
+## 商标
 
-请您知晓，您不得将与SimPad、SimDevices、SimGEKI、SimGETRO相关的任何名称（包括产品名称和商标）用于销售或其他目的。
+软件许可不授予 SimPad、SimDevices、SimGEKI、SimGETRO 名称或商标的使用权。未经事先
+许可，请勿使用这些名称宣传产品，也不得暗示获得项目方赞助、认可或与项目方存在关联。
 
 ## 特别感谢
 

@@ -1,7 +1,6 @@
-/* SPDX-License-Identifier: MPL-2.0
+/* SPDX-License-Identifier: PolyForm-Noncommercial-1.0.0
  *
- * The inverse S-box constants are adapted from PN532-Aime-Reader commit
- * 8feaf84860a17f10ebd12c3827a17cc7deaa01c3.
+ * The inverse S-box constants were independently recovered by static analysis
  */
 #include "felica-inject.h"
 
