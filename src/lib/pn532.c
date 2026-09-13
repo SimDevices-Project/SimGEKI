@@ -3,6 +3,7 @@
 #include "pn532_uart.h"
 #include "cdc.h"
 #include "comio.h"
+#include "felica-inject.h"
 #if PN532_DIAG_LED
 #include "led.h"
 #endif
@@ -112,6 +113,14 @@ static void PN532_SendErrorResponse(RES_STATUS error_status)
 {
   AIME_Response *res = PN532_GetResponse();
   AIME_Request *req  = PN532_GetRequest();
+  if (pn532_state.command_status == PN532_FELICA_READ && FelicaInject_IsProbing()) {
+    FelicaInject_FinishFelicaProbe(NULL);
+    res_init_s(FelicaInject_FillPollResponse(res, pn532_state.felica_idm, pn532_state.felica_pmm), req, res);
+    pn532_state.option_status = PN532_STANDBY;
+    PN532_ClearFailureTimer();
+    CDC_CARD_IO_SendDataReady();
+    return;
+  }
   res_init_s(0, req, res);
   res->status               = error_status;
   pn532_state.option_status = PN532_STANDBY;
@@ -122,6 +131,7 @@ static void PN532_SendErrorResponse(RES_STATUS error_status)
 void PN532_Polling()
 {
   static uint8_t bet = 0; // Between, Mode ISO14443A or FeliCa
+  FelicaInject_Reset();
   if (bet) {
     PN532_readPassiveTargetID(PN532_MIFARE_ISO14443A, PN532_TIMEOUT_VAL);
     bet = 0;
@@ -191,6 +201,12 @@ static void PN532_Failed(void)
       CDC_CARD_IO_SendDataReady();
       break;
     case PN532_FELICA_READ:
+      if (FelicaInject_IsProbing()) {
+        FelicaInject_FinishFelicaProbe(NULL);
+        res_init(FelicaInject_FillPollResponse(res, pn532_state.felica_idm, pn532_state.felica_pmm));
+        CDC_CARD_IO_SendDataReady();
+        break;
+      }
       res->RW_status[0] = 0;
       res->RW_status[1] = 0;
       res->numBlock     = req->numBlock;
@@ -446,11 +462,17 @@ void PN532_Check()
           if (responseLength == 20) {
             pn532_state.felica_system_code[0] = buffer[7 + 20];
             pn532_state.felica_system_code[1] = buffer[7 + 21];
+          } else {
+            pn532_state.felica_system_code[0] = 0;
+            pn532_state.felica_system_code[1] = 0;
           }
-          res_init(0x13);
-          res->count  = 1;
-          res->type   = 0x20;
-          res->id_len = 0x10;
+          if (FelicaInject_BeginFelicaProbe(pn532_state.felica_idm, pn532_state.felica_system_code)) {
+            uint16_t service_code = 0x000B;
+            uint16_t block_list = 0x8000;
+            PN532_felica_ReadWithoutEncryption(1, &service_code, 1, &block_list, res->blockData);
+            break;
+          }
+          res_init(FelicaInject_FillPollResponse(res, pn532_state.felica_idm, pn532_state.felica_pmm));
           CDC_CARD_IO_SendDataReady();
         } else {
           // 协议帧无效，发送错误响应并清理状态
@@ -486,6 +508,12 @@ void PN532_Check()
             for (uint8_t j = 0; j < 16; j++) {
               res->blockData[i][j] = buffer[k++];
             }
+          }
+          if (FelicaInject_IsProbing()) {
+            FelicaInject_FinishFelicaProbe(res->blockData[0]);
+            res_init(FelicaInject_FillPollResponse(res, pn532_state.felica_idm, pn532_state.felica_pmm));
+            CDC_CARD_IO_SendDataReady();
+            break;
           }
           res->RW_status[0] = 0;
           res->RW_status[1] = 0;

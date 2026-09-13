@@ -14,7 +14,8 @@ typedef struct {
   const uint32_t SleepTimeout; // 休眠超时时间，单位：毫秒
   const uint8_t DeviceMode;    // 设备工作模式，1:SGIO4, 2:私有HID，3:键盘鼠标
   const uint8_t LEDManager;    // LED管理模式，0:不管理，1:管理
-  const uint8_t _unused[FLASH_FAST_DATA_SIZE - 8];
+  const uint8_t CardReadMode;  // 卡片读模式，0:使用标准流程 1:直接本地读卡号
+  const uint8_t _unused[FLASH_FAST_DATA_SIZE - 9];
 } __packed FlashData;
 
 typedef struct {
@@ -22,7 +23,8 @@ typedef struct {
   uint32_t SleepTimeout; // 休眠超时时间，单位：毫秒
   uint8_t DeviceMode;    // 设备工作模式，1:SGIO4, 2:私有HID，3:键盘鼠标
   uint8_t LEDManager;    // LED管理模式，0:不管理，1:管理
-  uint8_t _unused[FLASH_FAST_DATA_SIZE - 8];
+  uint8_t CardReadMode;  // 卡片读模式，0:使用标准流程 1:直接本地读卡号
+  uint8_t _unused[FLASH_FAST_DATA_SIZE - 9];
 } __packed RamData;
 
 // extern FlashData *Data;

@@ -22,6 +22,8 @@ typedef enum {
 typedef enum {
   INPUT_MODE_GET = 0x01,
   INPUT_MODE_SET = 0x02, 
+  CARD_READ_MODE_GET = 0x03,
+  CARD_READ_MODE_SET = 0x04,
 
   GET_SERIAL_NUMBER = 0x10,
 
@@ -54,6 +56,10 @@ typedef struct {
     struct
     {
       uint8_t device_mode; // Device mode, 1:SGIO4, 2:Private HID, 3:Keyboard Mouse
+    };
+    struct
+    {
+      uint8_t card_read_mode; // Card read mode, 0:standard flow, 1:read access code locally
     };
     struct
     {

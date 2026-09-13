@@ -172,6 +172,24 @@ void HIDCONFIG_Receive_Handler()
           HIDCONFIG_Upload();
           break;
         }
+        case CARD_READ_MODE_GET: {
+          dataUpload->command        = CARD_READ_MODE_GET;
+          dataUpload->state          = STATE_OK;
+          dataUpload->card_read_mode = GlobalData->CardReadMode;
+          HIDCONFIG_Upload();
+          break;
+        }
+        case CARD_READ_MODE_SET: {
+          dataUpload->command = CARD_READ_MODE_SET;
+          if (dataReceive->card_read_mode <= 1) {
+            GlobalData->CardReadMode = dataReceive->card_read_mode;
+            dataUpload->state        = STATE_OK;
+          } else {
+            dataUpload->state = STATE_ERROR;
+          }
+          HIDCONFIG_Upload();
+          break;
+        }
         /**
          * @brief Set LED mode : 0xB0
          * This command is used to set the color of the LEDs.

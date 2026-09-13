@@ -81,6 +81,7 @@ C_SOURCES = \
 	src/lib/cdc.c \
 	src/lib/ch422.c \
 	src/lib/data.c \
+	src/lib/felica-inject.c \
 	src/lib/hidconfig.c \
 	src/lib/hidio.c \
 	src/lib/keyscan.c \

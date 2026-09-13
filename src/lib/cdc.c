@@ -10,6 +10,7 @@
 
 #include "pn532.h"
 #include "pn532_uart.h"
+#include "felica-inject.h"
 
 #include <string.h>
 
@@ -431,8 +432,13 @@ void CDC_CARD_IO_Handler()
       break;
     // 读取Mifare卡片
     case CMD_MIFARE_READ:
-      // CDC_LED_IO_PutChar(0Xe1);
-      PN532_mifareclassic_ReadDataBlock(req->block_no, res->block);
+      if (FelicaInject_EmulateMifareRead(req->block_no, res->block)) {
+        res->payload_len = sizeof(res->block);
+        res->frame_len += res->payload_len;
+        CDC_CARD_IO_SendDataReady();
+      } else {
+        PN532_mifareclassic_ReadDataBlock(req->block_no, res->block);
+      }
       break;
     // 读取Felica卡片
     case CMD_FELICA_THROUGH:
@@ -440,11 +446,19 @@ void CDC_CARD_IO_Handler()
       break;
     // 验证Mifare卡片密钥B
     case CMD_MIFARE_AUTHORIZE_B:
-      PN532_mifareclassic_AuthenticateBlock(req->uid, 4, req->block_no, 1, mifare_key_B);
+      if (FelicaInject_EmulateMifareAuth(req->uid)) {
+        CDC_CARD_IO_SendDataReady();
+      } else {
+        PN532_mifareclassic_AuthenticateBlock(req->uid, 4, req->block_no, 1, mifare_key_B);
+      }
       break;
     // 验证Mifare卡片密钥A
     case CMD_MIFARE_AUTHORIZE_A:
-      PN532_mifareclassic_AuthenticateBlock(req->uid, 4, req->block_no, 0, mifare_key_A);
+      if (FelicaInject_EmulateMifareAuth(req->uid)) {
+        CDC_CARD_IO_SendDataReady();
+      } else {
+        PN532_mifareclassic_AuthenticateBlock(req->uid, 4, req->block_no, 0, mifare_key_A);
+      }
       break;
     /**
      * @brief 其他未定义命令，阻塞式
