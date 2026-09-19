@@ -129,8 +129,9 @@ void Timer_Process()
     timeout[i].time += timerSetRec;
     if (timeout[i].time >= timeout[i].period) {
       timeout[i].time -= timeout[i].period;
-      timeout[i].callback();
+      void (*callback)(void) = timeout[i].callback;
       clearTimeout(i);
+      callback();
     }
   }
 }
