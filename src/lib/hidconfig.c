@@ -19,7 +19,7 @@ void HIDCONFIG_Receive_Handler();
 
 volatile uint8_t sp_input_state = 0; // DLL输入模式 Flag
 
-void SP_INPUT_Upload()
+uint8_t SP_INPUT_Upload()
 {
   memset(HIDCFG_Buffer_IN, 0, 64); // Clear buffer
 
@@ -31,7 +31,7 @@ void SP_INPUT_Upload()
   dataUpload->roller_value_sp = Roller_GetValue();
   dataUpload->input_status    = KeyScan_GetAllKeyDebouncedStatus();
 
-  HIDCONFIG_Upload();
+  return HIDCONFIG_Upload();
 }
 
 void HIDCONFIG_Get_SerialNumber(uint8_t *buf)
@@ -56,9 +56,9 @@ void HIDCONFIG_Get_SerialNumber(uint8_t *buf)
   buf[8]  = ((Device_Serial2 >> 24) & 0xFF);
 }
 
-void SP_INPUT_OnDataUpdate_Handler()
+uint8_t SP_INPUT_OnDataUpdate_Handler()
 {
-  SP_INPUT_Upload();
+  return SP_INPUT_Upload();
 }
 
 /**

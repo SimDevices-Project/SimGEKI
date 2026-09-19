@@ -135,8 +135,7 @@ void HIDIO_Upload()
       usbResult = HIDIO_SGIO4_Upload();
       break;
     case 2:
-      SP_INPUT_OnDataUpdate_Handler();
-      usbResult = USB_SUCCESS;
+      usbResult = SP_INPUT_OnDataUpdate_Handler();
       break;
     case 3:
       if (kbdUploadPending) {
