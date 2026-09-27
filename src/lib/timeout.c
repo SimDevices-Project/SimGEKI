@@ -8,10 +8,10 @@ typedef struct {
   uint32_t time;
   uint32_t period;
   void (*callback)(void);
+  uint8_t isInterval;
 } Timer_TypeDef;
 
-Timer_TypeDef interval[MAX_TIMER_COUNT] = {0};
-Timer_TypeDef timeout[MAX_TIMER_COUNT]  = {0};
+static Timer_TypeDef timers[MAX_TIMER_COUNT] = {0};
 
 volatile uint32_t timerSet = 0;
 
@@ -47,62 +47,47 @@ void TIM4_IRQHandler(void)
   }
 }
 
-uint8_t setInterval(void (*callback)(void), uint32_t period)
+static uint8_t setTimer(void (*callback)(void), uint32_t period, uint8_t isInterval)
 {
   for (uint8_t i = 0; i < MAX_TIMER_COUNT; i++) {
-    if (interval[i].callback == NULL) {
-      interval[i].callback = callback;
-      interval[i].period   = period;
-      interval[i].time     = 0;
+    if (timers[i].callback == NULL) {
+      timers[i].period     = period;
+      timers[i].time       = 0;
+      timers[i].isInterval = isInterval;
+      timers[i].callback   = callback;
       return i;
     }
   }
   return 0xFF;
+}
+
+uint8_t setInterval(void (*callback)(void), uint32_t period)
+{
+  return setTimer(callback, period, 1);
 }
 
 uint8_t setTimeout(void (*callback)(void), uint32_t period)
 {
-  for (uint8_t i = 0; i < MAX_TIMER_COUNT; i++) {
-    if (timeout[i].callback == NULL) {
-      timeout[i].callback = callback;
-      timeout[i].period   = period;
-      timeout[i].time     = 0;
-      return i;
-    }
+  return setTimer(callback, period, 0);
+}
+
+static void clearTimer(uint8_t id)
+{
+  if (id < MAX_TIMER_COUNT) {
+    timers[id].callback = NULL;
+    timers[id].period   = 0;
+    timers[id].time     = 0;
   }
-  return 0xFF;
 }
 
 void clearInterval(uint8_t id)
 {
-  if (id < MAX_TIMER_COUNT) {
-    interval[id].callback = NULL;
-    interval[id].period   = 0;
-    interval[id].time     = 0;
-  }
+  clearTimer(id);
 }
 
 void clearTimeout(uint8_t id)
 {
-  if (id < MAX_TIMER_COUNT) {
-    timeout[id].callback = NULL;
-    timeout[id].period   = 0;
-    timeout[id].time     = 0;
-  }
-}
-
-void resetTimeout(uint8_t id)
-{
-  if (id < MAX_TIMER_COUNT) {
-    timeout[id].time = 0;
-  }
-}
-
-void resetInterval(uint8_t id)
-{
-  if (id < MAX_TIMER_COUNT) {
-    interval[id].time = 0;
-  }
+  clearTimer(id);
 }
 
 void Timer_Process()
@@ -111,27 +96,20 @@ void Timer_Process()
   uint32_t timerSetRec = timerSet;
   timerSet = 0;
   TIM_ITConfig(TIM4, TIM_IT_Update, ENABLE);
-  uint8_t i;
-  for (i = 0; i < MAX_TIMER_COUNT; i++) {
-    if (interval[i].callback == NULL) {
+  for (uint8_t i = 0; i < MAX_TIMER_COUNT; i++) {
+    if (timers[i].callback == NULL) {
       continue;
     }
-    interval[i].time += timerSetRec;
-    if (interval[i].time >= interval[i].period) {
-      interval[i].time -= interval[i].period;
-      interval[i].callback();
-    }
-  }
-  for (i = 0; i < MAX_TIMER_COUNT; i++) {
-    if (timeout[i].callback == NULL) {
-      continue;
-    }
-    timeout[i].time += timerSetRec;
-    if (timeout[i].time >= timeout[i].period) {
-      timeout[i].time -= timeout[i].period;
-      void (*callback)(void) = timeout[i].callback;
-      clearTimeout(i);
-      callback();
+    timers[i].time += timerSetRec;
+    if (timers[i].time >= timers[i].period) {
+      timers[i].time -= timers[i].period;
+      if (timers[i].isInterval) {
+        timers[i].callback();
+      } else {
+        void (*callback)(void) = timers[i].callback;
+        clearTimer(i);
+        callback();
+      }
     }
   }
 }

@@ -39,8 +39,7 @@ static uint16_t activeRollerValue = 0;
 
 uint8_t intervalID = 0xFF;
 
-#define INTERVAL_HEARTBEAT_MS_IDLE   20
-#define INTERVAL_HEARTBEAT_MS_ACTIVE 5
+#define INTERVAL_HEARTBEAT_MS 5
 
 const uint8_t bitPosMap[] = {23, 20, 22, 19, 21, 18, 17, 16, 15, 14, 13, 12, 11, 10, 9, 8, 7, 6};
 
@@ -54,7 +53,7 @@ void HIDIO_Receive_Handler()
           dataUpload->systemStatus = 0x30;
 
           clearInterval(intervalID);
-          intervalID = setInterval(HIDIO_SGIO4_Heartbeat, INTERVAL_HEARTBEAT_MS_ACTIVE);
+          intervalID = setInterval(HIDIO_SGIO4_Heartbeat, INTERVAL_HEARTBEAT_MS);
           break;
         }
         case SET_SAMPLING_COUNT: {
@@ -131,7 +130,8 @@ void HIDIO_Upload()
   uint8_t usbResult        = 0xFF;
   switch (GlobalData->DeviceMode) {
     case 1:
-      resetInterval(intervalID);
+      clearInterval(intervalID);
+      intervalID = setInterval(HIDIO_SGIO4_Heartbeat, INTERVAL_HEARTBEAT_MS);
       usbResult = HIDIO_SGIO4_Upload();
       break;
     case 2:
@@ -297,5 +297,5 @@ xdata void HIDIO_Init()
   HIDIO_SGIO4_FreshData();
 
   clearInterval(intervalID);
-  intervalID = setInterval(HIDIO_SGIO4_Heartbeat, INTERVAL_HEARTBEAT_MS_IDLE);
+  intervalID = setInterval(HIDIO_SGIO4_Heartbeat, INTERVAL_HEARTBEAT_MS);
 }
