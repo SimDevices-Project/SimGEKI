@@ -16,7 +16,7 @@
 #define TIMER_PER_BUFF_SIZE (BUFF_FRONT_OFFSET + RGB_COUNT_PER_PORT * 24 + BUFF_END_OFFSET)
 #define TIMER_PERIOD        ((TIMER_CLOCK_FREQ / WS2812_FREQ) - 1)
 
-uint32_t colorList[RGB_PORT_COUNT][RGB_COUNT_PER_PORT] = {0}; // GRB format
+// uint32_t colorList[RGB_PORT_COUNT][RGB_COUNT_PER_PORT] = {0}; // GRB format 原始色，但目前无动画，不使用该变量
 uint8_t colorPWM[RGB_PORT_COUNT][TIMER_PER_BUFF_SIZE]  = {0}; // GRB format in 24 bits
 
 uint32_t colorRawCh422                    = 0;
@@ -24,7 +24,7 @@ uint8_t colorListCh422[RGB_7COLORS_COUNT] = {0};
 
 void setRgbColor32(uint8_t port, uint8_t index, uint32_t color)
 {
-  colorList[port][index] = color;
+  // colorList[port][index] = color; // 记录 原始颜色
   for (uint8_t i = 0; i < 24; i++) {
     colorPWM[port][BUFF_FRONT_OFFSET + index * 24 + i] = ((color >> (23 - i)) & 0x01) ? WS2812_TIME_1BIT : WS2812_TIME_0BIT;
   }
