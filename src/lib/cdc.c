@@ -465,7 +465,7 @@ void CDC_CARD_IO_Handler()
      */
     // 其他未明行为
     default:
-      memcpy(cardIO_ResponseStringBuf, res->buffer, 128);
+      // memcpy(cardIO_ResponseStringBuf, res->buffer, 128); // 原地memcpy，无意义
       CDC_CARD_IO_SendDataReady();
       break;
   }

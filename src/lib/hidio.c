@@ -93,7 +93,7 @@ void HIDIO_Receive_Handler()
 
 uint8_t HIDIO_SGIO4_Upload()
 {
-  memset(HID_Buffer_IN, 0, 64);
+  // memset(HID_Buffer_IN, 0, 64); // 由memcpy覆盖，不需要清零
   memcpy(HID_Buffer_IN, HID_SGIO4_Buffer_IN, 64);
   return USBD_ENDPx_DataUp(OUT_EP, HID_Buffer_IN, 64);
 }
