@@ -2,7 +2,7 @@
 #include "timeout.h"
 #include "data.h"
 
-#define MAX_SLEEP_CALLBACKS 8
+#define MAX_SLEEP_CALLBACKS 1
 
 static void (*sleep_callbacks[MAX_SLEEP_CALLBACKS])(void) = {NULL};
 static void (*wakeup_callbacks[MAX_SLEEP_CALLBACKS])(void) = {NULL};
