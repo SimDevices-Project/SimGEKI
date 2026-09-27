@@ -4,8 +4,8 @@
 __attribute__((aligned(8))) RamData dat;
 
 static volatile const RamData DEFAULT_DATA __attribute__((section(".flashdat"))) = {
-    .RollerOffset = 0x0000,
     .SleepTimeout = 0x000927C0, // 600000 ms = 10 minutes
+    .RollerOffset = 0x0000,
     .DeviceMode   = 0x01,
     .LEDManager   = 0x01,
     .CardReadMode  = 0x01,
