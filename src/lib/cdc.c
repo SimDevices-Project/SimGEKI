@@ -341,12 +341,7 @@ void CDC_CARD_IO_Handler()
      */
     // 初始化
     case CMD_TO_NORMAL_MODE:
-      if (req->payload_len == 0) {
-        // res->status = STATUS_INVALID_COMMAND;
-        res->status = STATUS_OK;
-      } else {
-        res->status = STATUS_OK;
-      }
+      res->status = STATUS_OK;
       LED_RGB_SetPort(LED_RGB_PORT_UART, 0xFF, 0xFF, 0xFF);
       CDC_CARD_IO_SendDataReady();
       break;

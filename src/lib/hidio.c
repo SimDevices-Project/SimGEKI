@@ -263,7 +263,6 @@ void HIDIO_Update()
   prevRollerValue = activeRollerValue;
 
   if (freshRequired) {
-    freshRequired = 0;
     Sleep_Alive();
     switch (GlobalData->DeviceMode) {
       case 1:

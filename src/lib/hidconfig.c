@@ -117,7 +117,6 @@ void HIDCONFIG_Receive_Handler()
           dataUpload->sleep_timeout = GlobalData->SleepTimeout;
           dataUpload->command       = SLEEP_GET_TIMEOUT;
           dataUpload->state         = STATE_OK;
-          dataUpload->sleep_timeout = GlobalData->SleepTimeout;
           HIDCONFIG_Upload();
           break;
         }
