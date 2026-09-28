@@ -37,14 +37,20 @@ void LoadData()
 
 void SaveData()
 {
-  uint32_t Offset = 0x00;
+  uint8_t changed = 0;
+  uint32_t interruptState = 0;
 
-  __disable_irq();
-
-  /* HCLK = SYSCLK/2 */
-  RCC->CFGR0 |= (uint32_t)RCC_HPRE_DIV2;
-
-  while ((Offset < FLASH_FAST_DATA_SIZE)) {
+  for (uint32_t Offset = 0; Offset < FLASH_FAST_DATA_SIZE; Offset += FLASH_FAST_PAGE_SIZE) {
+    if (memcmp((const uint8_t *)Data + Offset, (const uint8_t *)GlobalData + Offset, FLASH_FAST_PAGE_SIZE) == 0) {
+      continue;
+    }
+    if (!changed) {
+      interruptState = __get_MSTATUS(); // 保存中断状态
+      __disable_irq();
+      /* HCLK = SYSCLK/2 */
+      RCC->CFGR0 |= (uint32_t)RCC_HPRE_DIV2;
+      changed = 1;
+    }
     FLASH_Unlock_Fast();
     // FLASH_ClearFlag(FLASH_FLAG_BSY | FLASH_FLAG_EOP | FLASH_FLAG_WRPRTERR);
     // 擦除1页
@@ -52,12 +58,11 @@ void SaveData()
     // 写入1页
     FLASH_ProgramPage_Fast((uint32_t)Data + Offset, (uint32_t *)((uint32_t)GlobalData + Offset));
     FLASH_Lock_Fast();
-    // 地址增加 256 字节
-    Offset = Offset + 256;
   }
 
-  /* HCLK = SYSCLK */
-  RCC->CFGR0 &= ~(uint32_t)RCC_HPRE_DIV2;
-
-  __enable_irq();
+  if (changed) {
+    /* HCLK = SYSCLK */
+    RCC->CFGR0 &= ~(uint32_t)RCC_HPRE_DIV2;
+    __set_MSTATUS(interruptState); // 恢复中断状态
+  }
 }
