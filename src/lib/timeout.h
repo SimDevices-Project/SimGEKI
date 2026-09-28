@@ -11,6 +11,7 @@ void clearInterval(uint8_t id);
 uint8_t setTimeout(void (*callback)(void), uint32_t period);
 void clearTimeout(uint8_t id);
 
+uint8_t queueMicrotask(void (*callback)(void)); // 0 when the queue is full
 void Timer_Process();
 
 #endif // __TIMEOUT_H_

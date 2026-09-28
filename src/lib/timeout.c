@@ -3,6 +3,7 @@
 #define TIMER_CLOCK_FREQ 144000000
 
 #define MAX_TIMER_COUNT  16
+#define MAX_MICROTASK_COUNT 4
 
 typedef struct {
   uint32_t time;
@@ -12,6 +13,10 @@ typedef struct {
 } Timer_TypeDef;
 
 static Timer_TypeDef timers[MAX_TIMER_COUNT] = {0};
+static void (*microtasks[MAX_MICROTASK_COUNT])(void);
+static uint8_t microtaskHead = 0;
+static uint8_t microtaskTail = 0;
+static volatile uint8_t microtaskCount = 0;
 
 volatile uint32_t timerSet = 0;
 
@@ -90,8 +95,48 @@ void clearTimeout(uint8_t id)
   clearTimer(id);
 }
 
+uint8_t queueMicrotask(void (*callback)(void))
+{
+  if (callback == NULL) {
+    return 0;
+  }
+  uint32_t interruptState = __get_MSTATUS();
+  __disable_irq();
+  __asm volatile ("" ::: "memory");
+  if (microtaskCount == MAX_MICROTASK_COUNT) {
+    __set_MSTATUS(interruptState);
+    return 0;
+  }
+  microtasks[microtaskTail] = callback;
+  microtaskTail = (microtaskTail + 1) % MAX_MICROTASK_COUNT;
+  microtaskCount++;
+  __asm volatile ("" ::: "memory");
+  __set_MSTATUS(interruptState);
+  return 1;
+}
+
+static void processMicrotasks(void)
+{
+  while (microtaskCount != 0) {
+    uint32_t interruptState = __get_MSTATUS();
+    __disable_irq();
+    __asm volatile ("" ::: "memory");
+    if (microtaskCount == 0) {
+      __set_MSTATUS(interruptState);
+      return;
+    }
+    void (*callback)(void) = microtasks[microtaskHead];
+    microtaskHead = (microtaskHead + 1) % MAX_MICROTASK_COUNT;
+    microtaskCount--;
+    __asm volatile ("" ::: "memory");
+    __set_MSTATUS(interruptState);
+    callback();
+  }
+}
+
 void Timer_Process()
 {
+  processMicrotasks();
   TIM_ITConfig(TIM4, TIM_IT_Update, DISABLE);
   uint32_t timerSetRec = timerSet;
   timerSet = 0;
@@ -110,6 +155,7 @@ void Timer_Process()
         clearTimer(i);
         callback();
       }
+      processMicrotasks();
     }
   }
 }

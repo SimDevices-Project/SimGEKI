@@ -21,6 +21,19 @@
 
 #include "hidio.h"
 #include "hidconfig.h"
+#include "timeout.h"
+
+static void EP1_OUT_Process(void)
+{
+  HIDIO_Receive_Handler();
+  SetEPRxValid(ENDP1);
+}
+
+static void EP4_OUT_Process(void)
+{
+  HIDCONFIG_Receive_Handler();
+  SetEPRxValid(ENDP4);
+}
 
 /*********************************************************************
  * @fn      EP1_IN_Callback
@@ -42,10 +55,13 @@ void EP1_IN_Callback(void)
  */
 void EP1_OUT_Callback(void)
 {
+  // Keep OUT NAK until its queued handler has consumed the shared buffer.
+  SetEPRxStatus(ENDP1, EP_RX_NAK);
   if (USB_SIL_Read(EP1_OUT, HID_Buffer_OUT) == ENDP1_PACKET_SIZE) {
-    HIDIO_Receive_Handler();
+    if (!queueMicrotask(EP1_OUT_Process)) EP1_OUT_Process();
+  } else {
+    SetEPRxValid(ENDP1);
   }
-  SetEPRxValid(ENDP1);
 }
 
 /*********************************************************************
@@ -68,10 +84,12 @@ void EP4_IN_Callback(void)
  */
 void EP4_OUT_Callback(void)
 {
+  SetEPRxStatus(ENDP4, EP_RX_NAK);
   if (USB_SIL_Read(EP4_OUT, HIDCFG_Buffer_OUT) == ENDP4_PACKET_SIZE) {
-    HIDCONFIG_Receive_Handler();
+    if (!queueMicrotask(EP4_OUT_Process)) EP4_OUT_Process();
+  } else {
+    SetEPRxValid(ENDP4);
   }
-  SetEPRxValid(ENDP4);
 }
 /*********************************************************************
  * @fn      EP2_OUT_Callback
