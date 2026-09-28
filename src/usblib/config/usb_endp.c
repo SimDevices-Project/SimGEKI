@@ -58,7 +58,7 @@ void EP1_OUT_Callback(void)
   // Keep OUT NAK until its queued handler has consumed the shared buffer.
   SetEPRxStatus(ENDP1, EP_RX_NAK);
   if (USB_SIL_Read(EP1_OUT, HID_Buffer_OUT) == ENDP1_PACKET_SIZE) {
-    if (!queueMicrotask(EP1_OUT_Process)) EP1_OUT_Process();
+    if (setTimeout(EP1_OUT_Process, 0) == 0xFF) EP1_OUT_Process();
   } else {
     SetEPRxValid(ENDP1);
   }
@@ -86,7 +86,7 @@ void EP4_OUT_Callback(void)
 {
   SetEPRxStatus(ENDP4, EP_RX_NAK);
   if (USB_SIL_Read(EP4_OUT, HIDCFG_Buffer_OUT) == ENDP4_PACKET_SIZE) {
-    if (!queueMicrotask(EP4_OUT_Process)) EP4_OUT_Process();
+    if (setTimeout(EP4_OUT_Process, 0) == 0xFF) EP4_OUT_Process();
   } else {
     SetEPRxValid(ENDP4);
   }

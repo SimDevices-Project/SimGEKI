@@ -54,15 +54,22 @@ void TIM4_IRQHandler(void)
 
 static uint8_t setTimer(void (*callback)(void), uint32_t period, uint8_t isInterval)
 {
+  if (callback == NULL) return 0xFF;
+  uint32_t interruptState = __get_MSTATUS();
+  __disable_irq();
+  __asm volatile ("" ::: "memory");
   for (uint8_t i = 0; i < MAX_TIMER_COUNT; i++) {
     if (timers[i].callback == NULL) {
       timers[i].period     = period;
       timers[i].time       = 0;
       timers[i].isInterval = isInterval;
       timers[i].callback   = callback;
+      __asm volatile ("" ::: "memory");
+      __set_MSTATUS(interruptState);
       return i;
     }
   }
+  __set_MSTATUS(interruptState);
   return 0xFF;
 }
 
@@ -79,9 +86,14 @@ uint8_t setTimeout(void (*callback)(void), uint32_t period)
 static void clearTimer(uint8_t id)
 {
   if (id < MAX_TIMER_COUNT) {
-    timers[id].callback = NULL;
+    uint32_t interruptState = __get_MSTATUS();
+    __disable_irq();
+    __asm volatile ("" ::: "memory");
     timers[id].period   = 0;
     timers[id].time     = 0;
+    timers[id].callback = NULL;
+    __asm volatile ("" ::: "memory");
+    __set_MSTATUS(interruptState);
   }
 }
 
@@ -141,6 +153,9 @@ void Timer_Process()
   uint32_t timerSetRec = timerSet;
   timerSet = 0;
   TIM_ITConfig(TIM4, TIM_IT_Update, ENABLE);
+  uint32_t interruptState = __get_MSTATUS();
+  __disable_irq();
+  __asm volatile ("" ::: "memory");
   for (uint8_t i = 0; i < MAX_TIMER_COUNT; i++) {
     if (timers[i].callback == NULL) {
       continue;
@@ -148,16 +163,22 @@ void Timer_Process()
     timers[i].time += timerSetRec;
     if (timers[i].time >= timers[i].period) {
       timers[i].time -= timers[i].period;
-      if (timers[i].isInterval) {
-        timers[i].callback();
-      } else {
-        void (*callback)(void) = timers[i].callback;
-        clearTimer(i);
-        callback();
+      void (*callback)(void) = timers[i].callback;
+      if (!timers[i].isInterval) {
+        timers[i].period = 0;
+        timers[i].time = 0;
+        timers[i].callback = NULL;
       }
+      __asm volatile ("" ::: "memory");
+      __set_MSTATUS(interruptState);
+      callback();
       processMicrotasks();
+      interruptState = __get_MSTATUS();
+      __disable_irq();
+      __asm volatile ("" ::: "memory");
     }
   }
+  __set_MSTATUS(interruptState);
 }
 
 xdata void Timeout_Init()
