@@ -45,8 +45,7 @@ void SaveData()
       continue;
     }
     if (!changed) {
-      interruptState = __get_MSTATUS(); // 保存中断状态
-      __disable_irq();
+      interruptState = IRQ_Save(); // 保存中断状态
       /* HCLK = SYSCLK/2 */
       RCC->CFGR0 |= (uint32_t)RCC_HPRE_DIV2;
       changed = 1;
@@ -63,6 +62,6 @@ void SaveData()
   if (changed) {
     /* HCLK = SYSCLK */
     RCC->CFGR0 &= ~(uint32_t)RCC_HPRE_DIV2;
-    __set_MSTATUS(interruptState); // 恢复中断状态
+    IRQ_Restore(interruptState); // 恢复中断状态
   }
 }

@@ -55,8 +55,7 @@ void TIM4_IRQHandler(void)
 static uint8_t setTimer(void (*callback)(void), uint32_t period, uint8_t isInterval)
 {
   if (callback == NULL) return 0xFF;
-  uint32_t interruptState = __get_MSTATUS();
-  __disable_irq();
+  uint32_t interruptState = IRQ_Save();
   __asm volatile ("" ::: "memory");
   for (uint8_t i = 0; i < MAX_TIMER_COUNT; i++) {
     if (timers[i].callback == NULL) {
@@ -65,11 +64,11 @@ static uint8_t setTimer(void (*callback)(void), uint32_t period, uint8_t isInter
       timers[i].isInterval = isInterval;
       timers[i].callback   = callback;
       __asm volatile ("" ::: "memory");
-      __set_MSTATUS(interruptState);
+      IRQ_Restore(interruptState);
       return i;
     }
   }
-  __set_MSTATUS(interruptState);
+  IRQ_Restore(interruptState);
   return 0xFF;
 }
 
@@ -86,14 +85,13 @@ uint8_t setTimeout(void (*callback)(void), uint32_t period)
 static void clearTimer(uint8_t id)
 {
   if (id < MAX_TIMER_COUNT) {
-    uint32_t interruptState = __get_MSTATUS();
-    __disable_irq();
+    uint32_t interruptState = IRQ_Save();
     __asm volatile ("" ::: "memory");
     timers[id].period   = 0;
     timers[id].time     = 0;
     timers[id].callback = NULL;
     __asm volatile ("" ::: "memory");
-    __set_MSTATUS(interruptState);
+    IRQ_Restore(interruptState);
   }
 }
 
@@ -112,36 +110,34 @@ uint8_t queueMicrotask(void (*callback)(void))
   if (callback == NULL) {
     return 0;
   }
-  uint32_t interruptState = __get_MSTATUS();
-  __disable_irq();
+  uint32_t interruptState = IRQ_Save();
   __asm volatile ("" ::: "memory");
   if (microtaskCount == MAX_MICROTASK_COUNT) {
-    __set_MSTATUS(interruptState);
+    IRQ_Restore(interruptState);
     return 0;
   }
   microtasks[microtaskTail] = callback;
   microtaskTail = (microtaskTail + 1) % MAX_MICROTASK_COUNT;
   microtaskCount++;
   __asm volatile ("" ::: "memory");
-  __set_MSTATUS(interruptState);
+  IRQ_Restore(interruptState);
   return 1;
 }
 
 static void processMicrotasks(void)
 {
   while (microtaskCount != 0) {
-    uint32_t interruptState = __get_MSTATUS();
-    __disable_irq();
+    uint32_t interruptState = IRQ_Save();
     __asm volatile ("" ::: "memory");
     if (microtaskCount == 0) {
-      __set_MSTATUS(interruptState);
+      IRQ_Restore(interruptState);
       return;
     }
     void (*callback)(void) = microtasks[microtaskHead];
     microtaskHead = (microtaskHead + 1) % MAX_MICROTASK_COUNT;
     microtaskCount--;
     __asm volatile ("" ::: "memory");
-    __set_MSTATUS(interruptState);
+    IRQ_Restore(interruptState);
     callback();
   }
 }
@@ -153,8 +149,7 @@ void Timer_Process()
   uint32_t timerSetRec = timerSet;
   timerSet = 0;
   TIM_ITConfig(TIM4, TIM_IT_Update, ENABLE);
-  uint32_t interruptState = __get_MSTATUS();
-  __disable_irq();
+  uint32_t interruptState = IRQ_Save();
   __asm volatile ("" ::: "memory");
   for (uint8_t i = 0; i < MAX_TIMER_COUNT; i++) {
     if (timers[i].callback == NULL) {
@@ -170,15 +165,14 @@ void Timer_Process()
         timers[i].callback = NULL;
       }
       __asm volatile ("" ::: "memory");
-      __set_MSTATUS(interruptState);
+      IRQ_Restore(interruptState);
       callback();
       processMicrotasks();
-      interruptState = __get_MSTATUS();
-      __disable_irq();
+      interruptState = IRQ_Save();
       __asm volatile ("" ::: "memory");
     }
   }
-  __set_MSTATUS(interruptState);
+  IRQ_Restore(interruptState);
 }
 
 xdata void Timeout_Init()
