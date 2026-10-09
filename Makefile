@@ -113,6 +113,8 @@ S_SOURCES = \
 # Object files
 OBJS = $(patsubst %.c,$(OBJ_DIR)/%.o,$(C_SOURCES))
 OBJS += $(patsubst %.S,$(OBJ_DIR)/%.o,$(S_SOURCES))
+# Match the source/object order used by .eide and its linker response file.
+OBJS := $(sort $(OBJS))
 
 # Dependency files
 DEPS = $(OBJS:.o=.d)
@@ -132,10 +134,11 @@ INCLUDES = -Isdk/Peripheral/inc -Isrc -Isdk/Core -Isdk/Debug -Isrc/lib \
            -Isrc/usblib/config -Isrc/usblib/usb_driver/inc -Isrc/usblib/usb_driver/src
 
 # C flags
-CFLAGS = -std=c99 -Wall -g $(COMMON_FLAGS) $(INCLUDES)
+# Keep the additional C options from .eide/eide.yml.
+CFLAGS = -std=c99 -Wall -g $(COMMON_FLAGS) $(INCLUDES) -Wl, -Bstatic -fshort-enums
 
 # Assembler flags
-ASFLAGS = -g $(COMMON_FLAGS) $(INCLUDES)
+ASFLAGS = -g $(COMMON_FLAGS) $(INCLUDES) -Wl,-Bstatic
 
 # Linker flags
 LDFLAGS = -Wl,--print-memory-usage -Xlinker --gc-sections -nostartfiles \
@@ -146,7 +149,7 @@ ifeq ($(TARGET), SimGETRO_Public)
 	TARGET_DEF = -DTARGET_SIMGEKI
 	CFLAGS += -O2
 else ifeq ($(TARGET), SimGETRO_EarlyHardware)
-	TARGET_DEF = -DTARGET_SIMGETRO -DEARLY_HARDWARE
+	TARGET_DEF = -DTARGET_SIMGEKI -DEARLY_HARDWARE
 	CFLAGS += -O2
 else ifeq ($(TARGET), Debug)
 	TARGET_DEF = -DDEBUG
@@ -156,7 +159,7 @@ else
 endif
 
 CFLAGS += $(TARGET_DEF)
-ASFLAGS += $(TARGET_DEF)
+# EIDE does not apply C defines to the startup assembler.
 
 ###########################
 # Build Rules
