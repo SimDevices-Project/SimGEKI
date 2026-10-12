@@ -157,9 +157,9 @@ void CH422_Refresh()
 {
   if (master_sate == 0xFF) {
     stall_counter = 0;
-    master_sate   = 0;
     clearInterval(timerID);
     timerID = setInterval(CH422_Check, 0);
+    if (timerID != 0xFF) master_sate = 0;
   }
 }
 
