@@ -51,7 +51,7 @@ int main(void)
   setInterval(LED_Refresh, 20);
   setInterval(HIDIO_Update, 1);
   setInterval(CDC_Check, 5);
-  setInterval(PN532_Check, 30);
+  setInterval(PN532_Check, 10);
 
   while (1) {
     Timer_Process();

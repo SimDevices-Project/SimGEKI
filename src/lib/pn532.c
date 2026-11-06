@@ -653,7 +653,7 @@ void PN532_Init()
   setTimeout(PN532_getFirmwareVersion, 100);
   setTimeout(PN532_setPassiveActivationRetries, 200);
   setTimeout(PN532_SAMConfig, 300);
-  setTimeout(PN532_CheckInitPassthrough, 2000);
+  setTimeout(PN532_CheckInitPassthrough, 3000);
 #if PN532_DIAG_LED
   setTimeout(PN532_DiagLED, 6500);
 #endif

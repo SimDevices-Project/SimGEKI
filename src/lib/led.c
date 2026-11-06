@@ -271,8 +271,14 @@ xdata void LED_Effect_Normal()
   LED_RGB_SetPort(LED_RGB_PORT_UART, 0x00, 0x00, 0x00);
 }
 
+static uint8_t powerOnTimer = 0xFF;
+static uint8_t powerOnStep = 0;
+
 xdata void LED_Effect_Close()
 {
+  clearInterval(powerOnTimer);
+  powerOnTimer = 0xFF;
+
   LED_7C_Set(LED_7C_L1, LED_OFF, LED_OFF, LED_OFF);
   LED_7C_Set(LED_7C_L2, LED_OFF, LED_OFF, LED_OFF);
   LED_7C_Set(LED_7C_L3, LED_OFF, LED_OFF, LED_OFF);
@@ -286,13 +292,27 @@ xdata void LED_Effect_Close()
   LED_RGB_SetPort(LED_RGB_PORT_UART, 0x00, 0x00, 0x00);
 }
 
+static void LED_Animation_PowerOnStep(void)
+{
+  switch (++powerOnStep) {
+    case 1: LED_Effect_Red(); break;
+    case 2: LED_Effect_Green(); break;
+    case 3: LED_Effect_Blue(); break;
+    case 4: LED_Effect_White(); break;
+    case 6:
+      clearInterval(powerOnTimer);
+      powerOnTimer = 0xFF;
+      LED_Effect_Normal();
+      break;
+  }
+}
+
 xdata void LED_Animation_PowerOn()
 {
-  setTimeout(LED_Effect_Red, 500);
-  setTimeout(LED_Effect_Green, 1000);
-  setTimeout(LED_Effect_Blue, 1500);
-  setTimeout(LED_Effect_White, 2000);
-  setTimeout(LED_Effect_Normal, 3000);
+  clearInterval(powerOnTimer);
+  powerOnStep = 0;
+  powerOnTimer = setInterval(LED_Animation_PowerOnStep, 500);
+  if (powerOnTimer == 0xFF) LED_Effect_Normal();
 }
 
 xdata void LED_Init()
