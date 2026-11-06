@@ -261,7 +261,7 @@ static void PN532_DiagLED(void)
 
 static int16_t readResponse(uint8_t *buf, uint8_t len, uint8_t command)
 {
-  if (len < 4) {
+  if (len < 9) {
     return PN532_NO_SPACE;
   }
   if (0 != buf[0] || 0 != buf[1] || 0xFF != buf[2]) {
@@ -269,12 +269,12 @@ static int16_t readResponse(uint8_t *buf, uint8_t len, uint8_t command)
     return PN532_INVALID_FRAME;
   }
   uint8_t lenth_chk = buf[3] + buf[4];
-  if (lenth_chk) {
+  if (lenth_chk || buf[3] < 2) {
     // Length error
     return PN532_INVALID_FRAME;
   }
   buf[3] -= 2;
-  if (buf[3] > len) {
+  if (buf[3] + 9 > len) {
     return PN532_NO_SPACE;
   }
 
@@ -650,9 +650,9 @@ void PN532_Init()
   pn532_state.init_got_response = 0;
   INTR(begin)();
   INTR(wakeup)();
-  setTimeout(PN532_getFirmwareVersion, 100);
-  setTimeout(PN532_setPassiveActivationRetries, 200);
-  setTimeout(PN532_SAMConfig, 300);
+  setTimeout(PN532_getFirmwareVersion, 200);
+  setTimeout(PN532_setPassiveActivationRetries, 300);
+  setTimeout(PN532_SAMConfig, 400);
   setTimeout(PN532_CheckInitPassthrough, 3000);
 #if PN532_DIAG_LED
   setTimeout(PN532_DiagLED, 6500);

@@ -328,6 +328,9 @@ xdata void Roller_ADC_Init()
   DMA_Cmd(DMA1_Channel1, ENABLE);
 }
 
+static uint16_t rollerValue = 0;
+static uint16_t Roller_FilterValue(void);
+
 // 重新读取编码器值
 void Roller_Update()
 {
@@ -358,7 +361,7 @@ void Roller_Update()
     }
     case ROLLER_MODE_SPI: {
       if ((!DMA_GetFlagStatus(DMA1_FLAG_TC5)) && (!DMA_GetFlagStatus(DMA1_FLAG_TC4))) {
-        return;
+        break;
       }
 
       DMA_ClearFlag(DMA1_FLAG_TC5); // 清除传输完成标志
@@ -383,7 +386,7 @@ void Roller_Update()
     }
     case ROLLER_MODE_ADC: {
       if ((!DMA_GetFlagStatus(DMA1_FLAG_TC1))) {
-        return;
+        break;
       }
       DMA_ClearFlag(DMA1_FLAG_TC1); // 清除传输完成标志
 
@@ -407,6 +410,7 @@ void Roller_Update()
     default:
       break;
   }
+  rollerValue = Roller_FilterValue();
 }
 
 // 获取原始编码器值
@@ -421,6 +425,11 @@ uint16_t Roller_GetRawValue()
 
 // 获取经过OFFSET处理并去抖后的编码器值
 uint16_t Roller_GetValue()
+{
+  return rollerValue;
+}
+
+static uint16_t Roller_FilterValue(void)
 {
   const uint8_t multiple = 3; // 缩放倍数
 

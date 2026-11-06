@@ -2,7 +2,7 @@
 
 #define TIMER_CLOCK_FREQ 144000000
 
-#define MAX_TIMER_COUNT  16
+#define MAX_TIMER_COUNT  24
 #define MAX_MICROTASK_COUNT 4
 
 typedef struct {

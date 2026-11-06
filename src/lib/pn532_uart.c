@@ -169,7 +169,7 @@ void PN532_UART_Init()
 
   GPIO_InitStructure.GPIO_Pin   = UARTOE;
   GPIO_InitStructure.GPIO_Mode  = GPIO_Mode_Out_PP;
-  GPIO_InitStructure.GPIO_Speed = GPIO_Speed_50MHz;
+  GPIO_InitStructure.GPIO_Speed = GPIO_Speed_2MHz;
   GPIO_Init(GPIOA, &GPIO_InitStructure);
 
   USART_InitStructure.USART_BaudRate            = 115200;
@@ -189,6 +189,7 @@ void PN532_UART_Init()
   NVIC_Init(&NVIC_InitStructure);
 
   USART_Cmd(USART1, ENABLE);
+
   GPIO_SetBits(GPIOA, UARTOE); // 使能UART电平转换芯片
 }
 

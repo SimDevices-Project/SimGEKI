@@ -123,6 +123,7 @@ void EP2_IN_Callback(void)
     } else {
       // 发送一个ZLP 0长度包，通知包已发送完毕
       USB_SIL_Write(0x80 | CDC_LED_IO_EP, 0, 0);
+      SetEPTxStatus(CDC_LED_IO_EP, EP_TX_VALID);
     }
   } else {
     // 标记NAK状态，停止传输
@@ -162,6 +163,7 @@ void EP3_IN_Callback(void)
     } else {
       // 发送一个ZLP 0长度包，通知包已发送完毕
       USB_SIL_Write(0x80 | CDC_CARD_IO_EP, 0, 0);
+      SetEPTxStatus(CDC_CARD_IO_EP, EP_TX_VALID);
     }
   } else {
     // 标记NAK状态，停止传输
