@@ -140,6 +140,7 @@ void PN532_UART_Check(uint8_t *_buffer, uint8_t *_size)
     } else if (PN532_UART_DIRECT == 0) {
       memcpy(_buffer, buffer, size);
       *_size = size;
+      return;
     }
   }
 }
