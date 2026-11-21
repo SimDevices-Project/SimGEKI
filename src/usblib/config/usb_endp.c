@@ -122,8 +122,7 @@ void EP2_IN_Callback(void)
       // CDC_Check();
     } else {
       // 发送一个ZLP 0长度包，通知包已发送完毕
-      USB_SIL_Write(0x80 | CDC_LED_IO_EP, 0, 0);
-      SetEPTxStatus(CDC_LED_IO_EP, EP_TX_VALID);
+      USBD_ENDPx_DataUp(CDC_LED_IO_EP, NULL, 0);
     }
   } else {
     // 标记NAK状态，停止传输
@@ -162,8 +161,7 @@ void EP3_IN_Callback(void)
       // CDC_Check();
     } else {
       // 发送一个ZLP 0长度包，通知包已发送完毕
-      USB_SIL_Write(0x80 | CDC_CARD_IO_EP, 0, 0);
-      SetEPTxStatus(CDC_CARD_IO_EP, EP_TX_VALID);
+      USBD_ENDPx_DataUp(CDC_CARD_IO_EP, NULL, 0);
     }
   } else {
     // 标记NAK状态，停止传输
@@ -184,41 +182,30 @@ void EP3_IN_Callback(void)
  */
 uint8_t USBD_ENDPx_DataUp(uint8_t endp, uint8_t *pbuf, uint16_t len)
 {
-  switch (endp) {
-    case ENDP1: {
-      if (GetEPTxStatus(ENDP1) == EP_TX_VALID) {
-        return USB_ERROR;
-      }
-      USB_SIL_Write(EP1_IN, pbuf, len);
-      SetEPTxStatus(ENDP1, EP_TX_VALID);
-      break;
-    }
-    case ENDP2: {
-      if (GetEPTxStatus(ENDP2) == EP_TX_VALID) {
-        return USB_ERROR;
-      }
-      USB_SIL_Write(EP2_IN, pbuf, len);
-      SetEPTxStatus(ENDP2, EP_TX_VALID);
-      break;
-    }
-    case ENDP3: {
-      if (GetEPTxStatus(ENDP3) == EP_TX_VALID) {
-        return USB_ERROR;
-      }
-      USB_SIL_Write(EP3_IN, pbuf, len);
-      SetEPTxStatus(ENDP3, EP_TX_VALID);
-      break;
-    }
-    case ENDP4: {
-      if (GetEPTxStatus(ENDP4) == EP_TX_VALID) {
-        return USB_ERROR;
-      }
-      USB_SIL_Write(EP4_IN, pbuf, len);
-      SetEPTxStatus(ENDP4, EP_TX_VALID);
-      break;
-    }
-    default:
-      return USB_ERROR;
+  static const struct { uint16_t address, size; } txBuffers[] = {
+      [ENDP1] = {ENDP1_TXADDR, ENDP1_PACKET_SIZE},
+      [ENDP2] = {ENDP2_TXADDR, ENDP2_PACKET_SIZE},
+      [ENDP3] = {ENDP3_TXADDR, ENDP3_PACKET_SIZE},
+      [ENDP4] = {ENDP4_TXADDR, ENDP4_PACKET_SIZE},
+  };
+  if (endp < ENDP1 || endp > ENDP4 || len > txBuffers[endp].size || (len && !pbuf)) {
+    return USB_ERROR;
   }
-  return USB_SUCCESS;
+  uint32_t interruptState = IRQ_Save();
+  uint8_t result = USB_ERROR;
+  if (bDeviceState == CONFIGURED && !(_GetISTR() & ISTR_RESET)) {
+    uint16_t ep = _GetENDPOINT(endp);
+    if ((ep & (EPTX_STAT | EP_CTR_TX)) == EP_TX_NAK) {
+      // A hardware reset during this copy must never redirect it into the buffer table.
+      UserToPMABufferCopy(pbuf, txBuffers[endp].address, len);
+      if (!(_GetISTR() & ISTR_RESET)) {
+        SetEPTxCount(endp, len);
+        // Toggle NAK to VALID once. The host can consume the packet immediately.
+        _SetENDPOINT(endp, (ep & EPREG_MASK) | EP_CTR_RX | EP_CTR_TX | EPTX_DTOG1);
+        result = USB_SUCCESS;
+      }
+    }
+  }
+  IRQ_Restore(interruptState);
+  return result;
 }

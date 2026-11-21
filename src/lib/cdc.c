@@ -79,10 +79,12 @@ xdata void CDC_Init()
 void CDC_IO_USB_Poll(CDC_Struct *IO)
 {
   uint8_t usb_tx_len;
+  uint32_t interruptState = IRQ_Save();
   if (bDeviceState != CONFIGURED) {
     // USB 未枚举时，直接清空待发送队列，避免阻塞与历史数据堆积。
     IO->PutCharBuff_First = IO->PutCharBuff_Last;
     IO->Tx_Full           = 0;
+    IRQ_Restore(interruptState);
     return;
   }
 
@@ -105,14 +107,14 @@ void CDC_IO_USB_Poll(CDC_Struct *IO)
       // 复制数据
       memcpy(usb_DataUpBuf, &IO->PutCharBuff[IO->PutCharBuff_First], usb_tx_len);
 
-      // 更新指针
-      IO->PutCharBuff_First = (IO->PutCharBuff_First + usb_tx_len) % CDC_PUTCHARBUF_LEN;
-
-      // 发送数据
-      USBD_ENDPx_DataUp(IO->USB_EndPoint, usb_DataUpBuf, usb_tx_len);
-      IO->Tx_Full = 0;
+      // The IN completion callback uses the committed queue length to decide on a ZLP.
+      if (USBD_ENDPx_DataUp(IO->USB_EndPoint, usb_DataUpBuf, usb_tx_len) == USB_SUCCESS) {
+        IO->PutCharBuff_First = (IO->PutCharBuff_First + usb_tx_len) % CDC_PUTCHARBUF_LEN;
+        IO->Tx_Full = 0;
+      }
     }
   }
+  IRQ_Restore(interruptState);
 }
 
 void CDC_IO_PutChar(CDC_Struct *IO, uint8_t tdata)

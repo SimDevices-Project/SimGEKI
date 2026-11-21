@@ -19,8 +19,6 @@ uint16_t Ep0RxBlks;
 /* Private variables */
 __IO uint16_t wIstr;  
 __IO uint8_t bIntPackSOF = 0;  
-__IO uint32_t esof_counter =0;
-__IO uint32_t wCNTR=0;
 
 /* function pointers to non-control endpoints service routines */
 void (*pEpInt_IN[7])(void) ={
@@ -52,13 +50,26 @@ void (*pEpInt_OUT[7])(void) ={
  */
 void USB_Istr(void)
 {
-  uint32_t i=0;
-  __IO uint32_t EP[8];
+  wIstr = _GetISTR();
+#if (IMR_MSK & ISTR_RESET)
+  if (wIstr & ISTR_RESET & wInterrupt_Mask)
+  {
+    /* A bus reset supersedes pending suspend and resume events. */
+    _SetISTR((uint16_t)~(wIstr & (ISTR_RESET | ISTR_WKUP | ISTR_SUSP | ISTR_ESOF)));
+    _SetCNTR(_GetCNTR() & ~(CNTR_FSUSP | CNTR_LPMODE | CNTR_RESUME));
+    Resume(RESUME_OFF);
+    Device_Property.Reset();
+#ifdef RESET_CALLBACK
+    RESET_Callback();
+#endif
+    return;
+  }
+#endif
+
   if ((*_pEPRxCount(0) & 0xFC00 )!= Ep0RxBlks)
   {
     *_pEPRxCount(0) |= (Ep0RxBlks & 0xFC00);
   }
-  wIstr = _GetISTR();
 #if (IMR_MSK & ISTR_SOF)
   if (wIstr & ISTR_SOF & wInterrupt_Mask)
   {
@@ -83,18 +94,6 @@ void USB_Istr(void)
   }
 #endif
  
-#if (IMR_MSK & ISTR_RESET)
-  if (wIstr & ISTR_RESET & wInterrupt_Mask)
-  {
-    _SetISTR((uint16_t)CLR_RESET);
-    Device_Property.Reset();
-    
-#ifdef RESET_CALLBACK
-    RESET_Callback();
-#endif
-  }
-#endif
-
 #if (IMR_MSK & ISTR_DOVR)
   if (wIstr & ISTR_DOVR & wInterrupt_Mask)
   {
@@ -148,39 +147,7 @@ void USB_Istr(void)
   {
     _SetISTR((uint16_t)CLR_ESOF);
     
-    if ((_GetFNR()&FNR_RXDP)!=0)
-    {
-      esof_counter ++;
-      
-      if ((esof_counter >3)&&((_GetCNTR()&CNTR_FSUSP)==0))
-      {           
-
-        wCNTR = _GetCNTR(); 
-      
-        for (i=0;i<8;i++) EP[i] = _GetENDPOINT(i);
-      
-        wCNTR|=CNTR_FRES;
-        _SetCNTR(wCNTR);
- 
-        wCNTR&=~CNTR_FRES;
-        _SetCNTR(wCNTR);
-      
-        while((_GetISTR()&ISTR_RESET) == 0);
-  
-        _SetISTR((uint16_t)CLR_RESET);
-   
-        for (i=0;i<8;i++)
-        _SetENDPOINT(i, EP[i]);
-      
-        esof_counter = 0;
-      }
-    }
-    else
-    {
-        esof_counter = 0;
-    }
-    
-    Resume(RESUME_ESOF); 
+    Resume(RESUME_ESOF);
 
 #ifdef ESOF_CALLBACK
     ESOF_Callback();

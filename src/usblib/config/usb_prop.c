@@ -158,9 +158,7 @@ void USBD_SetConfiguration(void)
 {
   DEVICE_INFO *pInfo = &Device_Info;
 
-  if (pInfo->Current_Configuration != 0) {
-    bDeviceState = CONFIGURED;
-  }
+  bDeviceState = pInfo->Current_Configuration ? CONFIGURED : ADDRESSED;
 }
 
 /*******************************************************************************

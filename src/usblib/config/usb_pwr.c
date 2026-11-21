@@ -16,14 +16,13 @@
 
 __IO uint32_t bDeviceState = UNCONNECTED; 
 __IO bool fSuspendEnabled = TRUE;  
-__IO uint32_t EP[8];
 
 struct
 {
   __IO RESUME_STATE eState;
   __IO uint8_t bESOFcnt;
 }
-ResumeS;
+ResumeS = { RESUME_OFF, 0 };
 
 __IO uint32_t remotewakeupon=0;
 
@@ -74,36 +73,9 @@ RESULT PowerOff()
  */
 void Suspend(void)
 {
-	uint32_t i =0;
-	uint16_t wCNTR; 
-
-	wCNTR = _GetCNTR();  
-  for (i=0;i<8;i++) EP[i] = _GetENDPOINT(i);
-	
-	wCNTR|=CNTR_RESETM;
-	_SetCNTR(wCNTR);
-	
-	wCNTR|=CNTR_FRES;
-	_SetCNTR(wCNTR);
-	
-	wCNTR&=~CNTR_FRES;
-	_SetCNTR(wCNTR);
-
-	while((_GetISTR()&ISTR_RESET) == 0);
-	
-	_SetISTR((uint16_t)CLR_RESET);
-	
-	for (i=0;i<8;i++)
-	_SetENDPOINT(i, EP[i]);
-	
-	wCNTR |= CNTR_FSUSP;
-	_SetCNTR(wCNTR);
-	
-	wCNTR = _GetCNTR();
-	wCNTR |= CNTR_LPMODE;
-	_SetCNTR(wCNTR);
-
-	Enter_LowPowerMode();
+  _SetCNTR(_GetCNTR() | CNTR_FSUSP);
+  _SetCNTR(_GetCNTR() | CNTR_LPMODE);
+  Enter_LowPowerMode();
 }
 
 /*******************************************************************************
@@ -199,7 +171,9 @@ void Resume(RESUME_STATE eResumeSetVal)
       break;
 			
     case RESUME_OFF:
-			
+      remotewakeupon = 0;
+      break;
+
     case RESUME_ESOF:
 			
     default:
